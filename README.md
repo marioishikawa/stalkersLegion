@@ -14,8 +14,15 @@ can read the whole game as source.
 
 ## Running it
 
-Requires **Unreal Engine 5.4 or newer** (nothing in the code is version-specific;
-5.3 should work if you change `EngineAssociation` in `StalkersLegion.uproject`).
+Requires **Unreal Engine 5.4 or newer**; the `.uproject` is associated with
+**5.8**. To open it with a different install, right-click the `.uproject` →
+**Switch Unreal Engine version**, or edit `EngineAssociation` directly.
+
+You also need a working C++ toolchain, which is a separate install from the
+engine: on Windows that is **Visual Studio 2022** with the *Desktop development
+with C++* and *Game development with C++* workloads, plus a **Windows 10/11
+SDK**. Without it, project file generation fails before it ever reaches this
+code (`Some Platforms were skipped due to invalid SDK setup: Win64`).
 
 1. Right-click `StalkersLegion.uproject` → **Generate project files**, then build,
    or just open the `.uproject` and let the editor compile the modules.
