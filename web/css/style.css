@@ -1,0 +1,350 @@
+/*
+ * Stalkers Legion - interface.
+ *
+ * The game viewport is a deliberately single-world design: a dark dive rig seen
+ * through water. Every colour is declared explicitly from a token so the page
+ * holds its own appearance on any host background, light or dark.
+ */
+
+:root {
+  --abyss: #04141b;      /* the ground behind everything */
+  --hull: #0a212b;       /* instrument housing */
+  --hull-line: #1c3e49;  /* hairline frames */
+  --bone: #e8efe6;       /* primary text */
+  --muted: #7d949a;      /* teal-biased grey, not a default grey */
+  --phosphor: #67e8d8;   /* readouts: air, depth */
+  --kelp: #7fa63f;       /* the signature accent */
+  --rust: #c4551f;       /* scrap, warnings */
+  --blood: #b93b2c;      /* health, damage */
+
+  --label: 600 0.72rem/1 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --readout: 500 1rem/1 'IBM Plex Mono', ui-monospace, monospace;
+  --body: 400 0.9rem/1.5 'Barlow', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--abyss);
+  color: var(--bone);
+  font: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+body.is-ready #scene { cursor: none; }
+body.is-paused #scene { cursor: default; }
+
+/* --------------------------------------------------------------- HUD frame */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  padding: clamp(16px, 3vw, 34px);
+  pointer-events: none;
+  user-select: none;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+}
+
+.hud__top { display: flex; justify-content: center; align-items: flex-start; }
+.hud__middle { position: relative; }
+.hud__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* -------------------------------------------------------------- Instruments */
+
+.instruments { display: grid; gap: 10px; min-width: min(240px, 62vw); }
+
+.gauge { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+
+.gauge__label {
+  font: var(--label);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.gauge__value {
+  font: var(--readout);
+  font-variant-numeric: tabular-nums;
+  grid-row: 1;
+  grid-column: 2;
+  text-align: right;
+  color: var(--bone);
+}
+
+.gauge__track {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 9px;
+  background: color-mix(in srgb, var(--hull) 80%, transparent);
+  border: 1px solid var(--hull-line);
+  overflow: hidden;
+}
+
+.gauge__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transition: transform 120ms linear;
+}
+
+.gauge__fill--health { background: var(--blood); }
+.gauge__fill--air { background: var(--phosphor); }
+
+.gauge__fill.is-critical { animation: pulse 0.75s ease-in-out infinite; }
+
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+/* ------------------------------------------------------------------- Depth */
+
+.depth { text-align: right; display: grid; gap: 2px; justify-items: end; }
+
+.depth__biome {
+  font: var(--label);
+  font-size: clamp(0.85rem, 2.4vw, 1.15rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--kelp);
+}
+
+.depth__biome.is-entering { animation: slideIn 700ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.depth__value {
+  font: var(--readout);
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--phosphor);
+  line-height: 1;
+}
+
+.depth__unit { font: var(--label); letter-spacing: 0.2em; color: var(--muted); }
+
+/* --------------------------------------------------------------- Crosshair */
+
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.reticle__arm { position: absolute; background: var(--bone); opacity: 0.75; }
+.reticle__arm--l { left: 0; top: 50%; width: 12px; height: 2px; margin-top: -1px; }
+.reticle__arm--r { right: 0; top: 50%; width: 12px; height: 2px; margin-top: -1px; }
+.reticle__arm--t { top: 0; left: 50%; width: 2px; height: 12px; margin-left: -1px; }
+.reticle__arm--b { bottom: 0; left: 50%; width: 2px; height: 12px; margin-left: -1px; }
+
+.focus {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 34px);
+  transform: translateX(-50%);
+  font: var(--label);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.hit-marker {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 48px);
+  transform: translateX(-50%);
+  font: var(--label);
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone);
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  white-space: nowrap;
+}
+
+.hit-marker.is-visible { opacity: 1; }
+.hit-marker.is-kill { color: var(--rust); }
+
+/* ----------------------------------------------------------------- Warning */
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  border: 1px solid var(--rust);
+  background: color-mix(in srgb, var(--abyss) 70%, transparent);
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+
+.warning.is-visible { opacity: var(--pulse, 1); animation: warn var(--beat, 1s) ease-in-out infinite; }
+
+@keyframes warn { 50% { border-color: color-mix(in srgb, var(--rust) 40%, transparent); } }
+
+.warning__dot { width: 7px; height: 7px; background: var(--rust); }
+
+.warning__text {
+  font: var(--label);
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+/* ------------------------------------------------------------------- Notes */
+
+.carry-note, .mute-note {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font: var(--label);
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rust);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  white-space: nowrap;
+}
+
+.carry-note { bottom: 104px; }
+.mute-note { bottom: 74px; color: var(--muted); }
+.carry-note.is-visible, .mute-note.is-visible { opacity: 1; }
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  opacity: 0;
+  transition: opacity 600ms ease-out;
+  max-width: min(560px, 92vw);
+}
+
+kbd {
+  font: var(--readout);
+  font-size: 0.76rem;
+  color: var(--bone);
+  border: 1px solid var(--hull-line);
+  padding: 1px 5px;
+}
+
+.screen { cursor: default; }
+
+/* ------------------------------------------------------------- Full screens */
+
+.damage-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 35%, var(--blood) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms linear;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: clamp(16px, 5vw, 40px);
+  background:
+    radial-gradient(ellipse at center, color-mix(in srgb, var(--abyss) 45%, transparent) 0%, var(--abyss) 130%);
+  pointer-events: auto;
+}
+
+.screen.is-visible { display: grid; }
+
+.screen__title {
+  font: 600 clamp(2.4rem, 9vw, 5.4rem)/0.95 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.screen__rule { width: min(340px, 70vw); height: 1px; background: var(--hull-line); margin: 18px 0; }
+
+.screen__sub {
+  max-width: 46ch;
+  color: var(--muted);
+  margin: 0 0 22px;
+  text-wrap: pretty;
+}
+
+.screen__cta {
+  font: var(--label);
+  font-size: 0.9rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--abyss);
+  background: var(--kelp);
+  padding: 11px 22px;
+  border: 0;
+  cursor: pointer;
+}
+
+.screen__cta:focus-visible { outline: 2px solid var(--phosphor); outline-offset: 3px; }
+
+#titleScreen .screen__title { color: var(--bone); }
+#titleScreen .screen__title em { font-style: normal; color: var(--kelp); }
+
+#deathScreen .screen__title { color: var(--blood); }
+#deathScreen { background: radial-gradient(ellipse at center, rgba(75, 10, 6, 0.55) 0%, var(--abyss) 120%); }
+
+.screen__meta {
+  margin-top: 20px;
+  font: var(--label);
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#loadError { color: var(--rust); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* Phone: shrink the instruments and stack the bottom row. */
+@media (max-width: 560px) {
+  .hud__bottom { flex-direction: column; align-items: stretch; }
+  .depth { text-align: left; justify-items: start; }
+  .instruments { min-width: 0; }
+  .hint { display: none; }
+}

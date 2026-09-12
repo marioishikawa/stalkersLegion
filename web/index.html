@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stalkers Legion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="damage-flash" id="damageFlash"></div>
+
+<div class="hud">
+  <div class="hud__top">
+    <div class="warning" id="warning">
+      <span class="warning__dot"></span>
+      <span class="warning__text" id="warningText">STALKER</span>
+    </div>
+  </div>
+
+  <div class="hud__middle">
+    <div class="reticle">
+      <span class="reticle__arm reticle__arm--l"></span>
+      <span class="reticle__arm reticle__arm--r"></span>
+      <span class="reticle__arm reticle__arm--t"></span>
+      <span class="reticle__arm reticle__arm--b"></span>
+    </div>
+    <div class="focus" id="focus"></div>
+    <div class="hit-marker" id="hitMarker"></div>
+  </div>
+
+  <div class="hud__bottom">
+    <div class="instruments">
+      <div class="gauge">
+        <span class="gauge__label">Health</span>
+        <span class="gauge__value" id="healthValue">100</span>
+        <span class="gauge__track">
+          <span class="gauge__fill gauge__fill--health" id="healthFill"></span>
+        </span>
+      </div>
+      <div class="gauge">
+        <span class="gauge__label">Air</span>
+        <span class="gauge__value" id="airValue">90s</span>
+        <span class="gauge__track">
+          <span class="gauge__fill gauge__fill--air" id="airFill"></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="depth">
+      <span class="depth__biome" id="biomeName">Safe Shallows</span>
+      <span class="depth__value" id="depthValue">0.0</span>
+      <span class="depth__unit">metres down</span>
+    </div>
+  </div>
+
+  <div class="carry-note" id="carryNote">Carrying scrap metal &nbsp;·&nbsp; [E] throw it</div>
+  <div class="mute-note" id="muteNote">sound off</div>
+
+  <div class="hint" id="hint">
+    <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> swim &nbsp; <kbd>Space</kbd>/<kbd>Ctrl</kbd> rise &amp; sink &nbsp; <kbd>Shift</kbd> sprint</div>
+    <div><kbd>Click</kbd> knife &nbsp; <kbd>E</kbd> pick up / throw scrap &nbsp; <kbd>F</kbd> light &nbsp; <kbd>M</kbd> sound</div>
+    <div>Air refills at the surface. Scrap metal draws stalkers — use it.</div>
+  </div>
+</div>
+
+<div class="screen is-visible" id="titleScreen">
+  <h1 class="screen__title">Stalkers <em>Legion</em></h1>
+  <div class="screen__rule"></div>
+  <p class="screen__sub">
+    Six biomes of open ocean, ninety seconds of air, and a survival knife.
+    The kelp forest is full of scrap metal — and the stalkers that chew on it.
+  </p>
+  <button class="screen__cta" type="button">Click to dive</button>
+  <p class="screen__meta">Mouse to look &nbsp;·&nbsp; Esc to release the cursor</p>
+</div>
+
+<div class="screen" id="pauseScreen">
+  <h1 class="screen__title">Paused</h1>
+  <div class="screen__rule"></div>
+  <button class="screen__cta" type="button">Back to the water</button>
+</div>
+
+<div class="screen" id="deathScreen">
+  <h1 class="screen__title">You Died</h1>
+  <div class="screen__rule"></div>
+  <p class="screen__sub">Something found you in the dark.</p>
+  <p class="screen__meta">Press <kbd>R</kbd> to wake up at the surface</p>
+</div>
+
+<div class="screen" id="loadError">
+  <h1 class="screen__title">No Connection</h1>
+  <div class="screen__rule"></div>
+  <p class="screen__sub">The 3D library could not be loaded. Check your connection and reload.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/biomes.js"></script>
+<script src="js/species.js"></script>
+<script src="js/bodies.js"></script>
+<script src="js/flora.js"></script>
+<script src="js/scrap.js"></script>
+<script src="js/creatures.js"></script>
+<script src="js/player.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/world.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

@@ -14,3 +14,6 @@ Saved/
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+# Web build output
+web/dist/

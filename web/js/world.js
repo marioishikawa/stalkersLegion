@@ -1,0 +1,245 @@
+/**
+ * Builds and runs the ocean: terrain, water surface, lighting, and every plant,
+ * scrap pile and creature in it. Also drives the ambience - fog colour and
+ * density track whichever biome the player is swimming through.
+ */
+(function (SL) {
+  'use strict';
+
+  const { MeshData } = SL;
+
+  /** The sea floor, as tiles sampled from the analytic height field. */
+  function buildTerrain(game) {
+    const TILES = 6;
+    const CELLS = 30;
+    const CELL_SIZE = 1.6;
+    const tileSize = CELLS * CELL_SIZE;
+    const half = tileSize * TILES * 0.5;
+
+    for (let ty = 0; ty < TILES; ty++) {
+      for (let tx = 0; tx < TILES; tx++) {
+        const originX = -half + tx * tileSize;
+        const originZ = -half + ty * tileSize;
+        const mesh = new MeshData();
+        const verts = CELLS + 1;
+
+        for (let z = 0; z < verts; z++) {
+          for (let x = 0; x < verts; x++) {
+            // Vertices are in world space, so neighbouring tiles share exact
+            // edge heights and the floor has no visible seams.
+            const wx = originX + x * CELL_SIZE;
+            const wz = originZ + z * CELL_SIZE;
+            const color = SL.Biomes.floorColorAt(wx, wz);
+            mesh.vertex(wx, SL.Biomes.floorHeightAt(wx, wz), wz, 0, 1, 0, color);
+          }
+        }
+
+        for (let z = 0; z < CELLS; z++) {
+          for (let x = 0; x < CELLS; x++) {
+            const a = z * verts + x;
+            mesh.quad(a, a + verts, a + verts + 1, a + 1);
+          }
+        }
+
+        mesh.computeNormals();
+        game.scene.add(new THREE.Mesh(mesh.toGeometry(), game.materials.surface));
+      }
+    }
+  }
+
+  /**
+   * A gently rippled sheet at the water line. From below it is the ceiling of
+   * the world; from above it reads as open ocean.
+   */
+  function buildWaterSurface(game) {
+    const extent = SL.WORLD_RADIUS * 1.5;
+    const cells = 26;
+    const step = (extent * 2) / cells;
+    const mesh = new MeshData();
+    const verts = cells + 1;
+    const color = new THREE.Color();
+
+    for (let z = 0; z < verts; z++) {
+      for (let x = 0; x < verts; x++) {
+        const wx = -extent + x * step;
+        const wz = -extent + z * step;
+        const ripple = SL.fbm(wx, wz, 2, 0.08, 2, 0.5, 4242) * 0.35;
+        color.setRGB(0.04, 0.22, 0.30).multiplyScalar(1 + ripple * 0.4);
+        mesh.vertex(wx, SL.WATER_LEVEL + ripple, wz, 0, 1, 0, color);
+      }
+    }
+
+    for (let z = 0; z < cells; z++) {
+      for (let x = 0; x < cells; x++) {
+        const a = z * verts + x;
+        mesh.quad(a, a + verts, a + verts + 1, a + 1);
+      }
+    }
+
+    mesh.computeNormals();
+    const surface = new THREE.Mesh(mesh.toGeometry(), game.materials.water);
+    game.scene.add(surface);
+  }
+
+  function buildLighting(game) {
+    // Sunlight filtering down from above. Kept low deliberately: vertex colours
+    // are already near full brightness, so anything above ~1.0 total blows the
+    // sea floor out to white.
+    const sun = new THREE.DirectionalLight(0xfff3d8, 0.62);
+    sun.position.set(40, 80, 20);
+    game.scene.add(sun);
+
+    // Sky above, dark water below - the classic underwater ambient split.
+    // The three intensities deliberately total ~1.0 so vertex colours render at
+    // roughly the value they were authored at.
+    game.scene.add(new THREE.HemisphereLight(0x9fd8e8, 0x081412, 0.28));
+    game.scene.add(new THREE.AmbientLight(0x1b3038, 0.12));
+  }
+
+  function scatterFlora(game) {
+    let total = 0;
+
+    for (const biome of SL.Biomes.list) {
+      for (let p = 0; p < biome.floraPatches; p++) {
+        const center = SL.Biomes.randomPointIn(biome);
+        if (!center) continue;
+
+        const instances = [];
+        const count = SL.randInt(8, 20);
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.sqrt(Math.random()) * 7;
+          const x = center.x + Math.cos(angle) * dist;
+          const z = center.z + Math.sin(angle) * dist;
+
+          instances.push({
+            type: SL.pick(biome.flora),
+            // Patch-local, with each plant's foot on the sea floor.
+            x: x - center.x,
+            y: SL.Biomes.floorHeightAt(x, z),
+            z: z - center.z,
+            yaw: Math.random() * Math.PI * 2,
+            scale: SL.randRange(0.7, 1.4),
+            seed: (Math.random() * 1e9) | 0
+          });
+        }
+
+        const patch = SL.buildFloraPatch(instances, game.materials);
+        patch.position.set(center.x, 0, center.z);
+        game.scene.add(patch);
+        total += instances.length;
+      }
+    }
+
+    return total;
+  }
+
+  function scatterScrap(game) {
+    for (const biome of SL.Biomes.list) {
+      for (let i = 0; i < biome.scrapCount; i++) {
+        const point = SL.Biomes.randomPointIn(biome);
+        if (!point) continue;
+        game.scrap.push(new SL.Scrap(game, point.x, point.z, (Math.random() * 1e9) | 0));
+      }
+    }
+  }
+
+  /**
+   * Scales every school count at once. Each fish is two draw calls, so this is
+   * the dial to turn if the frame rate suffers on a weaker machine.
+   */
+  const POPULATION = 0.6;
+
+  function spawnCreatures(game) {
+    for (const biome of SL.Biomes.list) {
+      // --- Fish -------------------------------------------------------------
+      for (const species of SL.Species.ofBiome(biome.id)) {
+        const groups = Math.max(1, Math.round(species.groups * POPULATION));
+        for (let g = 0; g < groups; g++) {
+          const point = SL.Biomes.randomPointIn(biome);
+          if (!point) continue;
+
+          const floor = SL.Biomes.floorHeightAt(point.x, point.z);
+          const y = Math.min(floor + species.altitude * SL.randRange(0.8, 1.6), SL.WATER_LEVEL - 3);
+
+          let leader = null;
+          for (let i = 0; i < species.schoolSize; i++) {
+            const fish = new SL.Fish(game, species,
+              point.x + SL.randRange(-2.6, 2.6),
+              y + SL.randRange(-1.2, 1.2),
+              point.z + SL.randRange(-2.6, 2.6));
+            fish.territory.set(point.x, y, point.z);
+            fish.territoryRadius = 22;
+
+            if (i === 0) {
+              leader = fish;
+            } else {
+              // Followers hold a slot in a loose wedge behind the leader.
+              const spacing = Math.max(0.6, species.shape.length * 1.6);
+              const row = Math.ceil(i / 2);
+              const side = i % 2 === 0 ? 1 : -1;
+              fish.setLeader(leader, new THREE.Vector3(
+                side * row * spacing * 0.8,
+                SL.randRange(-0.4, 0.4) * spacing,
+                -row * spacing));
+            }
+            game.fish.push(fish);
+          }
+        }
+      }
+
+      // --- Stalkers -----------------------------------------------------------
+      for (let i = 0; i < biome.stalkerCount; i++) {
+        const point = SL.Biomes.randomPointIn(biome);
+        if (!point) continue;
+        const y = SL.Biomes.floorHeightAt(point.x, point.z) + 5;
+        const stalker = new SL.Stalker(game, SL.Species.stalker, point.x, y, point.z);
+        stalker.territory.set(point.x, y, point.z);
+        game.stalkers.push(stalker);
+      }
+    }
+  }
+
+  /**
+   * Stalkers chew scrap out of existence, so top the kelp forest back up.
+   * Without this the biome's whole reason to exist quietly disappears.
+   */
+  function replenishScrap(game) {
+    const kelp = SL.Biomes.byId.kelp;
+    const alive = game.scrap.length;
+    if (alive >= kelp.scrapCount) return;
+
+    for (let i = alive; i < kelp.scrapCount; i++) {
+      const point = SL.Biomes.randomPointIn(kelp);
+      if (!point) continue;
+
+      // Never pop a piece into existence in front of the player.
+      const dx = point.x - game.player.position.x;
+      const dz = point.z - game.player.position.z;
+      if (dx * dx + dz * dz < 900) continue;
+
+      game.scrap.push(new SL.Scrap(game, point.x, point.z, (Math.random() * 1e9) | 0));
+    }
+  }
+
+  const _fogTarget = new THREE.Color();
+
+  function updateAmbience(game, dt) {
+    const p = game.player.position;
+    const biome = SL.Biomes.biomeAt(p.x, p.z);
+
+    // Above the surface the haze lifts; deeper water is darker water.
+    const submerged = SL.clamp((SL.WATER_LEVEL - p.y) / 4, 0, 1);
+    const depthFade = SL.clamp(1 - (SL.WATER_LEVEL - p.y) / 60, 0.12, 1);
+
+    _fogTarget.copy(biome.waterColor).multiplyScalar(depthFade);
+
+    game.scene.fog.color.lerp(_fogTarget, 1 - Math.exp(-1.2 * dt));
+    game.scene.fog.density = SL.damp(game.scene.fog.density, biome.fogDensity * submerged, 1.2, dt);
+    game.scene.background = game.scene.fog.color;
+
+    game.audio.setDepth(game.player.depth);
+  }
+
+  SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap, spawnCreatures, replenishScrap, updateAmbience };
+})(window.SL);
