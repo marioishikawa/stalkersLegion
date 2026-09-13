@@ -596,8 +596,11 @@
  * source rather than a shape you make out. Everything else in the game is lit
  * by three fixed lights; this one carries its own and drags it across the dark.
  *
- * It wants nothing. It drifts, it breathes, and if you cut it it turns white
- * and comes at you.
+ * And the light is bait. It drifts and breathes and looks like a landmark from
+ * two hundred metres, and when you come close enough it puts itself out - the
+ * only light on the plain, gone - and takes you in the dark. Nothing else in
+ * this game hunts the diver on purpose; the four other leviathans all have to
+ * be provoked first, and the whale cannot hurt you at all.
  */
 (function (SL) {
   'use strict';
@@ -606,9 +609,26 @@
 
   const LABELS = {
     drift: 'crossing the dark',
-    flare: 'lighting you up',
+    lure: 'waiting for you',
+    dark: 'gone out',
+    strike: 'coming',
+    withdraw: 'circling back',
     angry: 'blazing'
   };
+
+  /** Inside this it stops drifting and starts working on you. */
+  const LURE_RANGE = 44;
+
+  /** How close it gets before it puts the light out and charges. */
+  const STRIKE_RANGE = 22;
+
+  /** Past this it loses interest and goes back to crossing. */
+  const GIVE_UP_RANGE = 105;
+
+  /** How close the mouth has to get. */
+  const MOUTH_REACH = 5.5;
+
+  const _mouth = new THREE.Vector3();
 
   /**
    * Resting light, and what a flare or a wound pushes it to.
@@ -633,6 +653,8 @@
       this.biteCooldown = 0;
       this.aggro = 0;
       this.threat = null;
+      this.hunts = 0;
+      this.restTimer = 0;
       this.driftTarget = new THREE.Vector3(x, y, z);
 
       // Its own light, carried in the middle of the body. This is the whole
@@ -671,13 +693,37 @@
     get stateLabel() { return LABELS[this.state] || ''; }
     get biteReach() { return this.bodyLength * 0.44 + 3; }
 
+    /**
+     * Where its mouth actually is.
+     *
+     * Measuring the bite from the pivot of a thirteen-metre animal is what let
+     * it hang six metres over a diver on the sea floor looking like it was
+     * biting and never landing anything: its nose was on them, its centre was
+     * not. A long fish bites with its head, so the check uses the head.
+     */
+    mouthPosition() {
+      return _mouth.set(0, 0, this.bodyLength * 0.45)
+        .applyQuaternion(this.object.quaternion).add(this.position);
+    }
+
+    /** True if the mouth is on the target, however far away the pivot is. */
+    canBite(target) {
+      return this.mouthPosition().distanceToSquared(target.position) < MOUTH_REACH * MOUTH_REACH;
+    }
+
+    /** Whether it is currently working on the diver, for the proximity warning. */
+    get hunting() {
+      return !this.dead && (this.state === 'lure' || this.state === 'dark'
+        || this.state === 'strike' || this.state === 'angry');
+    }
+
     enterState(state) {
       if (this.state === state) return;
       this.state = state;
       this.stateTimer = 0;
     }
 
-    /** It starts nothing. Cut it and it stops being scenery. */
+    /** Cutting it skips the theatre and puts it straight onto you. */
     provoke(threat) {
       if (this.dead || !threat) return;
       this.threat = threat;
@@ -705,9 +751,20 @@
 
       this.pulse += dt * (this.state === 'drift' ? 0.9 : 2.6);
 
-      const target = this.dead ? 0
-        : (this.state === 'drift' ? CALM_LIGHT : FLARE_LIGHT);
-      this.glow = SL.damp(this.glow, target / CALM_LIGHT, 2.2, dt);
+      // What the light is doing is the whole tell, so it is a per-state value
+      // rather than on/off: steady while crossing, brighter while luring you
+      // in, out while it closes, and white once it has committed.
+      let target = CALM_LIGHT;
+      if (this.dead) target = 0;
+      else if (this.state === 'lure') target = CALM_LIGHT * 1.5;
+      else if (this.state === 'dark') target = CALM_LIGHT * 0.06;
+      else if (this.state === 'strike' || this.state === 'angry') target = FLARE_LIGHT;
+      else if (this.state === 'withdraw') target = CALM_LIGHT * 0.5;
+
+      // It goes out fast and comes back slowly, which is what makes the dark
+      // feel like something happening rather than a fade.
+      const rate = this.state === 'dark' ? 5.5 : 2.2;
+      this.glow = SL.damp(this.glow, target / CALM_LIGHT, rate, dt);
 
       const breath = 1 + Math.sin(this.pulse) * 0.16 + Math.sin(this.pulse * 2.7) * 0.06;
       this.lamp.intensity = Math.max(0, this.glow * CALM_LIGHT * breath);
@@ -722,8 +779,12 @@
 
       // The halo breathes with the lamp and swells when it flares, so the glow
       // reads from far enough away to be a landmark.
-      const shine = Math.min(this.glow, 3);
-      this.halo.material.opacity = 0.22 * shine * breath;
+      // Capped well below the lamp's range. Additive at full flare the halo
+      // turns into a solid white slab that swallows the animal - the blaze is
+      // supposed to be light coming off it, so the lamp carries the intensity
+      // and the halo only ever thickens a little.
+      const shine = Math.min(this.glow, 1.9);
+      this.halo.material.opacity = 0.17 * shine * breath;
       this.halo.material.color.copy(this.lamp.color);
       this.halo.scale.setScalar(1.35 + shine * 0.22 + Math.sin(this.pulse) * 0.05);
       this.halo.visible = this.halo.material.opacity > 0.01;
@@ -737,7 +798,87 @@
       this.aggro = Math.max(0, this.aggro - dt);
       this.biteCooldown = Math.max(0, this.biteCooldown - dt);
 
+      this.restTimer = Math.max(0, this.restTimer - dt);
+
       const playerDistance = player.dead ? Infinity : player.position.distanceTo(this.position);
+
+      // --- Hunting -------------------------------------------------------------
+      //
+      // Three beats: hang and glow while you close, put the light out and come
+      // in dark, then bite. Split across states so each one is a thing you can
+      // read off the water rather than one continuous chase.
+
+      if (this.state === 'lure') {
+        this.jawOpen = SL.damp(this.jawOpen, 0.3, 2, dt);
+
+        if (playerDistance > GIVE_UP_RANGE) { this.enterState('drift'); return _tmp.set(0, 0, 0); }
+
+        if (playerDistance < STRIKE_RANGE || this.stateTimer > 5) {
+          this.enterState('dark');
+          this.game.audio.blow(this.game.distanceToPlayer(this.position));
+          this.game.hud.toast('The light goes out');
+          return _tmp.set(0, 0, 0);
+        }
+
+        // Barely moving - it is letting you come to it.
+        return _tmp.subVectors(player.position, this.position).normalize()
+          .multiplyScalar(S.cruiseSpeed * 0.35);
+      }
+
+      if (this.state === 'dark') {
+        this.jawOpen = SL.damp(this.jawOpen, 0.15, 3, dt);
+
+        // A moment of nothing, then it commits.
+        if (this.stateTimer > 1.6) {
+          this.enterState('strike');
+          this.game.audio.bite(this.game.distanceToPlayer(this.position));
+        }
+
+        return _tmp.subVectors(player.position, this.position).normalize()
+          .multiplyScalar(S.cruiseSpeed);
+      }
+
+      if (this.state === 'strike') {
+        this.jawOpen = SL.damp(this.jawOpen, 1, 6, dt);
+
+        if (this.biteCooldown <= 0 && this.canBite(player)) {
+          this.biteCooldown = S.biteInterval;
+          this.game.audio.bite(0);
+          player.hurt(S.biteDamage, this);
+          this.hunts++;
+          this.enterState('withdraw');
+          return _tmp.set(0, 0, 0);
+        }
+
+        // A charge is a committed run, not a chase - it overshoots and has to
+        // come round again, which is what gives you room to get away.
+        if (this.stateTimer > 4.5 || playerDistance > GIVE_UP_RANGE) {
+          this.enterState('withdraw');
+          return _tmp.set(0, 0, 0);
+        }
+
+        return _tmp.subVectors(player.position, this.mouthPosition()).normalize()
+          .multiplyScalar(S.sprintSpeed);
+      }
+
+      if (this.state === 'withdraw') {
+        this.jawOpen = SL.damp(this.jawOpen, 0.1, 2, dt);
+
+        // Short. A diver who stands their ground regenerates 2.5 health a
+        // second once eighteen seconds pass without a hit, so a slow cycle
+        // means it cannot kill anyone - it has to come back inside that window
+        // or it is weather rather than a predator.
+        if (this.stateTimer > 3.5) {
+          this.restTimer = 2;
+          this.enterState('drift');
+          return _tmp.set(0, 0, 0);
+        }
+
+        // Swings wide before it relights, so the next pass comes from somewhere
+        // else in the dark.
+        return _tmp.subVectors(this.position, player.position).normalize()
+          .multiplyScalar(S.cruiseSpeed * 1.3);
+      }
 
       if (this.state === 'angry') {
         this.jawOpen = SL.damp(this.jawOpen, playerDistance < 18 ? 0.9 : 0.35, 3, dt);
@@ -748,7 +889,7 @@
           return _tmp.set(0, 0, 0);
         }
 
-        if (playerDistance < this.biteReach && this.biteCooldown <= 0) {
+        if (this.biteCooldown <= 0 && this.canBite(this.threat)) {
           this.biteCooldown = S.biteInterval;
           this.game.audio.bite(0);
           this.threat.hurt(S.biteDamage, this);
@@ -758,13 +899,13 @@
           .multiplyScalar(S.sprintSpeed);
       }
 
-      // A flare is a display, not a threat: it brightens when someone comes
-      // close and goes back to its business. Nothing about it does damage.
-      if (this.state === 'flare') {
-        this.jawOpen = SL.damp(this.jawOpen, 0.2, 2, dt);
-        if (this.stateTimer > 7 || playerDistance > S.senseRadius * 1.3) this.enterState('drift');
-      } else if (playerDistance < S.senseRadius * 0.45 && this.stateTimer > 12) {
-        this.enterState('flare');
+      // Crossing, and something has swum into range: start working on it. The
+      // rest timer after a pass is what stops it becoming an unbroken grind -
+      // there is always a window to leave in.
+      if (playerDistance < LURE_RANGE && this.restTimer <= 0 && !player.dead) {
+        this.enterState('lure');
+        this.game.hud.toast('The Glow Leviathan has seen you');
+        return _tmp.set(0, 0, 0);
       }
 
       this.jawOpen = SL.damp(this.jawOpen, 0.12, 1, dt);

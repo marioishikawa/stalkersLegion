@@ -445,10 +445,10 @@
     fish('glowlev', 'Glow Leviathan', 'abyss', 'torpedo', {
       leviathan: true, markerColor: '#5ce7ff',
       diet: 'carnivore', groups: 0,
-      note: 'A very large fish that is lit from the inside. It crosses the ' +
-            'abyssal plain on no particular errand, throwing enough light to ' +
-            'read the sea floor by, and is the only thing you will ever see ' +
-            'out there. It wants nothing from you.',
+      note: 'A very large fish that is lit from the inside, throwing enough ' +
+            'light to read the sea floor by, and the only thing you will ever ' +
+            'see out there. The light is bait. Come close enough and it puts ' +
+            'itself out, and the plain is very dark without it.',
       // Everything about it is the glow, so the colours are the light.
       backColor: C(0.20, 0.86, 1.0), bellyColor: C(0.86, 1.0, 1.0), finColor: C(0.36, 0.72, 1.0),
       eyeColor: C(1.0, 0.98, 0.72), glow: 1,

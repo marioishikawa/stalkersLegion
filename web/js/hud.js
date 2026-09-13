@@ -173,23 +173,41 @@
         if (this.hitTimer <= 0) this.el.hitMarker.classList.remove('is-visible');
       }
 
-      // --- Stalker proximity -----------------------------------------------------
-      let closest = null, closestDistance = 26;
+      // --- Proximity warning ------------------------------------------------------
+      //
+      // Stalkers, and anything larger that is actively working on the diver.
+      // A leviathan that hunts in the dark with no warning at all is not
+      // frightening, it is just unfair.
+      let closest = null, closestDistance = 26, range = 26;
+
       for (const stalker of this.game.stalkers) {
         if (stalker.dead) continue;
         const d = stalker.position.distanceTo(p.position);
         if (d < closestDistance) { closestDistance = d; closest = stalker; }
       }
 
+      for (const lev of this.game.glowLevs) {
+        if (!lev.hunting) continue;
+        const d = lev.position.distanceTo(p.position);
+        // Given a wider band than a stalker, because it closes far faster.
+        if (d < 80 && (!closest || d / 80 < closestDistance / range)) {
+          closest = lev; closestDistance = d; range = 80;
+        }
+      }
+
       if (closest && !p.dead) {
-        const proximity = 1 - closestDistance / 26;
+        const proximity = 1 - closestDistance / range;
         this.el.warning.classList.add('is-visible');
         this.el.warning.style.setProperty('--pulse', (0.35 + proximity * 0.65).toFixed(2));
         this.el.warning.style.setProperty('--beat', (1.4 - proximity).toFixed(2) + 's');
         this.el.warningText.textContent =
-          'STALKER  ' + closestDistance.toFixed(0) + 'm  ·  ' + closest.stateLabel;
+          closest.species.name.toUpperCase().replace(' LEVIATHAN', '')
+          + '  ' + closestDistance.toFixed(0) + 'm  ·  ' + closest.stateLabel;
       } else {
         this.el.warning.classList.remove('is-visible');
+        // Cleared as well as hidden, so a label from the last thing that was
+        // after you cannot flash back up when the next one arrives.
+        this.el.warningText.textContent = '';
       }
 
       // --- Carried scrap ---------------------------------------------------------

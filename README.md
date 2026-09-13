@@ -233,9 +233,17 @@ scaled *down* (it is meant to feel like crossing nothing), the trench, the far
 forest, the basin and the islet all scaled *up*.
 
 A world carries roughly 5,400 fish, of which 12–40 are inside the 55 m you can
-see at any moment, and 90–130 over the islet's reef. Stepping all of them costs
-about 2.3 ms a frame; everything past the fog is neither drawn nor stepped at
-full rate.
+see at any moment, and 90–130 over the islet's reef. Everything past the fog is
+neither drawn nor stepped at full rate.
+
+Stepping the world costs around **8 ms a frame**, measured by instrumenting the
+real frame loop in a software-rendered headless container — so the number on a
+machine with a GPU is lower, but that is the honest ceiling. Turn `POPULATION`
+in `web/js/world.js` down if a weaker machine struggles; it is one dial and it
+scales every school at once. (An earlier revision of this file claimed 2.3 ms.
+That came from calling `update()` sixty times in a tight loop, which re-runs the
+HUD and the chart redraw with no frame in between and does not measure what a
+frame costs.)
 
 ## The databank
 
@@ -320,15 +328,24 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   Completely harmless. The bubbles rise, swell as the pressure drops, wobble on
   their own phase and pop at the surface.
 * **Glow Leviathan** — thirteen metres of fish lit from the inside, crossing the
-  abyssal plain on no particular errand. It is the only leviathan that is
-  genuinely a *light source* rather than a shape you make out: it carries a
-  120 m lamp that lays a pool of light on the sea floor under it, wrapped in an
-  additive halo that reads as the glow coming off it. Its materials are the one
-  place in the game where fog is switched off — a fogged light dims with
-  distance, and a light that dims with distance is not a landmark. Across a
-  black plain at 180 m it is a single cyan point, and the only thing you can
-  see. It wants nothing from you. Cut it and it turns from cold blue to hot
-  white and comes.
+  abyssal plain. It is the only leviathan that is genuinely a *light source*
+  rather than a shape you make out: a 120 m lamp that lays a pool of light on
+  the sea floor under it, wrapped in an additive halo that reads as the glow
+  coming off it. Its materials are the one place in the game where fog is
+  switched off — a fogged light dims with distance, and a light that dims with
+  distance is not a landmark. Across a black plain at 180 m it is a single cyan
+  point and the only thing you can see.
+
+  **And the light is bait.** It is the only thing in the game that hunts the
+  diver on purpose — every other leviathan has to be provoked first, and the
+  whale cannot hurt you at all. Come inside 44 m and it stops crossing, hangs
+  and burns brighter while you close, then **puts itself out**: the only light
+  on the plain, gone, and a second and a half later it is coming at you in the
+  dark at 5 m/s. The charge is committed rather than a chase, so it overshoots
+  and has to swing wide and come round again, and it rests for five seconds
+  after each pass — there is always a window to leave in, and a sprint gets you
+  out. Thirty damage a bite. The proximity warning that used to watch only
+  stalkers now watches this too, on a wider band, because it closes much faster.
 * **Walkingcarni** — lives on the islet, and is the only animal in the game that
   is not swimming. Four legs, a long jaw, and it takes its height from the
   ground rather than integrating against the sea floor like everything else, so
