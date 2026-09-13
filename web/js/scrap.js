@@ -33,7 +33,7 @@
         SL.hash(seed, 6, 9) * Math.PI * 2,
         (SL.hash(seed, 7, 11) - 0.5) * 0.4);
       this.object.rotation.copy(this.restRotation);
-      game.scene.add(this.object);
+      game.addToWorld(this.object);
     }
 
     /** A welded cluster of plates and bars, cached by seed bucket. */
@@ -111,11 +111,11 @@
 
     /** Detaches and lets the piece sink back to the floor. */
     drop(tossVelocity) {
-      if (this.object.parent && this.object.parent !== this.game.scene) {
-        // Preserve world position when re-parenting to the scene.
+      if (this.object.parent && this.object.parent !== this.game.worldGroup) {
+        // Preserve world position when re-parenting out of a carrier.
         const world = new THREE.Vector3();
         this.object.getWorldPosition(world);
-        this.game.scene.add(this.object);
+        this.game.worldGroup.add(this.object);
         this.object.position.copy(world);
       }
 

@@ -68,6 +68,12 @@
       this.scrapTimer = 20;
       this._tmp = new THREE.Vector3();
 
+      // Seconds played in the current world, which is what a save records.
+      this.worldTime = 0;
+      this.world = null;
+      this.worldGroup = new THREE.Group();
+      this.scene.add(this.worldGroup);
+
       // Adaptive resolution. A retina display at devicePixelRatio 2 costs four
       // times the pixels of 1, which is the usual reason a scene like this feels
       // sluggish to the mouse.
@@ -76,8 +82,44 @@
       this.frameTimes = [];
     }
 
-    build() {
+    /** Everything belonging to the current world, so it can be torn down. */
+    addToWorld(object) {
+      this.worldGroup.add(object);
+      return object;
+    }
+
+    /**
+     * Removes the current world completely. Geometry shared between worlds
+     * (creature bodies, pickup shapes) is marked and left alone; everything
+     * else - terrain, kelp, scrap - is disposed so switching worlds does not
+     * leak the old one onto the GPU.
+     */
+    teardownWorld() {
+      for (const fish of this.fish) fish.object.parent && fish.object.parent.remove(fish.object);
+      this.fish.length = 0;
+      this.stalkers.length = 0;
+      this.scrap.length = 0;
+      this.pickups.length = 0;
+
+      if (this.worldGroup) {
+        this.worldGroup.traverse((node) => {
+          if (node.geometry && !node.geometry.userData.shared) node.geometry.dispose();
+        });
+        this.scene.remove(this.worldGroup);
+      }
+
+      this.worldGroup = new THREE.Group();
+      this.scene.add(this.worldGroup);
+    }
+
+    /** Generates a world from a seed. The same seed always gives the same ocean. */
+    build(seed) {
       const started = performance.now();
+
+      this.seed = seed >>> 0;
+      SL.setSeed(this.seed);
+      SL.Biomes.setSeed(this.seed);
+      this.teardownWorld();
 
       SL.World.buildLighting(this);
       SL.World.buildTerrain(this);
@@ -85,9 +127,11 @@
       const plants = SL.World.scatterFlora(this);
       SL.World.scatterScrap(this);
 
-      this.player = new SL.Player(this);
+      // The player and HUD survive world changes; only the ocean is rebuilt.
+      if (!this.player) this.player = new SL.Player(this);
+      if (!this.hud) this.hud = new SL.Hud(this);
       SL.Crafting.reset();
-      this.hud = new SL.Hud(this);
+      this.player.resetLoadout();
 
       SL.World.spawnCreatures(this);
 
@@ -156,6 +200,40 @@
       this.updateCursor();
     }
 
+    /** Writes the current run into its world record. Never blocks the game. */
+    saveWorld(options) {
+      if (!this.world || !this.player) return Promise.resolve(false);
+
+      SL.Saves.capture(this.world, this);
+      const saved = SL.Saves.put(this.world);
+
+      if (options && options.announce) {
+        saved.then((ok) => this.hud.toast(ok ? 'World saved' : 'Could not save'));
+      }
+      return saved;
+    }
+
+    /** Generates `world`'s ocean and drops the diver back into it. */
+    enterWorld(world) {
+      this.world = world;
+      this.build(world.seed);
+      SL.Saves.restore(world, this);
+      this.hud.refreshFabricator();
+      this.hud.setWorldName(world.name);
+      this.enter();
+    }
+
+    /** Saves and returns to the world list. */
+    async quitToMenu() {
+      await this.saveWorld();
+      this.started = false;
+      this.setPaused(true);
+      document.getElementById('pauseScreen').classList.remove('is-visible');
+      this.hud.setFabricatorOpen(false);
+      this.fabricatorOpen = false;
+      await SL.Menu.open(this);
+    }
+
     setPaused(paused) {
       this.paused = paused;
       if (paused && document.pointerLockElement === this.canvas) document.exitPointerLock();
@@ -176,7 +254,13 @@
 
       // The diver only ticks while actually playing - this is what stops air
       // draining behind the title card and the pause screen.
-      if (!this.paused) this.player.update(dt, this.input);
+      if (!this.paused) {
+        this.player.update(dt, this.input);
+        this.worldTime += dt;
+
+        this.autosaveTimer = (this.autosaveTimer || 0) - dt;
+        if (this.autosaveTimer <= 0) { this.autosaveTimer = 25; this.saveWorld(); }
+      }
 
       const playerPos = this.player.position;
 
@@ -202,6 +286,15 @@
 
       SL.World.updateAmbience(this, dt);
       this.hud.update(dt);
+
+      // A death is worth recording the moment it happens.
+      if (this.player.dead && !this._deathSaved) {
+        this._deathSaved = true;
+        if (this.world) this.world.deaths = (this.world.deaths || 0) + 1;
+        this.saveWorld();
+      } else if (!this.player.dead) {
+        this._deathSaved = false;
+      }
     }
 
     loop(now) {
@@ -388,8 +481,6 @@
 
   function boot() {
     const canvas = document.getElementById('scene');
-    const title = document.getElementById('titleScreen');
-    const pauseScreen = document.getElementById('pauseScreen');
 
     if (!window.THREE) {
       document.getElementById('loadError').classList.add('is-visible');
@@ -399,26 +490,30 @@
     const game = new Game(canvas);
     window.SL.game = game;
 
-    game.build();
+    // A world is generated straight away so the menu sits over a living ocean
+    // rather than a black screen. Picking a world replaces it.
+    game.build(SL.newSeed());
     bindInput(game);
     game.loop(performance.now());
-
-    // The ocean is already rendering behind the title card.
     document.body.classList.add('is-ready');
 
-    const enter = () => {
-      title.classList.remove('is-visible');
-      pauseScreen.classList.remove('is-visible');
-      game.enter();
-    };
+    SL.Menu.init(game);
+    SL.Menu.open(game);
 
-    title.addEventListener('click', enter);
-    pauseScreen.addEventListener('click', () => {
+    // --- Pause menu -----------------------------------------------------------
+    const pauseScreen = document.getElementById('pauseScreen');
+
+    document.getElementById('resumeButton').addEventListener('click', () => {
       pauseScreen.classList.remove('is-visible');
       game.enter();
     });
-    window.addEventListener('keydown', function once(e) {
-      if (e.code === 'Enter' && !game.started) { enter(); window.removeEventListener('keydown', once); }
+
+    document.getElementById('saveButton').addEventListener('click', () => {
+      game.saveWorld({ announce: true });
+    });
+
+    document.getElementById('quitButton').addEventListener('click', () => {
+      game.quitToMenu();
     });
   }
 

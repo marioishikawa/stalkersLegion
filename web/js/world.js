@@ -42,7 +42,7 @@
         }
 
         mesh.computeNormals();
-        game.scene.add(new THREE.Mesh(mesh.toGeometry(), game.materials.surface));
+        game.addToWorld(new THREE.Mesh(mesh.toGeometry(), game.materials.surface));
       }
     }
   }
@@ -77,8 +77,7 @@
     }
 
     mesh.computeNormals();
-    const surface = new THREE.Mesh(mesh.toGeometry(), game.materials.water);
-    game.scene.add(surface);
+    game.addToWorld(new THREE.Mesh(mesh.toGeometry(), game.materials.water));
   }
 
   function buildLighting(game) {
@@ -87,13 +86,13 @@
     // sea floor out to white.
     const sun = new THREE.DirectionalLight(0xfff3d8, 0.62);
     sun.position.set(40, 80, 20);
-    game.scene.add(sun);
+    game.addToWorld(sun);
 
     // Sky above, dark water below - the classic underwater ambient split.
     // The three intensities deliberately total ~1.0 so vertex colours render at
     // roughly the value they were authored at.
-    game.scene.add(new THREE.HemisphereLight(0x9fd8e8, 0x081412, 0.28));
-    game.scene.add(new THREE.AmbientLight(0x1b3038, 0.12));
+    game.addToWorld(new THREE.HemisphereLight(0x9fd8e8, 0x081412, 0.28));
+    game.addToWorld(new THREE.AmbientLight(0x1b3038, 0.12));
   }
 
   function scatterFlora(game) {
@@ -126,7 +125,7 @@
 
         const patch = SL.buildFloraPatch(instances, game.materials);
         patch.position.set(center.x, 0, center.z);
-        game.scene.add(patch);
+        game.addToWorld(patch);
         total += instances.length;
       }
     }

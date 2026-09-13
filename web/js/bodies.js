@@ -258,7 +258,15 @@
   // A school of ten shares one shape, so build each species once.
   const cache = {};
   SL.buildBody = function (species) {
-    if (!cache[species.id]) cache[species.id] = build(species);
+    if (!cache[species.id]) {
+      const built = build(species);
+      // Shared across every individual of the species and across worlds, so
+      // world teardown must not dispose these.
+      for (const geometry of [built.body, built.tail, built.jaw]) {
+        if (geometry) geometry.userData.shared = true;
+      }
+      cache[species.id] = built;
+    }
     return cache[species.id];
   };
   SL.profileAt = profileAt;

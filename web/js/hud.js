@@ -18,7 +18,7 @@
       for (const id of ['healthFill', 'healthValue', 'airFill', 'airValue', 'depthValue',
         'biomeName', 'focus', 'warning', 'warningText', 'hitMarker', 'damageFlash',
         'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
-        'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps']) {
+        'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName']) {
         this.el[id] = document.getElementById(id);
       }
 
@@ -200,6 +200,10 @@
       this.el.lookMode.classList.add('is-visible');
       clearTimeout(this._lookTimer);
       this._lookTimer = setTimeout(() => this.el.lookMode.classList.remove('is-visible'), 9000);
+    }
+
+    setWorldName(name) {
+      this.el.worldName.textContent = name || '';
     }
 
     showMuted(muted) {

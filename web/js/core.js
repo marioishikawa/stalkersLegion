@@ -22,9 +22,32 @@ window.SL = window.SL || {};
   /** Frame-rate independent approach to a target. */
   SL.damp = (current, target, speed, dt) => SL.lerp(current, target, 1 - Math.exp(-speed * dt));
 
-  SL.randRange = (a, b) => a + Math.random() * (b - a);
-  SL.randInt = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
-  SL.pick = (array) => array[Math.floor(Math.random() * array.length)];
+  /**
+   * A seeded random stream (mulberry32). World generation draws from this so
+   * that one seed always produces the same ocean - the terrain, where the kelp
+   * grows, where the scrap lies and where the stalkers patrol. Reseeding before
+   * a build is what makes a saved world the same world when you come back.
+   */
+  let rngState = 1;
+
+  SL.setSeed = function (seed) {
+    rngState = (seed >>> 0) || 1;
+  };
+
+  SL.random = function () {
+    rngState |= 0;
+    rngState = (rngState + 0x6D2B79F5) | 0;
+    let t = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
+  /** A fresh world seed. */
+  SL.newSeed = () => (Math.random() * 0xffffffff) >>> 0;
+
+  SL.randRange = (a, b) => a + SL.random() * (b - a);
+  SL.randInt = (a, b) => Math.floor(a + SL.random() * (b - a + 1));
+  SL.pick = (array) => array[Math.floor(SL.random() * array.length)];
 
   // --- Noise ----------------------------------------------------------------
 

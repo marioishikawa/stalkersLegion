@@ -12,7 +12,9 @@
 (function (SL) {
   'use strict';
 
-  const SEED = 20260912;
+  // Set per world by SL.Biomes.setSeed. Two worlds with different seeds have
+  // genuinely different sea floors and biome coastlines.
+  let SEED = 20260912;
 
   const BIOMES = [
     {
@@ -163,5 +165,8 @@
     return null;
   }
 
-  SL.Biomes = { list: BIOMES, byId, biomeAt, floorHeightAt, floorColorAt, randomPointIn, innerRadiusOf };
+  function setSeed(seed) { SEED = (seed >>> 0) || 1; }
+
+  SL.Biomes = { list: BIOMES, byId, biomeAt, floorHeightAt, floorColorAt, randomPointIn,
+    innerRadiusOf, setSeed };
 })(window.SL);

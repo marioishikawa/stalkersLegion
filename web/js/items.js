@@ -55,10 +55,13 @@
       this.spin = SL.randRange(0.6, 1.8);
       this.bobOffset = Math.random() * Math.PI * 2;
 
-      if (!geometryCache[type]) geometryCache[type] = TYPES[type].build();
+      if (!geometryCache[type]) {
+        geometryCache[type] = TYPES[type].build();
+        geometryCache[type].userData.shared = true;   // survives world teardown
+      }
       this.object = new THREE.Mesh(geometryCache[type], game.materials.glow);
       this.object.position.copy(position);
-      game.scene.add(this.object);
+      game.addToWorld(this.object);
     }
 
     get position() { return this.object.position; }

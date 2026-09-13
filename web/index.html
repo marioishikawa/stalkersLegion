@@ -69,6 +69,7 @@
       <span class="depth__biome" id="biomeName">Safe Shallows</span>
       <span class="depth__value" id="depthValue">0.0</span>
       <span class="depth__unit">metres down</span>
+      <span class="world-name" id="worldName"></span>
       <span class="fps" id="fps"></span>
     </div>
   </div>
@@ -87,15 +88,29 @@
   </div>
 </div>
 
-<div class="screen is-visible" id="titleScreen">
-  <h1 class="screen__title">Stalkers <em>Legion</em></h1>
-  <div class="screen__rule"></div>
-  <p class="screen__sub">
-    Six biomes of open ocean, ninety seconds of air, and a survival knife.
-    The kelp forest is full of scrap metal — and the stalkers that chew on it.
-  </p>
-  <button class="screen__cta" type="button">Click to dive</button>
-  <p class="screen__meta">Mouse to look &nbsp;·&nbsp; Esc to release the cursor</p>
+<div class="screen is-visible" id="menuScreen">
+  <div class="menu">
+    <h1 class="screen__title">Stalkers <em>Legion</em></h1>
+    <div class="screen__rule"></div>
+    <p class="screen__sub">
+      Six biomes of open ocean, ninety seconds of air, and a survival knife.
+      The kelp forest is full of scrap metal — and the stalkers that chew on it.
+    </p>
+
+    <h2 class="menu__heading">Your worlds</h2>
+    <div class="world-list" id="worldList"></div>
+    <p class="menu__empty" id="worldEmpty">No worlds yet. Name one and dive.</p>
+
+    <div class="menu__new">
+      <label class="menu__label" for="newWorldName">New world</label>
+      <input class="menu__input" id="newWorldName" type="text" maxlength="28"
+             placeholder="Home Reef" autocomplete="off" spellcheck="false">
+      <button class="screen__cta" type="button" id="newWorldButton">Dive in</button>
+    </div>
+
+    <p class="menu__note" id="storageNote"></p>
+    <p class="screen__meta">Each world has its own sea floor &nbsp;·&nbsp; Esc pauses &nbsp;·&nbsp; Tab is the fabricator</p>
+  </div>
 </div>
 
 <div class="fabricator" id="fabricator">
@@ -112,8 +127,12 @@
 <div class="screen" id="pauseScreen">
   <h1 class="screen__title">Paused</h1>
   <div class="screen__rule"></div>
-  <p class="screen__sub">The cursor is yours while you are paused.</p>
-  <button class="screen__cta" type="button">Resume dive</button>
+  <p class="screen__sub">The cursor is yours while you are paused. Your world saves itself as you play.</p>
+  <div class="menu__actions">
+    <button class="screen__cta" type="button" id="resumeButton">Resume dive</button>
+    <button class="screen__cta screen__cta--quiet" type="button" id="saveButton">Save now</button>
+    <button class="screen__cta screen__cta--quiet" type="button" id="quitButton">Save &amp; leave world</button>
+  </div>
   <p class="screen__meta">Esc pauses &nbsp;·&nbsp; Tab opens the fabricator</p>
 </div>
 
@@ -140,6 +159,8 @@
 <script src="js/scrap.js"></script>
 <script src="js/items.js"></script>
 <script src="js/crafting.js"></script>
+<script src="js/saves.js"></script>
+<script src="js/menu.js"></script>
 <script src="js/creatures.js"></script>
 <script src="js/player.js"></script>
 <script src="js/audio.js"></script>

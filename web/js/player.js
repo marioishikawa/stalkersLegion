@@ -112,6 +112,22 @@
     get atSurface() { return this.position.y > SL.WATER_LEVEL - 0.9; }
     get biome() { return SL.Biomes.biomeAt(this.position.x, this.position.z); }
 
+    /**
+     * Back to a bare diver: base gear, full health and air. Called when a world
+     * is entered, before that world's saved progress is applied over the top.
+     */
+    resetLoadout() {
+      this.maxHealth = 100;
+      this.maxOxygen = 90;
+      this.knifeDamage = 28;
+      this.knifeReach = 2.2;
+      this.damageResist = 0;
+      this.swimSpeed = 4.2;
+      this.swingDuration = 0.48;
+      if (this.carriedScrap) { this.carriedScrap = null; }
+      this.respawn();
+    }
+
     respawn() {
       // Upgrades survive death; only health and air are restored.
       this.dead = false;

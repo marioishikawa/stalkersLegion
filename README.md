@@ -48,6 +48,24 @@ To run the web build locally, open `web/index.html` directly — it uses classic
 scripts rather than ES modules specifically so that it works from `file://` with
 no server and no build step. The only external dependency is Three.js from a CDN.
 
+## Worlds
+
+The game opens on a list of saved worlds rather than a play button, because each
+world is its own ocean. A world stores a **seed**, and the seed regenerates
+everything — the sea floor, where the kelp grows, where the scrap lies, where the
+stalkers patrol — so coming back gives you the same sea you left, and a new world
+is a genuinely different map.
+
+Saves hold the seed, your position, health and air, your materials and every
+piece of gear you have built. They write themselves every 25 seconds, on pause,
+on death, and when you leave a world. Gear survives death; only health and air
+are restored.
+
+Storage goes to the artifact's own database when the page is running on
+claude.ai, so worlds follow your account rather than one browser. Opened as a
+local file it falls back to `localStorage`, and if even that is blocked it keeps
+worlds in memory for the session and says so on the menu.
+
 ## Controls
 
 | Input | Action |
@@ -63,6 +81,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 | `M` | Mute |
 | `R` | Respawn, once you are dead |
 | `Esc` | Pause, and hand the cursor back |
+| Pause menu | Resume, save now, or save and leave the world |
 
 The cursor is captured while you are diving and free on the title card, the
 pause screen and the fabricator — nowhere else. If the browser refuses pointer

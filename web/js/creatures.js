@@ -50,7 +50,7 @@
         this.object.add(this.jawMesh);
       }
 
-      game.scene.add(this.object);
+      game.addToWorld(this.object);
     }
 
     get position() { return this.object.position; }
