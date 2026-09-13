@@ -166,6 +166,7 @@
       };
       world.crafting = {
         inventory: Object.assign({}, SL.Crafting.inventory),
+        stacks: Object.assign({}, SL.Crafting.stacks),
         built: Object.assign({}, SL.Crafting.built)
       };
       return world;
@@ -183,10 +184,11 @@
       SL.Crafting.reset();
       if (world.crafting) {
         Object.assign(SL.Crafting.inventory, world.crafting.inventory || {});
+        Object.assign(SL.Crafting.stacks, world.crafting.stacks || {});
         for (const recipe of SL.Crafting.recipes) {
           if (world.crafting.built && world.crafting.built[recipe.id]) {
             SL.Crafting.built[recipe.id] = true;
-            recipe.apply(p);
+            if (recipe.apply) recipe.apply(p);
           }
         }
       }

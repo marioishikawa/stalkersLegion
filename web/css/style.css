@@ -691,3 +691,53 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
 .resource__swatch--diamond { background: #d3f0fa; }
 
 .resource--kit .resource__count { color: var(--kelp); }
+
+/* ---------------------------------------------------------------- The chart */
+
+.hud__top {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* The warning keeps the centre; the chart sits out at the right edge. */
+.chart {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.chart canvas {
+  width: 168px;
+  height: 168px;
+  border: 1px solid var(--hull-line);
+  background: color-mix(in srgb, var(--abyss) 80%, transparent);
+  image-rendering: pixelated;
+}
+
+.chart__legend {
+  font: var(--readout);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone);
+  text-align: right;
+  line-height: 1.5;
+}
+
+.chart__hint {
+  font: var(--label);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .chart canvas { width: 108px; height: 108px; }
+  .chart__legend { font-size: 0.64rem; }
+}

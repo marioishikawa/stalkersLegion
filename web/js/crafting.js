@@ -89,6 +89,44 @@
       requires: 'suit',
       apply(player) { player.damageResist = 0.65; }
     },
+    // --- Light, navigation and tools -----------------------------------------
+    {
+      id: 'lantern',
+      name: 'Lantern',
+      blurb: 'Replaces the torch with a broad, far-reaching lamp. Press F.',
+      cost: { titanium: 4, quartz: 3 },
+      apply(player) { player.lanternBuilt = true; player.upgradeLight(); }
+    },
+    {
+      id: 'beacon',
+      name: 'Marker Beacon',
+      blurb: 'Drop one with G. It lights the spot and pins it to your chart.',
+      cost: { titanium: 2, quartz: 1 },
+      consumable: true,
+      stack: 'beacon'
+    },
+    {
+      id: 'tracker',
+      name: 'Leviathan Tracker',
+      blurb: 'Puts both leviathans on the chart, with range, wherever they are.',
+      cost: { gold: 3, quartz: 4, tooth: 4 }
+    },
+    {
+      id: 'bait',
+      name: 'Bait Pod',
+      blurb: 'Throw with B. Every stalker that hears it goes there, not at you.',
+      cost: { titanium: 2, tooth: 1 },
+      consumable: true,
+      stack: 'bait'
+    },
+    {
+      id: 'repel',
+      name: 'Repel Charge',
+      blurb: 'Press V. Drives every stalker within 25 m off you for a while.',
+      cost: { quartz: 3, tooth: 2 },
+      consumable: true,
+      stack: 'repel'
+    },
     {
       id: 'blade4',
       name: 'Diamond Blade',
@@ -103,7 +141,7 @@
     recipes: RECIPES,
     inventory: { titanium: 0, tooth: 0, quartz: 0, gold: 0, diamond: 0 },
     /** Consumables held, keyed by recipe stack name. */
-    stacks: { medkit: 0 },
+    stacks: { medkit: 0, beacon: 0, bait: 0, repel: 0 },
     built: {},
 
     reset() {
@@ -137,7 +175,7 @@
           this.stacks[recipe.stack] = (this.stacks[recipe.stack] || 0) + 9;
         } else if (!this.built[recipe.id]) {
           this.built[recipe.id] = true;
-          recipe.apply(game.player);
+          if (recipe.apply) recipe.apply(game.player);
         }
       }
       for (const key of Object.keys(this.inventory)) this.inventory[key] += 99;
@@ -159,7 +197,7 @@
       }
 
       this.built[recipe.id] = true;
-      recipe.apply(game.player);
+      if (recipe.apply) recipe.apply(game.player);
 
       game.audio.craft();
       game.hud.toast(recipe.name + ' equipped');

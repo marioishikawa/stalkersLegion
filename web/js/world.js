@@ -10,9 +10,10 @@
 
   /** The sea floor, as tiles sampled from the analytic height field. */
   function buildTerrain(game) {
-    // 7 x 7 tiles of 32 cells at 1.8 m covers roughly 400 m across, which holds
-    // the full 190 m world radius with margin.
-    const TILES = 7;
+    // 9 x 9 tiles of 32 cells at 1.8 m covers roughly 520 m across, which holds
+    // the 240 m world radius with margin. Tiles are frustum-culled, so only a
+    // fraction of the triangle count is ever drawn.
+    const TILES = 9;
     const CELLS = 32;
     const CELL_SIZE = 1.8;
     const tileSize = CELLS * CELL_SIZE;
@@ -101,7 +102,8 @@
     let total = 0;
 
     for (const biome of SL.Biomes.list) {
-      for (let p = 0; p < biome.floraPatches; p++) {
+      const patches = Math.round((biome.floraDensity || 0) * 34 * areaFactorOf(biome));
+      for (let p = 0; p < patches; p++) {
         const center = SL.Biomes.randomPointIn(biome);
         if (!center) continue;
 
@@ -138,7 +140,8 @@
   /** Cuttable crystal clusters - the quartz source. */
   function scatterCrystals(game) {
     for (const biome of SL.Biomes.list) {
-      for (let i = 0; i < (biome.crystalNodes || 0); i++) {
+      const nodes = Math.round((biome.crystalDensity || 0) * 22 * areaFactorOf(biome));
+      for (let i = 0; i < nodes; i++) {
         const point = SL.Biomes.randomPointIn(biome);
         if (!point) continue;
         game.crystals.push(new SL.Crystal(game, point.x, point.z, (SL.random() * 1e9) | 0));
@@ -148,7 +151,8 @@
 
   function scatterScrap(game) {
     for (const biome of SL.Biomes.list) {
-      for (let i = 0; i < biome.scrapCount; i++) {
+      const count = Math.round((biome.scrapDensity || 0) * 14 * areaFactorOf(biome));
+      for (let i = 0; i < count; i++) {
         const point = SL.Biomes.randomPointIn(biome);
         if (!point) continue;
         game.scrap.push(new SL.Scrap(game, point.x, point.z, (Math.random() * 1e9) | 0));
@@ -170,15 +174,51 @@
    * This scales school counts by ring area so the distance between schools stays
    * roughly constant wherever you are.
    */
+  /**
+   * Biomes no longer occupy tidy rings - a seamount reef may be a tenth the
+   * size of the abyssal plain - so populations are expressed as a density and
+   * multiplied by how much sea floor the biome actually covers in this world.
+   */
   function areaFactorOf(biome) {
-    const inner = SL.Biomes.innerRadiusOf(biome);
-    const outer = Math.min(biome.outerRadius, SL.WORLD_RADIUS);
-    const area = Math.PI * (outer * outer - inner * inner);
-    const reference = Math.PI * (52 * 52 - 26 * 26);   // the Kelp Forest
-    return SL.clamp(area / reference, 0.8, 2.0);
+    return SL.clamp(SL.Biomes.areaShareOf(biome) * 9, 0.35, 3.2);
+  }
+
+  /**
+   * The two leviathans are placed at the features that exist for them - the
+   * king in his basin, the whale over its open ground - rather than scattered
+   * anywhere their biome happens to reach.
+   */
+  function spawnLeviathans(game) {
+    const basin = SL.Biomes.kingBasin;
+    if (basin) {
+      const y = SL.Biomes.floorHeightAt(basin.x, basin.z) + 10;
+      const king = new SL.KingStalker(game, SL.Species.kingStalker, basin.x, y, basin.z);
+      king.territory.set(basin.x, y, basin.z);
+      game.kings.push(king);
+
+      // He already sits on a pile; his subjects keep adding to it.
+      for (let j = 0; j < 10; j++) {
+        const angle = SL.random() * Math.PI * 2;
+        const radius = SL.randRange(1.5, 8);
+        game.scrap.push(new SL.Scrap(game,
+          basin.x + Math.cos(angle) * radius,
+          basin.z + Math.sin(angle) * radius,
+          (SL.random() * 1e9) | 0));
+      }
+    }
+
+    const ground = SL.Biomes.whaleGround;
+    if (ground) {
+      const y = SL.Biomes.floorHeightAt(ground.x, ground.z) + 26;
+      const whale = new SL.Whale(game, SL.Species.whale, ground.x, y, ground.z);
+      whale.territory.set(ground.x, y, ground.z);
+      game.whales.push(whale);
+    }
   }
 
   function spawnCreatures(game) {
+    spawnLeviathans(game);
+
     for (const biome of SL.Biomes.list) {
       const density = POPULATION * areaFactorOf(biome);
 
@@ -218,40 +258,9 @@
         }
       }
 
-      // --- The King, and his hoard --------------------------------------------
-      for (let i = 0; i < (biome.kingCount || 0); i++) {
-        const point = SL.Biomes.randomPointIn(biome);
-        if (!point) continue;
-
-        const y = SL.Biomes.floorHeightAt(point.x, point.z) + 9;
-        const king = new SL.KingStalker(game, SL.Species.kingStalker, point.x, y, point.z);
-        king.territory.set(point.x, y, point.z);
-        game.kings.push(king);
-
-        // He already sits on a pile; his subjects keep adding to it.
-        for (let j = 0; j < 9; j++) {
-          const angle = SL.random() * Math.PI * 2;
-          const radius = SL.randRange(1.5, 7);
-          game.scrap.push(new SL.Scrap(game,
-            point.x + Math.cos(angle) * radius,
-            point.z + Math.sin(angle) * radius,
-            (SL.random() * 1e9) | 0));
-        }
-      }
-
-      // --- The whale -----------------------------------------------------------
-      for (let i = 0; i < (biome.whaleCount || 0); i++) {
-        const point = SL.Biomes.randomPointIn(biome);
-        if (!point) continue;
-
-        const y = SL.Biomes.floorHeightAt(point.x, point.z) + 24;
-        const whale = new SL.Whale(game, SL.Species.whale, point.x, y, point.z);
-        whale.territory.set(point.x, y, point.z);
-        game.whales.push(whale);
-      }
-
       // --- Stalkers -----------------------------------------------------------
-      for (let i = 0; i < biome.stalkerCount; i++) {
+      const stalkers = Math.round((biome.stalkerDensity || 0) * 9 * areaFactorOf(biome));
+      for (let i = 0; i < stalkers; i++) {
         const point = SL.Biomes.randomPointIn(biome);
         if (!point) continue;
         const y = SL.Biomes.floorHeightAt(point.x, point.z) + 5;
@@ -268,10 +277,11 @@
    */
   function replenishScrap(game) {
     const kelp = SL.Biomes.byId.kelp;
+    const target = Math.round(kelp.scrapDensity * 14 * areaFactorOf(kelp));
     const alive = game.scrap.length;
-    if (alive >= kelp.scrapCount) return;
+    if (alive >= target) return;
 
-    for (let i = alive; i < kelp.scrapCount; i++) {
+    for (let i = alive; i < target; i++) {
       const point = SL.Biomes.randomPointIn(kelp);
       if (!point) continue;
 
@@ -307,5 +317,5 @@
   }
 
   SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap,
-    scatterCrystals, spawnCreatures, replenishScrap, updateAmbience };
+    scatterCrystals, spawnCreatures, spawnLeviathans, replenishScrap, updateAmbience };
 })(window.SL);

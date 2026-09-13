@@ -93,3 +93,70 @@
 
   SL.Crystal = Crystal;
 })(window.SL);
+
+/**
+ * Marker beacons: the one thing the player can leave behind in the world.
+ *
+ * A beacon is a light in the dark and a pin on the chart. Dropping one at the
+ * mouth of the trench, or beside a crystal field worth coming back to, is how a
+ * 480 m map becomes navigable.
+ */
+(function (SL) {
+  'use strict';
+
+  const { MeshData, Geo } = SL;
+
+  /** Only this many beacons cast real light; the rest still glow and map. */
+  const LIT_BEACONS = 5;
+
+  let beaconGeometry = null;
+
+  class Beacon {
+    constructor(game, position) {
+      this.game = game;
+      this.dead = false;
+      this.phase = SL.random() * Math.PI * 2;
+
+      if (!beaconGeometry) {
+        const mesh = new MeshData();
+        const shell = new THREE.Color(0.16, 0.22, 0.24);
+        const lamp = new THREE.Color(0.45, 1.0, 0.92);
+        Geo.cone(mesh, 0, 0, 0, 0.22, 0.5, 6, shell, shell);
+        Geo.sphere(mesh, 0, 0.62, 0, 0.20, 9, lamp);
+        mesh.computeNormals();
+        beaconGeometry = mesh.toGeometry();
+        beaconGeometry.userData.shared = true;
+      }
+
+      this.object = new THREE.Mesh(beaconGeometry, game.materials.glow);
+      this.object.position.copy(position);
+      this.object.position.y = SL.Biomes.floorHeightAt(position.x, position.z) + 0.1;
+      game.addToWorld(this.object);
+
+      if (game.beacons.filter((b) => b.light).length < LIT_BEACONS) {
+        this.light = new THREE.PointLight(0x8ffff0, 1.6, 26, 1.5);
+        this.light.position.set(0, 0.62, 0);
+        this.object.add(this.light);
+      }
+    }
+
+    get position() { return this.object.position; }
+
+    update(dt) {
+      // A slow pulse, so a beacon reads as made rather than grown.
+      this.phase += dt * 1.4;
+      const pulse = 0.75 + 0.25 * Math.sin(this.phase);
+      if (this.light) this.light.intensity = 1.6 * pulse;
+      this.object.scale.setScalar(0.96 + 0.04 * pulse);
+    }
+
+    destroy() {
+      this.dead = true;
+      if (this.object.parent) this.object.parent.remove(this.object);
+      const i = this.game.beacons.indexOf(this);
+      if (i >= 0) this.game.beacons.splice(i, 1);
+    }
+  }
+
+  SL.Beacon = Beacon;
+})(window.SL);

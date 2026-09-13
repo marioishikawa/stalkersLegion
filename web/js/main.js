@@ -24,6 +24,7 @@
       this.crystals = [];
       this.kings = [];
       this.whales = [];
+      this.beacons = [];
 
       // Paused covers the title card, the pause screen and the fabricator. The
       // world keeps moving so the ocean stays alive behind them, but the diver
@@ -106,6 +107,7 @@
       this.crystals.length = 0;
       this.kings.length = 0;
       this.whales.length = 0;
+      this.beacons.length = 0;
 
       if (this.worldGroup) {
         this.worldGroup.traverse((node) => {
@@ -125,6 +127,8 @@
       this.seed = seed >>> 0;
       SL.setSeed(this.seed);
       SL.Biomes.setSeed(this.seed);
+      // One sampling pass builds both the spawn index and the chart.
+      SL.Biomes.buildIndex();
       this.teardownWorld();
 
       SL.World.buildLighting(this);
@@ -299,6 +303,7 @@
       for (let i = this.scrap.length - 1; i >= 0; i--) this.scrap[i].update(dt);
       for (let i = this.pickups.length - 1; i >= 0; i--) this.pickups[i].update(dt);
       for (let i = this.crystals.length - 1; i >= 0; i--) this.crystals[i].update(dt);
+      for (const beacon of this.beacons) beacon.update(dt);
 
       this.scrapTimer -= dt;
       if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }
@@ -394,6 +399,9 @@
         case 'KeyE': game.player.interact(); break;
         case 'KeyF': game.player.toggleFlashlight(); break;
         case 'KeyH': game.player.useMedkit(); break;
+        case 'KeyG': game.player.dropBeacon(); break;
+        case 'KeyB': game.player.throwBait(); break;
+        case 'KeyV': game.player.useRepel(); break;
         case 'KeyR': if (game.player.dead) game.player.respawn(); break;
         case 'KeyM':
           game.audio.setMuted(!game.audio.muted);

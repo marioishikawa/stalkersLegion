@@ -78,6 +78,9 @@ worlds in memory for the session and says so on the menu.
 | `E` | Pick up scrap metal / throw the piece you are holding |
 | `Tab` | Open the fabricator |
 | `H` | Use a medkit |
+| `G` | Drop a marker beacon |
+| `B` | Throw a bait pod |
+| `V` | Set off a repel charge |
 | `F` | Flashlight |
 | `M` | Mute |
 | `R` | Respawn, once you are dead |
@@ -135,6 +138,11 @@ to collect, then press `Tab`:
 | Gold Rebreather | 5 gold, 4 quartz, 6 titanium | Air 260s → 420s |
 | Prism Suit | 3 diamond, 8 titanium, 4 quartz | Take 65% less damage |
 | Diamond Blade | 4 diamond, 10 titanium, 8 teeth | Knife 84 → 140 |
+| **Lantern** | 4 titanium, 3 quartz | A broad, far-reaching lamp in place of the torch |
+| **Marker Beacon** | 2 titanium, 1 quartz | Drop with `G` — lights the spot and pins it to your chart |
+| **Leviathan Tracker** | 3 gold, 4 quartz, 4 teeth | Both leviathans on the chart, with range, wherever they are |
+| **Bait Pod** | 2 titanium, 1 tooth | Throw with `B` — every stalker that hears it goes there, not at you |
+| **Repel Charge** | 3 quartz, 2 teeth | Press `V` — drives stalkers within 25 m off you |
 
 Five materials in all. **Titanium** from cutting scrap, **teeth** from stalkers
 chewing it, and **quartz, gold and diamond** from the Crystal Caverns — the
@@ -151,25 +159,47 @@ biome out.
 
 ## The ocean
 
-Six biomes in rings around the origin, with boundaries warped by noise so they
-read as coastlines rather than circles. Swim any direction and it gets deeper
-and darker.
+The sea floor is modelled on a **continental margin**, not on rings. Depth is no
+longer just distance from the middle:
 
-| Biome | Radius | Floor | What lives there |
-|---|---|---|---|
-| **Safe Shallows** | 0–26 m | 7 m | Glimmerfin, Bubblepeep. Bright, sandy, harmless. |
-| **Kelp Forest** | 26–52 m | 15 m | Bladefish, Kelp Darter — **and six stalkers.** Dense kelp, scrap everywhere. |
-| **Grassy Plateau** | 52–74 m | 21 m | Spadefin, Grass Nibbler. Open sea grass, a couple of stalkers. |
-| **Red Coral Reef** | 74–92 m | 27 m | Emberfin, Coral Boxfish. Coral fans and tubes. |
-| **Boulder Field** | 92–106 m | 34 m | Stone Gulper. Rocks and glow pods, deep gloom. |
-| **Crystal Caverns** | 106–126 m | 40 m | Pink crystal country. The fish here are **made of metal** — Goldfin, Prism Diamondfish, Silverscale — and the crystals cut for quartz. |
-| **Deep Trench** | 126–148 m | 56 m | Lanternjaw, Abyss Ribbon. Near-total darkness — bring the flashlight. |
-| **King's Domain** | 148–168 m | 64 m | The **Stalker Leviathan** and its hoard. Crownfin. |
-| **Whale Reach** | 168 m + | 74 m | Open water and the **Glasswhale**. Blue Drifters. |
+* a shallow **shelf** around the origin, sloping gently — this is where the game
+  lives, and it is wide on purpose;
+* a **shelf break** at about 105 m where the floor falls away fast;
+* five **seamounts** that rise back out of the deep, two of them tall enough to
+  reach the light — so coral reefs grow 100–150 m out, in shallow water;
+* a **submarine canyon** that wanders across the whole map and bites into the
+  shelf, putting the deepest water in the game within 90 m of home;
+* a **basin** gouged below the abyssal plain, where the king lives.
 
-Fog colour and density track the biome you are in, fading between them and
-darkening with depth. The audio does the same: everything runs through a lowpass
-that closes further the deeper you go.
+Biomes then follow from what the floor *is* at a point — its depth, whether it
+sits on a seamount, whether it lies in the canyon — rather than from how far out
+you have swum. Roughly a tenth of the sea floor is shallow enough to be sunlit
+even past 120 m.
+
+| Biome | Where it occurs | Share of the floor |
+|---|---|---|
+| **Safe Shallows** | The shelf above ~6 m | ~10% |
+| **Kelp Forest** | The shelf, 6–27 m, where the ground is right for it | ~9% |
+| **Grassy Plateau** | Open shelf, 17–38 m | ~6% |
+| **Coral Seamount** | Sunlit seamount tops, wherever they rise | ~10% |
+| **Boulder Slope** | Shelf break and seamount flanks | ~8% |
+| **Crystal Caverns** | Mineral-rich deep floor, 38–76 m | ~28% |
+| **Deep Trench** | Inside the canyon | ~7% |
+| **King's Basin** | The gouged basin | ~3% |
+| **Abyssal Plain** | Everything below 76 m | ~18% |
+
+The world is 480 m across, and the two leviathans are on opposite sides of it.
+
+## The chart
+
+A larger, less predictable ocean needs a map, so the HUD carries one. It is
+drawn from the very same index the world was populated from — what you see on
+the chart is literally where things were placed — coloured by biome, with your
+position and heading on it.
+
+Leviathans appear on the chart once you build the **Leviathan Tracker**, with
+live range. Before that you only get a bearing when one is within 70 m, which is
+its own kind of information. Beacons you drop show up as pins.
 
 ## The fish
 
@@ -198,7 +228,7 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Stalker Leviathan** — 8.4 m and 900 HP, the king. It sits on a pile of
   scrap its subjects drag out to it, and **will not touch you unless you touch
   it first**. Then it hits for 34.
-* **Glasswhale** — 15 m, 2,600 HP, and the only thing that eats stalkers. It
+* **Glasswhale Leviathan** — 15 m, 2,600 HP, and the only thing that eats stalkers. It
   swallows them whole and has **no interest in a diver at all** — it cannot hurt
   you, at any range, ever.
 

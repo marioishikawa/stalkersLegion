@@ -210,7 +210,7 @@
     }),
 
     // -------------------------------------------------------------- Whale Reach
-    fish('bluedrifter', 'Blue Drifter', 'whale', 'ribbon', {
+    fish('bluedrifter', 'Blue Drifter', 'abyss', 'ribbon', {
       // Open-water plankton feeder, drifting in loose ribbons near the whale.
       backColor: C(0.14, 0.32, 0.58), bellyColor: C(0.70, 0.88, 0.98), finColor: C(0.24, 0.48, 0.78),
       glow: 0.25, maxHealth: 24, cruiseSpeed: 1.2, sprintSpeed: 2.8, turnRate: 1.2,
@@ -239,6 +239,7 @@
 
     // ------------------------------------------------------- The Stalker King
     fish('kingstalker', 'Stalker Leviathan', 'kings', 'eel', {
+      leviathan: true, markerColor: '#e08a2c',
       // Three times a stalker in every dimension, sitting on a hoard of scrap
       // its subjects drag out to it. It will not start a fight with the diver -
       // but it finishes one.
@@ -255,7 +256,8 @@
     }),
 
     // ------------------------------------------------------------- The Whale
-    fish('whale', 'Glasswhale', 'whale', 'bulb', {
+    fish('whale', 'Glasswhale Leviathan', 'abyss', 'bulb', {
+      leviathan: true, markerColor: '#5fb8e8',
       // The only thing out here that eats stalkers. It has no interest in
       // anything as small as a diver and will never harm one.
       diet: 'whale',

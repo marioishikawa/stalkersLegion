@@ -19,7 +19,8 @@
         'biomeName', 'focus', 'warning', 'warningText', 'hitMarker', 'damageFlash',
         'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
         'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName',
-        'quartzCount', 'goldCount', 'diamondCount', 'medkitCount', 'resources']) {
+        'quartzCount', 'goldCount', 'diamondCount', 'medkitCount', 'resources',
+        'beaconCount', 'baitCount', 'repelCount', 'minimap', 'chartLegend']) {
         this.el[id] = document.getElementById(id);
       }
 
@@ -27,6 +28,7 @@
       this.damageTimer = 0;
       this.heartbeatTimer = 0;
       this.lastBiome = null;
+      this.chart = new SL.Minimap(game, this.el.minimap);
       this.buildFabricator();
     }
 
@@ -85,12 +87,15 @@
       this.el.goldCount.textContent = inventory.gold;
       this.el.diamondCount.textContent = inventory.diamond;
       this.el.medkitCount.textContent = SL.Crafting.stacks.medkit;
+      this.el.beaconCount.textContent = SL.Crafting.stacks.beacon;
+      this.el.baitCount.textContent = SL.Crafting.stacks.bait;
+      this.el.repelCount.textContent = SL.Crafting.stacks.repel;
 
       // A resource you have never seen stays hidden, so the strip starts small
       // and grows as the ocean gives things up.
       for (const node of this.el.resources.children) {
         const type = node.dataset.type;
-        const held = type === 'medkit' ? SL.Crafting.stacks.medkit : inventory[type];
+        const held = type in SL.Crafting.stacks ? SL.Crafting.stacks[type] : inventory[type];
         node.classList.toggle('is-known', held > 0 || type === 'titanium' || type === 'tooth');
       }
     }
@@ -199,6 +204,8 @@
 
       this.el.deathScreen.classList.toggle('is-visible', p.dead);
 
+      this.updateChart();
+
       if (this.game.fps) this.el.fps.textContent = this.game.fps + ' fps';
 
       // --- Controls hint ---------------------------------------------------------
@@ -220,6 +227,37 @@
 
     setWorldName(name) {
       this.el.worldName.textContent = name || '';
+    }
+
+    /** Redraws the chart, and lists whatever it can tell you about leviathans. */
+    updateChart() {
+      this.chart.draw();
+
+      const player = this.game.player;
+      const tracked = SL.Crafting.built.tracker;
+      const lines = [];
+
+      for (const apex of this.game.kings.concat(this.game.whales)) {
+        if (apex.dead) continue;
+        const distance = apex.position.distanceTo(player.position);
+
+        // Without the tracker you only learn about one close enough to hear,
+        // which is itself worth knowing.
+        if (!tracked && distance > 70) continue;
+
+        lines.push('<span style="color:' + (apex.species.markerColor || '#fff') + '">&#9679;</span> '
+          + apex.species.name.replace(' Leviathan', '') + '  ' + Math.round(distance) + ' m');
+      }
+
+      if (!tracked && lines.length === 0) {
+        lines.push('<span class="chart__hint">Build a tracker to chart leviathans</span>');
+      }
+
+      const html = lines.join('<br>');
+      if (html !== this._legendHtml) {
+        this._legendHtml = html;
+        this.el.chartLegend.innerHTML = html;
+      }
     }
 
     showMuted(muted) {

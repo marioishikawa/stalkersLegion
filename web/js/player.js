@@ -66,6 +66,7 @@
       this.knifeReach = 2.2;
       this.damageResist = 0;
       this.visionBonus = 0;
+      this.lanternBuilt = false;
       this.dead = false;
       this.timeSinceDamage = 999;
 
@@ -124,6 +125,7 @@
       this.knifeReach = 2.2;
       this.damageResist = 0;
       this.visionBonus = 0;
+      this.lanternBuilt = false;
       this.swimSpeed = 4.2;
       this.swingDuration = 0.48;
       if (this.carriedScrap) { this.carriedScrap = null; }
@@ -264,10 +266,79 @@
       this.game.hud.toast('Medkit used');
     }
 
+    /** The lantern is a wider, longer-reaching lamp in place of the torch. */
+    upgradeLight() {
+      this.flashlight.distance = 90;
+      this.flashlight.angle = 0.95;
+      this.flashlight.penumbra = 0.6;
+      this.flashlight.color.setHex(0xfff0cc);
+      if (this.flashlightOn) this.flashlight.intensity = this.lightPower;
+    }
+
+    // The lantern's advantage is reach and spread, not raw brightness - pushing
+    // intensity instead blows the sea floor out to white.
+    get lightPower() { return this.lanternBuilt ? 2.9 : 2.6; }
+
     toggleFlashlight() {
       this.flashlightOn = !this.flashlightOn;
-      this.flashlight.intensity = this.flashlightOn ? 2.6 : 0;
+      this.flashlight.intensity = this.flashlightOn ? this.lightPower : 0;
       this.game.audio.click();
+    }
+
+    /** Plants a beacon on the sea floor below. */
+    dropBeacon() {
+      if (this.dead) return;
+      if (!SL.Crafting.consume('beacon')) {
+        this.game.hud.toast('No beacons — build one at the fabricator');
+        return;
+      }
+      this.game.beacons.push(new SL.Beacon(this.game, this.position.clone()));
+      this.game.audio.pickUp();
+      this.game.hud.toast('Beacon planted');
+    }
+
+    /**
+     * A bait pod is scrap laced with something stalkers cannot ignore: it lands
+     * as an ordinary piece of salvage, already making as much noise as a piece
+     * being chewed, which is exactly what pulls them off you.
+     */
+    throwBait() {
+      if (this.dead) return;
+      if (!SL.Crafting.consume('bait')) {
+        this.game.hud.toast('No bait pods — build one at the fabricator');
+        return;
+      }
+
+      this.camera.getWorldDirection(_forward);
+      const landing = this.position.clone().addScaledVector(_forward, 14);
+      const scrap = new SL.Scrap(this.game, landing.x, landing.z, (SL.random() * 1e9) | 0);
+      scrap.disturbance = 2;
+      this.game.scrap.push(scrap);
+
+      this.game.audio.throwScrap();
+      this.game.hud.toast('Bait pod thrown');
+    }
+
+    /** Drives nearby stalkers off. Does nothing to a leviathan. */
+    useRepel() {
+      if (this.dead) return;
+      if (!SL.Crafting.consume('repel')) {
+        this.game.hud.toast('No repel charges — build one at the fabricator');
+        return;
+      }
+
+      let scared = 0;
+      for (const stalker of this.game.stalkers) {
+        if (stalker.dead || stalker.position.distanceTo(this.position) > 25) continue;
+        stalker.threat = this;
+        stalker.aggro = 0;
+        stalker.enterState('retreat');
+        scared++;
+      }
+
+      this.game.audio.crystal();
+      this.game.hud.toast(scared ? 'Repelled ' + scared + ' stalker' + (scared === 1 ? '' : 's')
+        : 'Charge spent — nothing close enough');
     }
 
     updateOxygen(dt) {
