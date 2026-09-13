@@ -248,7 +248,7 @@
       const tracked = SL.Crafting.built.tracker;
       const lines = [];
 
-      for (const apex of this.game.kings.concat(this.game.whales, this.game.puffers)) {
+      for (const apex of this.game.leviathans()) {
         if (apex.dead) continue;
         const distance = apex.position.distanceTo(player.position);
 

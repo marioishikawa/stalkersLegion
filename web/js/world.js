@@ -10,12 +10,13 @@
 
   /** The sea floor, as tiles sampled from the analytic height field. */
   function buildTerrain(game) {
-    // 9 x 9 tiles of 32 cells at 1.8 m covers roughly 520 m across, which holds
-    // the 240 m world radius with margin. Tiles are frustum-culled, so only a
-    // fraction of the triangle count is ever drawn.
-    const TILES = 9;
+    // 12 x 12 tiles of 32 cells at 2.2 m covers roughly 845 m across, holding
+    // the 400 m world radius with margin. Cells are a little coarser than they
+    // were on the smaller map, which is the trade for nearly four times the sea
+    // floor; tiles are frustum-culled, so only a fraction is ever drawn.
+    const TILES = 12;
     const CELLS = 32;
-    const CELL_SIZE = 1.8;
+    const CELL_SIZE = 2.2;
     const tileSize = CELLS * CELL_SIZE;
     const half = tileSize * TILES * 0.5;
 
@@ -259,6 +260,34 @@
       const puffer = new SL.RedPuff(game, SL.Species.redPuff, reef.x, y, reef.z);
       puffer.territory.set(reef.x, y, reef.z);
       game.puffers.push(puffer);
+    }
+
+    // The far forest has a keeper, sat well inside the weeds - so the first
+    // sign of it is usually its kelpers, not the animal itself.
+    //
+    // The bank's crown is the shallowest part of the forest, and eleven metres
+    // of leviathan will not fit there, so the deepest forest point out of a
+    // handful of tries is used instead.
+    // Deep enough for eleven metres of animal, but still short of the rubble
+    // the forest stops at, so it is standing in its own kelp.
+    let grove = null;
+    let groveDepth = 0;
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const candidate = SL.Biomes.randomPointIn(SL.Biomes.byId.farkelp);
+      if (!candidate) break;
+
+      const depth = -SL.Biomes.floorHeightAt(candidate.x, candidate.z);
+      if (depth > 30) continue;
+      if (depth > groveDepth) { groveDepth = depth; grove = candidate; }
+      if (depth > 22) break;
+    }
+
+    if (grove) {
+      const floor = SL.Biomes.floorHeightAt(grove.x, grove.z);
+      const y = Math.min(floor + groveDepth * 0.45, SL.WATER_LEVEL - 6);
+      const lev = new SL.KelperLeviathan(game, grove.x, y, grove.z);
+      lev.territory.set(grove.x, y, grove.z);
+      game.kelperLevs.push(lev);
     }
 
     const ground = SL.Biomes.whaleGround;

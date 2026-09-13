@@ -343,6 +343,50 @@
                jawLength: 0.20, backSpikes: 12, spineSegments: 24, radialSegments: 11 }
     }),
 
+    // ---------------------------------------------------- Kelper's Reach
+    fish('frondfish', 'Frondfish', 'farkelp', 'ribbon', {
+      note: "Drifts in the far forest with its fins spread like torn leaves.",
+      backColor: C(0.22, 0.40, 0.18), bellyColor: C(0.80, 0.86, 0.58), finColor: C(0.34, 0.52, 0.22),
+      glow: 0.2, maxHealth: 24, cruiseSpeed: 1.3, sprintSpeed: 3.2,
+      schoolSize: 5, groups: 6, altitude: 5, wagRate: 3.4,
+      shape: { length: 0.7, height: 0.28, width: 0.05, bellyPosition: 0.30, noseSharpness: 0.55,
+               tailHeight: 0.26, tailSweep: 0.32, tailFork: 0.15, dorsalFin: 0.24,
+               ventralFin: 0.18, sideFin: 0.08, eyeSize: 0.035, spineSegments: 18 }
+    }),
+
+    // The leviathan's servants: small, quick, and after your pockets.
+    fish('kelper', 'Kelper', 'farkelp', 'arrow', {
+      diet: 'carnivore', groups: 0,
+      note: "Called up by the leviathan to rob you. Takes one loose item and runs " +
+            "for the forest with it. Kill it and you get the thing back.",
+      backColor: C(0.30, 0.46, 0.16), bellyColor: C(0.74, 0.82, 0.44), finColor: C(0.46, 0.62, 0.20),
+      eyeColor: C(0.95, 0.80, 0.20), glow: 0.35,
+      maxHealth: 26, cruiseSpeed: 3.2, sprintSpeed: 7.2, turnRate: 3.2,
+      senseRadius: 34, biteDamage: 0, biteInterval: 1,
+      schoolSize: 1, altitude: 4, wagRate: 8,
+      shape: { length: 0.9, height: 0.20, width: 0.11, bellyPosition: 0.40, noseSharpness: 0.9,
+               tailHeight: 0.30, tailSweep: 0.26, tailFork: 0.7, dorsalFin: 0.20,
+               ventralFin: 0.10, sideFin: 0.14, eyeSize: 0.05, eyeRing: true,
+               backSpikes: 4, spineSegments: 16 }
+    }),
+
+    fish('kelperlev', 'Kelper Leviathan', 'farkelp', 'ribbon', {
+      leviathan: true, markerColor: '#7fc23a',
+      diet: 'carnivore', groups: 0,
+      note: "Holds the far forest and does not leave it. Rather than fight, it " +
+            "calls up kelpers to strip anything loose off whoever came.",
+      backColor: C(0.16, 0.34, 0.12), bellyColor: C(0.66, 0.78, 0.40), finColor: C(0.30, 0.56, 0.16),
+      eyeColor: C(1.0, 0.86, 0.24), glow: 0.35,
+      maxHealth: 780, cruiseSpeed: 1.9, sprintSpeed: 5.4, turnRate: 0.8,
+      senseRadius: 52, biteDamage: 24, biteInterval: 3.6,
+      schoolSize: 1, altitude: 9, wagRate: 1.2,
+      shape: { length: 11, height: 0.26, width: 0.06, bellyPosition: 0.26, noseSharpness: 0.5,
+               crossSection: 1.9, tailHeight: 0.30, tailSweep: 0.40, tailFork: 0.2,
+               dorsalFin: 0.22, ventralFin: 0.14, sideFin: 0.10,
+               eyeSize: 0.016, eyeRing: true, mouthLine: 0.008,
+               jawLength: 0.13, backSpikes: 10, spineSegments: 26, radialSegments: 10 }
+    }),
+
     // ---------------------------------------------------- The bonded stalker
     fish('petstalker', 'Bonded Stalker', 'kelp', 'eel', {
       // Never spawns on its own - awarded for finishing the databank.
@@ -368,11 +412,11 @@
       leviathan: true, markerColor: '#e0452c',
       diet: 'carnivore',
       note: 'Grazes the reef and wants no trouble. Corner it and it swells, ' +
-            'throws up a cage of thorned vines, and waits for you to leave.',
+            'throws up a cage of thorned vines, and comes after you through them.',
       backColor: C(0.72, 0.12, 0.10), bellyColor: C(0.98, 0.86, 0.62), finColor: C(0.92, 0.38, 0.16),
       eyeColor: C(0.10, 0.06, 0.04), glow: 0.3,
-      maxHealth: 520, cruiseSpeed: 1.3, sprintSpeed: 3.4, turnRate: 0.9,
-      senseRadius: 26, biteDamage: 16, biteInterval: 3.8,
+      maxHealth: 520, cruiseSpeed: 1.3, sprintSpeed: 4.8, turnRate: 1.3,
+      senseRadius: 40, biteDamage: 16, biteInterval: 3.8,
       schoolSize: 1, groups: 0, altitude: 5, wagRate: 1.8,
       shape: { length: 6.0, height: 0.34, width: 0.32, bellyPosition: 0.36,
                noseSharpness: 0.06, crossSection: 2.1,
@@ -416,6 +460,8 @@
     whale: byId.whale,
     redPuff: byId.redpuff,
     petStalker: byId.petstalker,
+    kelperLeviathan: byId.kelperlev,
+    kelper: byId.kelper,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(

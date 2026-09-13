@@ -57,6 +57,36 @@
     return mesh.toGeometry();
   }
 
+  /**
+   * The swing, written as three poses rather than one arc number.
+   *
+   * The hand is the camera turned around, so in these numbers +z is straight
+   * ahead and -x is the diver's right. The knife cocks back over the right
+   * shoulder, comes across the body to the left with the arm extending, and
+   * settles back to the grip it started from.
+   */
+  const KNIFE_REST = { pos: [-0.30, -0.26, 0.52], rot: [-0.20, -0.30, 0.10] };
+  const KNIFE_WIND = { pos: [-0.46, -0.08, 0.28], rot: [0.12, -0.95, 0.78] };
+  const KNIFE_CUT = { pos: [0.12, -0.34, 0.74], rot: [-0.46, 0.52, -1.06] };
+
+  /** Fractions of the swing spent winding up and cutting. The rest recovers. */
+  const WINDUP_END = 0.20;
+  const CUT_END = 0.52;
+
+  /** Where in the swing the edge is actually passing through the target. */
+  const CONTACT = 0.36;
+
+  function poseKnife(knife, from, to, t) {
+    knife.position.set(
+      SL.lerp(from.pos[0], to.pos[0], t),
+      SL.lerp(from.pos[1], to.pos[1], t),
+      SL.lerp(from.pos[2], to.pos[2], t));
+    knife.rotation.set(
+      SL.lerp(from.rot[0], to.rot[0], t),
+      SL.lerp(from.rot[1], to.rot[1], t),
+      SL.lerp(from.rot[2], to.rot[2], t));
+  }
+
   /** Shortest distance in the horizontal plane from a point to a travelled path. */
   function pathDistance2D(ax, az, bx, bz, px, pz) {
     const dx = bx - ax;
@@ -166,9 +196,9 @@
 
       this.knife = new THREE.Mesh(buildKnife(), game.materials.surface);
       this.knife.scale.setScalar(0.72);
-      this.knifeRest = new THREE.Vector3(-0.30, -0.26, 0.52);
+      this.knifeRest = new THREE.Vector3().fromArray(KNIFE_REST.pos);
       this.knife.position.copy(this.knifeRest);
-      this.knife.rotation.set(-0.2, -0.3, 0.1);
+      this.knife.rotation.fromArray(KNIFE_REST.rot);
       this.hand.add(this.knife);
 
       this.carryPoint = new THREE.Object3D();
@@ -320,6 +350,8 @@
       for (const c of this.game.kings) if (!c.dead) considerCreature(c);
       for (const c of this.game.whales) if (!c.dead) considerCreature(c);
       for (const c of this.game.puffers) if (!c.dead) considerCreature(c);
+      for (const c of this.game.kelperLevs) if (!c.dead) considerCreature(c);
+      for (const c of this.game.kelpers) if (!c.dead) considerCreature(c);
 
       for (const s of this.game.scrap) if (!s.dead && !s.isHeld) considerPoint(s);
       for (const c of this.game.crystals) if (!c.dead) considerPoint(c);
@@ -383,6 +415,8 @@
       for (const c of this.game.kings) if (!c.dead) consider(c);
       for (const c of this.game.whales) if (!c.dead) consider(c);
       for (const c of this.game.puffers) if (!c.dead) consider(c);
+      for (const c of this.game.kelperLevs) if (!c.dead) consider(c);
+      for (const c of this.game.kelpers) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 
@@ -537,6 +571,10 @@
       for (const c of this.game.kings) if (!c.dead) consider(c.species.name, c.position, 40);
       for (const c of this.game.whales) if (!c.dead) consider(c.species.name, c.position, 60);
       for (const c of this.game.puffers) if (!c.dead) consider(c.species.name, c.position, 34);
+      for (const c of this.game.kelperLevs) if (!c.dead) consider(c.species.name, c.position, 44);
+      for (const c of this.game.kelpers) {
+        if (!c.dead) consider(c.stolen ? 'Kelper   carrying your gear' : c.species.name, c.position, 20);
+      }
       for (const c of this.game.crystals) {
         if (!c.dead) consider('Crystal   [knife] for quartz', c.position, 12);
       }
@@ -660,6 +698,8 @@
       for (const c of this.game.kings) resolve(c);
       for (const c of this.game.whales) resolve(c);
       for (const c of this.game.puffers) resolve(c);
+      for (const c of this.game.kelperLevs) resolve(c);
+      for (const c of this.game.kelpers) resolve(c);
 
       this.pushOutOfVines();
     }
@@ -775,28 +815,37 @@
         const t = this.game.time;
         this.knife.position.lerp(_tmp.copy(this.knifeRest).add(
           _toTarget.set(Math.sin(t * 1.3) * 0.006, Math.sin(t * 1.9) * 0.008, 0)), 1 - Math.exp(-6 * dt));
-        this.knife.rotation.x = SL.damp(this.knife.rotation.x, -0.2, 8, dt);
-        this.knife.rotation.y = SL.damp(this.knife.rotation.y, -0.3, 8, dt);
-        this.knife.rotation.z = SL.damp(this.knife.rotation.z, 0.1, 8, dt);
+        this.knife.rotation.x = SL.damp(this.knife.rotation.x, KNIFE_REST.rot[0], 8, dt);
+        this.knife.rotation.y = SL.damp(this.knife.rotation.y, KNIFE_REST.rot[1], 8, dt);
+        this.knife.rotation.z = SL.damp(this.knife.rotation.z, KNIFE_REST.rot[2], 8, dt);
         return;
       }
 
       this.swingTime = Math.max(0, this.swingTime - dt);
-      const alpha = 1 - this.swingTime / this.swingDuration;
+      const alpha = SL.clamp(1 - this.swingTime / this.swingDuration, 0, 1);
 
-      // Wind up across the first third, slash through the middle, recover after.
-      const arc = SL.clamp(alpha < 0.3
-        ? SL.lerp(0, -1, alpha / 0.3)
-        : SL.lerp(-1, 1, (alpha - 0.3) / 0.35), -1, 1);
+      if (alpha < WINDUP_END) {
+        // Cocking back: quick off the grip, easing as the arm loads.
+        const t = alpha / WINDUP_END;
+        poseKnife(this.knife, KNIFE_REST, KNIFE_WIND, 1 - (1 - t) * (1 - t));
+      } else if (alpha < CUT_END) {
+        // The cut: slow off the shoulder, fastest through the middle.
+        const t = (alpha - WINDUP_END) / (CUT_END - WINDUP_END);
+        poseKnife(this.knife, KNIFE_WIND, KNIFE_CUT, SL.smoothstep(t));
 
-      this.knife.position.set(
-        this.knifeRest.x - arc * 0.30,
-        this.knifeRest.y + Math.abs(arc) * 0.10,
-        this.knifeRest.z + arc * 0.08);
-      this.knife.rotation.set(-0.2 + arc * 0.5, -0.3 + arc * 0.9, 0.1 - arc * 0.8);
+        // A wrist roll laid over the sweep, so the edge leads the whole way
+        // instead of the blade travelling flat-on through the water.
+        this.knife.rotation.z -= Math.sin(t * Math.PI) * 0.55;
+      } else {
+        // Recovery. The old swing had none - it froze at full extension for the
+        // last third and then let the idle bob snap the knife home, which is
+        // what made the animation read as broken.
+        const t = (alpha - CUT_END) / (1 - CUT_END);
+        poseKnife(this.knife, KNIFE_CUT, KNIFE_REST, SL.smoothstep(t));
+      }
 
-      // The blade connects partway through the slash.
-      if (!this.strikeResolved && alpha >= 0.42) {
+      // The blade connects as the edge crosses in front of the diver.
+      if (!this.strikeResolved && alpha >= CONTACT) {
         this.strikeResolved = true;
         this.resolveStrike();
       }

@@ -93,6 +93,16 @@
       flora: ['boulder', 'glowPod', 'crystal'], floraDensity: 0.8
     },
     {
+      // A drowned plateau a long way offshore, shallow enough for kelp. The
+      // only forest out here, and it belongs to something.
+      id: 'farkelp', name: "Kelper's Reach",
+      floorColor: new THREE.Color(0.26, 0.34, 0.20),
+      waterColor: new THREE.Color(0.05, 0.22, 0.20),
+      fogDensity: 0.030,
+      scrapDensity: 0.5, stalkerDensity: 0.15,
+      flora: ['kelp', 'kelp', 'kelp', 'seagrass'], floraDensity: 2.4
+    },
+    {
       id: 'abyss', name: 'Abyssal Plain',
       floorColor: new THREE.Color(0.10, 0.14, 0.18),
       waterColor: new THREE.Color(0.02, 0.07, 0.12),
@@ -110,46 +120,66 @@
   let seamounts = [];
   let kingBasin = null;
   let whaleGround = null;
+  let farBank = null;
 
   function placeFeatures() {
     seamounts = [];
 
-    // Five seamounts out past the shelf break. The tallest reach the light,
-    // which is where coral grows; the others stay dim rubble slopes.
-    for (let i = 0; i < 5; i++) {
+    // Nine seamounts out past the shelf break, scattered all the way to the
+    // rim. There were five when the map was a good deal smaller; left at five,
+    // everything past the slope was one unbroken plain.
+    for (let i = 0; i < 9; i++) {
       const angle = SL.hash(i, 11, SEED) * Math.PI * 2;
-      const radius = SL.lerp(95, 215, SL.hash(i, 22, SEED));
+      const radius = SL.lerp(120, 345, SL.hash(i, 22, SEED));
       seamounts.push({
         x: Math.cos(angle) * radius,
         z: Math.sin(angle) * radius,
-        // Two of them are tall enough to break into sunlight.
-        rise: SL.lerp(34, 62, SL.hash(i, 33, SEED)) * (i < 2 ? 1.25 : 0.85),
-        width: SL.lerp(26, 46, SL.hash(i, 44, SEED))
+        // Three of them are tall enough to break into sunlight.
+        rise: SL.lerp(34, 62, SL.hash(i, 33, SEED)) * (i < 3 ? 1.25 : 0.85),
+        width: SL.lerp(30, 54, SL.hash(i, 44, SEED))
       });
     }
 
     // The king sits in a basin gouged out beyond the trench.
     const kingAngle = SL.hash(7, 77, SEED) * Math.PI * 2;
     kingBasin = {
-      x: Math.cos(kingAngle) * 196,
-      z: Math.sin(kingAngle) * 196,
-      radius: 42
+      x: Math.cos(kingAngle) * 248,
+      z: Math.sin(kingAngle) * 248,
+      radius: 52
     };
 
     // The whale works open water on the far side of the map from the king.
     whaleGround = {
-      x: Math.cos(kingAngle + Math.PI) * 180,
-      z: Math.sin(kingAngle + Math.PI) * 180,
-      radius: 60
+      x: Math.cos(kingAngle + Math.PI) * 235,
+      z: Math.sin(kingAngle + Math.PI) * 235,
+      radius: 72
     };
+
+    // The far bank: a plateau rising out of the abyss, a long swim from
+    // anywhere, carrying the only kelp forest outside the shelf.
+    const bankAngle = SL.hash(13, 131, SEED) * Math.PI * 2;
+    farBank = {
+      x: Math.cos(bankAngle) * 322,
+      z: Math.sin(bankAngle) * 322,
+      radius: 78,
+      rise: 64
+    };
+  }
+
+  /** How far the far bank lifts the floor at a point, in metres. */
+  function bankRise(x, z) {
+    if (!farBank) return 0;
+    const d = Math.hypot(x - farBank.x, z - farBank.z) / farBank.radius;
+    if (d > 2.2) return 0;
+    return farBank.rise * Math.exp(-d * d * 1.5);
   }
 
   /** How far into the trench a point lies, 0 outside to 1 at the axis. */
   function trenchInfluence(x, z) {
     // The trench wanders across the whole map rather than ringing the middle.
-    const axis = Math.sin(x * 0.0115) * 74 + Math.sin(x * 0.031) * 16;
+    const axis = Math.sin(x * 0.0085) * 110 + Math.sin(x * 0.023) * 22;
     const distance = Math.abs(z - axis);
-    const halfWidth = 34 + Math.sin(x * 0.02) * 9;
+    const halfWidth = 40 + Math.sin(x * 0.015) * 11;
 
     // A submarine canyon: it bites well into the shelf rather than beginning
     // out in deep water, so there is deep water close to home and shallow water
@@ -172,25 +202,26 @@
 
   /** The underlying continental margin: shelf, shelf break, abyssal slope. */
   function marginProfile(r) {
-    if (r < 105) {
+    if (r < 140) {
       // The shelf, sloping gently away from the shallows. It is wide, because
       // the shelf is where the game is - kelp, scrap and stalkers all live here.
-      return -3.5 - Math.pow(r / 105, 1.7) * 13;
+      return -3.5 - Math.pow(r / 140, 1.7) * 13;
     }
-    if (r < 180) {
+    if (r < 250) {
       // The shelf break: the floor falls away fast.
-      return SL.lerp(-16.5, -66, SL.smoothstep((r - 105) / 75));
+      return SL.lerp(-16.5, -66, SL.smoothstep((r - 140) / 110));
     }
     // The abyssal slope beyond it, still descending, but slowly.
-    return -66 - (r - 180) * 0.07;
+    return -66 - (r - 250) * 0.06;
   }
 
   function floorHeightAt(x, z) {
     const r = Math.hypot(x, z);
     let y = marginProfile(r);
 
-    // Seamounts rise out of whatever is underneath them.
+    // Seamounts rise out of whatever is underneath them, and so does the bank.
     y += seamountRise(x, z);
+    y += bankRise(x, z);
 
     // The king's basin is gouged below the surrounding floor.
     if (kingBasin) {
@@ -226,6 +257,10 @@
     // The trench is the trench regardless of how deep the floor around it is.
     if (trenchInfluence(x, z) > 0.45 && depth > 34) return byId.trench;
 
+    // The far bank's shallows are kelp; its flanks are rubble.
+    const bank = bankRise(x, z);
+    if (bank > 18) return depth < 34 ? byId.farkelp : byId.boulders;
+
     // A seamount top in the light is a reef; its flanks are rubble.
     const rise = seamountRise(x, z);
     if (rise > 12) return depth < 26 ? byId.coral : byId.boulders;
@@ -234,8 +269,10 @@
     if (depth < 17) return region > -0.22 ? byId.kelp : byId.shallows;
     if (depth < 27) return region > -0.05 ? byId.kelp : byId.plateau;
     if (depth < 38) return region > 0.25 ? byId.boulders : byId.plateau;
-    if (depth < 56) return mineral > 0.05 ? byId.crystal : byId.boulders;
-    if (depth < 76) return mineral > 0.15 ? byId.crystal : byId.abyss;
+    // Crystal country is meant to be somewhere you find, not the floor of half
+    // the ocean - so the mineral noise has to run well above average for it.
+    if (depth < 56) return mineral > 0.24 ? byId.crystal : byId.boulders;
+    if (depth < 76) return mineral > 0.34 ? byId.crystal : byId.abyss;
     return byId.abyss;
   }
 
@@ -316,6 +353,8 @@
     get seamounts() { return seamounts; },
     get kingBasin() { return kingBasin; },
     get whaleGround() { return whaleGround; },
+    get farBank() { return farBank; },
+    bankRise,
     trenchInfluence, seamountRise
   };
 })(window.SL);

@@ -94,7 +94,7 @@
 
       // Leviathans, once the tracker exists.
       if (SL.Crafting.built.tracker) {
-        for (const apex of game.kings.concat(game.whales, game.puffers)) {
+        for (const apex of game.leviathans()) {
           if (apex.dead) continue;
           const point = this.project(apex.position.x, apex.position.z);
           this.marker(point, apex.species.markerColor || '#ffffff', 4);

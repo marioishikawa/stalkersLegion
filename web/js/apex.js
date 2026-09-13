@@ -412,7 +412,8 @@
  * The third leviathan, and the only one that never hunts anything. It grazes
  * the reef and would rather be left alone. Provoke it and it does not chase:
  * it swells to twice its size, throws a cage of thorned vines up around
- * whatever provoked it, and holds position until the trouble goes away.
+ * whatever provoked it, then comes after it - slowly, because a swollen fish
+ * is not a fast one, but it does not stop until the aggro runs out.
  *
  * Being caged is the threat. The vines are solid, they wither on their own, and
  * a knife cuts through one faster than waiting does.
@@ -424,7 +425,7 @@
 
   const LABELS = {
     graze: 'grazing the reef',
-    puffed: 'swollen and cornered',
+    puffed: 'swollen and furious',
     settle: 'deflating'
   };
 
@@ -436,6 +437,7 @@
       this.stateTimer = 0;
       this.biteCooldown = 0;
       this.cageCooldown = 0;
+      this.chargeCooldown = 0;
       this.threat = null;
       this.aggro = 0;
       this.puff = 0;                       // 0 slack, 1 fully inflated
@@ -461,6 +463,9 @@
         this.enterState('puffed');
         this.game.hud.toast('The Red Puff swells');
       }
+
+      // Every hit stokes it further, up to a hard ceiling.
+      this.aggro = Math.min(this.aggro + 8, 34);
 
       // Throw the cage, but not every single time it is touched.
       if (this.cageCooldown <= 0) {
@@ -495,6 +500,7 @@
       this.aggro = Math.max(0, this.aggro - dt);
       this.biteCooldown = Math.max(0, this.biteCooldown - dt);
       this.cageCooldown = Math.max(0, this.cageCooldown - dt);
+      this.chargeCooldown = Math.max(0, this.chargeCooldown - dt);
 
       switch (this.state) {
         case 'puffed': {
@@ -509,20 +515,45 @@
 
           const distance = threat.position.distanceTo(this.position);
 
-          // It holds its ground rather than pursuing. Get close enough to be
-          // inside those spines and that is your own fault.
           if (distance < this.biteReach && this.biteCooldown <= 0) {
             this.biteCooldown = S.biteInterval;
             this.game.audio.bite(0);
             threat.hurt(S.biteDamage, this);
           }
 
-          // Drift slowly away from whatever is bothering it.
-          if (distance < this.bodyLength) {
-            return _tmp.subVectors(this.position, threat.position).normalize()
-              .multiplyScalar(S.cruiseSpeed * 0.6);
+          // Now that it is up, it comes for whoever woke it. A ball of spines
+          // is slow, so this is a thing you can outswim in open water - which
+          // is exactly why it cages you first.
+          if (distance > 90) {
+            this.enterState('settle');
+            return _tmp.set(0, 0, 0);
           }
-          return _tmp.set(0, 0, 0);
+
+          // A fresh cage every so often, so running only buys you distance.
+          if (this.cageCooldown <= 0 && distance < 30) {
+            this.cageCooldown = 9;
+            SL.Vine.cage(this.game, threat.position, 3.0, 16);
+            this.game.audio.crystal();
+          }
+
+          _tmp.subVectors(threat.position, this.position).normalize();
+
+          // It lunges in bursts rather than grinding along at one speed. The
+          // burst is faster than a diver swims and the grind is slower, so
+          // sprinting away works and paddling away does not - which is the
+          // whole trade, because sprinting burns air you may not have.
+          let speed = S.cruiseSpeed * 1.9;
+          if (this.chargeCooldown <= 0 && distance < 34) {
+            this.chargeCooldown = SL.randRange(3.5, 6);
+            this.game.audio.bite(this.game.distanceToPlayer(this.position));
+          }
+          if (this.chargeCooldown > 2.6) speed = S.sprintSpeed;
+
+          // Close enough to bite and it stops shoving, so it does not push the
+          // diver out through its own vines.
+          if (distance < this.biteReach * 0.8) speed *= 0.15;
+
+          return _tmp.multiplyScalar(speed);
         }
 
         case 'settle': {

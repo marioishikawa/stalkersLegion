@@ -1,9 +1,9 @@
 # Stalkers Legion
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
-surface with a survival knife and ninety seconds of air. Below you are six
-biomes, eleven species of fish, and a kelp forest full of stalkers — long,
-armoured predators with a fixation on scrap metal.
+surface with a survival knife and ninety seconds of air. Below you are ten
+biomes, thirty-two species, four leviathans, and a kelp forest full of stalkers
+— long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
 
@@ -148,7 +148,7 @@ to collect, then press `Tab`:
 | Diamond Blade | 4 diamond, 10 titanium, 8 teeth | Knife 84 → 140 |
 | **Lantern** | 4 titanium, 3 quartz | A broad, far-reaching lamp in place of the torch |
 | **Marker Beacon** | 2 titanium, 1 quartz | Drop with `G` — lights the spot and pins it to your chart |
-| **Leviathan Tracker** | 3 gold, 4 quartz, 4 teeth | Both leviathans on the chart, with range, wherever they are |
+| **Leviathan Tracker** | 3 gold, 4 quartz, 4 teeth | Every leviathan on the chart, with range, wherever they are |
 | **Bait Pod** | 2 titanium, 1 tooth | Throw with `B` — every stalker that hears it goes there, not at you |
 | **Repel Charge** | 3 quartz, 2 teeth | Press `V` — drives stalkers within 25 m off you |
 | **Scanner** | 3 titanium, 2 quartz, 1 gold | Hold `X` on a creature to catalogue it |
@@ -173,12 +173,15 @@ longer just distance from the middle:
 
 * a shallow **shelf** around the origin, sloping gently — this is where the game
   lives, and it is wide on purpose;
-* a **shelf break** at about 105 m where the floor falls away fast;
-* five **seamounts** that rise back out of the deep, two of them tall enough to
-  reach the light — so coral reefs grow 100–150 m out, in shallow water;
+* a **shelf break** at about 140 m where the floor falls away fast;
+* nine **seamounts** that rise back out of the deep, three of them tall enough to
+  reach the light — so coral reefs grow in shallow water a long way from home;
 * a **submarine canyon** that wanders across the whole map and bites into the
   shelf, putting the deepest water in the game within 90 m of home;
-* a **basin** gouged below the abyssal plain, where the king lives.
+* a **basin** gouged below the abyssal plain, where the king lives;
+* a **far bank**, a plateau rising 64 m out of the abyss at the very edge of the
+  map, carrying the only kelp forest that is not on the shelf — and the
+  leviathan that holds it.
 
 Biomes then follow from what the floor *is* at a point — its depth, whether it
 sits on a seamount, whether it lies in the canyon — rather than from how far out
@@ -187,17 +190,22 @@ even past 120 m.
 
 | Biome | Where it occurs | Share of the floor |
 |---|---|---|
-| **Safe Shallows** | The shelf above ~6 m | ~10% |
-| **Kelp Forest** | The shelf, 6–27 m, where the ground is right for it | ~9% |
-| **Grassy Plateau** | Open shelf, 17–38 m | ~6% |
-| **Coral Seamount** | Sunlit seamount tops, wherever they rise | ~10% |
-| **Boulder Slope** | Shelf break and seamount flanks | ~8% |
-| **Crystal Caverns** | Mineral-rich deep floor, 38–76 m | ~28% |
-| **Deep Trench** | Inside the canyon | ~7% |
-| **King's Basin** | The gouged basin | ~3% |
-| **Abyssal Plain** | Everything below 76 m | ~18% |
+| **Safe Shallows** | The shelf above ~6 m | ~6% |
+| **Kelp Forest** | The shelf, 6–27 m, where the ground is right for it | ~7% |
+| **Grassy Plateau** | Open shelf, 17–38 m | ~4% |
+| **Coral Seamount** | Sunlit seamount tops, wherever they rise | ~7% |
+| **Boulder Slope** | Shelf break, seamount flanks, the far bank's sides | ~12% |
+| **Crystal Caverns** | Mineral-rich deep floor, 38–76 m | ~13% |
+| **Deep Trench** | Inside the canyon | ~6% |
+| **King's Basin** | The gouged basin | ~2% |
+| **Kelper's Reach** | The sunlit crown of the far bank | ~1.5% |
+| **Abyssal Plain** | Everything below 76 m | ~42% |
 
-The world is 480 m across, and the two leviathans are on opposite sides of it.
+Shares move with the seed, since the features are placed from it.
+
+The world is **800 m across**, and the four leviathans are spread around it —
+Kelper's Reach sits out near the rim, roughly 300 m from the surface you start
+on, which is several tanks of air away.
 
 ## The databank
 
@@ -265,6 +273,18 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   size and throws a cage of thorned red vines up around *you* — sixteen stalks
   on a three-metre ring, spaced closer together than you are wide, so the ring
   genuinely holds. They wither after 26 seconds, or two knife strikes cuts one.
+  Then it comes after you: a swollen fish is slow, so you can outswim it in open
+  water, which is exactly why it cages you first. It throws a fresh cage every
+  nine seconds while it is chasing, so running only ever buys you distance. It
+  gives up once you are 90 m off, and every hit you land stokes it further.
+* **Kelper Leviathan** — 11 m, 780 HP, holding the far bank's kelp forest and
+  never leaving it. It barely fights. Instead it **calls kelpers**: two or three
+  at a time, up to five at once, quick spindly things that weave in, take one
+  loose item off you and run for the weeds. They only take what you can make
+  again — bait pods, beacons, medkits, repel charges — and never touch built
+  gear or raw materials. Kill the one that robbed you and the item comes
+  straight back; let it reach the forest and it is gone. The leviathan itself
+  only bites what comes at it, for 24.
 * **Bonded Stalker** — catalogue every fish in the databank and one of them
   bonds to you. It keeps station off your shoulder, goes after anything hunting
   you, and cannot hurt you whatever you do. Killed, it returns 10 seconds later.
@@ -330,11 +350,12 @@ python3 web/tools/build-artifact.py
   rippled surface plane, not a water shader.
 * **Health regenerates slowly** (2.5/s after 18 seconds without damage). With no
   medkits, the alternative was a one-way trip.
-* **There are two cheat codes**, typed at any point while diving:
+* **There are three cheat codes**, typed at any point while diving:
   * `sus` — every fabricator recipe, 99 of each material, and infinite health
     and air.
-  * `sandwich` — drags the two leviathans together, starts a clash, and parks
-    you at a ringside seat to watch it.
+  * `sandwich` — drags the king and the whale together, starts a clash, and
+    parks you at a ringside seat to watch it.
+  * `tame` — the bonded stalker now, without filling the databank first.
 
   A letter part-way through a code is swallowed rather than firing whatever it
   is normally bound to, so typing `sandwich` does not open the databank on the

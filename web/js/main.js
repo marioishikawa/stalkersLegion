@@ -25,6 +25,8 @@
       this.kings = [];
       this.whales = [];
       this.puffers = [];
+      this.kelperLevs = [];
+      this.kelpers = [];
       this.pets = [];
       this.petRespawn = 0;
       this.beacons = [];
@@ -113,6 +115,8 @@
       this.kings.length = 0;
       this.whales.length = 0;
       this.puffers.length = 0;
+      this.kelperLevs.length = 0;
+      this.kelpers.length = 0;
       this.pets.length = 0;
       this.petRespawn = 0;
       this.beacons.length = 0;
@@ -127,6 +131,11 @@
 
       this.worldGroup = new THREE.Group();
       this.scene.add(this.worldGroup);
+    }
+
+    /** Every leviathan in the world, in the one list the chart wants. */
+    leviathans() {
+      return this.kings.concat(this.whales, this.puffers, this.kelperLevs);
     }
 
     /** Generates a world from a seed. The same seed always gives the same ocean. */
@@ -328,6 +337,18 @@
         puffer.object.visible = puffer.position.distanceToSquared(playerPos) < 6 * CULL_DISTANCE * CULL_DISTANCE;
         puffer.update(dt);
       }
+      for (const lev of this.kelperLevs) {
+        lev.object.visible = lev.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
+        lev.update(dt);
+      }
+
+      // Kelpers exist to reach you, so they always think - and they remove
+      // themselves the moment they get away, hence the backwards walk.
+      for (let i = this.kelpers.length - 1; i >= 0; i--) {
+        const kelper = this.kelpers[i];
+        kelper.object.visible = kelper.position.distanceToSquared(playerPos) < 4 * CULL_DISTANCE * CULL_DISTANCE;
+        kelper.update(dt);
+      }
 
       // The pet is always beside you, so it is never culled.
       for (const pet of this.pets) pet.update(dt);
@@ -414,6 +435,16 @@
     // Put the two leviathans on each other and pull up a seat.
     sandwich(game) {
       SL.forceClash(game);
+    },
+    // The stalker you would otherwise have to fill the databank for.
+    tame(game) {
+      if (game.pets.length) {
+        game.hud.toast('CHEAT \u2014 your stalker is already with you');
+        return;
+      }
+      game.petRespawn = 0;
+      SL.Pet.spawn(game);
+      game.hud.toast('CHEAT \u2014 a stalker has bonded to you');
     }
   };
 

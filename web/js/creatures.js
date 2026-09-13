@@ -184,7 +184,8 @@
       if (this.object.parent) this.object.parent.remove(this.object);
 
       for (const list of [this.game.fish, this.game.stalkers, this.game.kings,
-        this.game.whales, this.game.puffers, this.game.pets]) {
+        this.game.whales, this.game.puffers, this.game.kelperLevs,
+        this.game.kelpers, this.game.pets]) {
         const i = list.indexOf(this);
         if (i >= 0) { list.splice(i, 1); return; }
       }
