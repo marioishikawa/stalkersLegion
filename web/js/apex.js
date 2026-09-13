@@ -356,6 +356,52 @@
     }
   }
 
+  /**
+   * Cheat: drag the two leviathans together and start a clash, then put the
+   * diver somewhere safe to watch it from. Normally this only happens when the
+   * whale's wandering brings it into the king's water, which can take a while.
+   */
+  SL.forceClash = function (game) {
+    const king = game.kings.find((k) => !k.dead);
+    const whale = game.whales.find((w) => !w.dead);
+
+    if (!king || !whale) {
+      game.hud.toast('Both leviathans have to be alive for that');
+      return false;
+    }
+
+    // Reset them to full and clear the standoff cooldown.
+    king.health = king.species.maxHealth;
+    whale.health = whale.species.maxHealth;
+    king.clashCooldown = 0;
+    whale.clashCooldown = 0;
+    king.threat = null;
+    king.aggro = 0;
+
+    // Bring the whale to the king, a little above and off to one side.
+    whale.object.position.copy(king.position).add(new THREE.Vector3(16, 5, 0));
+    whale.velocity.set(0, 0, 0);
+
+    if (!tryClash(king, whale, game)) {
+      game.hud.toast('They would not engage');
+      return false;
+    }
+
+    // A ringside seat. Close enough to see through the murk out here, far
+    // enough to stay clear of two animals throwing their weight around.
+    const seat = king.position.clone().add(new THREE.Vector3(5, 9, 19));
+    game.player.position.copy(seat);
+    game.player.velocity.set(0, 0, 0);
+
+    const look = new THREE.Vector3().subVectors(
+      king.position.clone().lerp(whale.position, 0.5), seat).normalize();
+    game.player.yaw = Math.atan2(-look.x, -look.z);
+    game.player.pitch = Math.asin(SL.clamp(look.y, -1, 1));
+
+    game.hud.toast('SANDWICH — the leviathans are fighting');
+    return true;
+  };
+
   SL.KingStalker = KingStalker;
   SL.Whale = Whale;
 })(window.SL);

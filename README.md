@@ -115,6 +115,12 @@ That gives you a tool. Pick up a plate with `E`, throw it with `E`, and every
 stalker in range chases the noise instead of you. It is the difference between
 crossing the kelp forest and dying in it.
 
+**Creatures are solid.** You cannot swim through anything. Both sides are pushed
+apart with the share decided by size, so a 10 cm shrimp is the one that gets
+shoved aside while a 15 m whale is effectively a wall — one rule covering the
+whole range. Bodies collide along their full length, not as a ball at the
+middle, so a leviathan's tail is as solid as its head.
+
 **Stalkers hunt.** Left alone they patrol, run fish down and kill them outright,
 then feed for a couple of seconds. Get within about 13 metres and you become the
 more interesting target: 13 damage a bite, a hard knockback, and you drop
@@ -313,8 +319,15 @@ python3 web/tools/build-artifact.py
   rippled surface plane, not a water shader.
 * **Health regenerates slowly** (2.5/s after 18 seconds without damage). With no
   medkits, the alternative was a one-way trip.
-* **There is a cheat code.** Type `sus` at any point while diving to unlock every
-  fabricator recipe and top up your materials.
+* **There are two cheat codes**, typed at any point while diving:
+  * `sus` — every fabricator recipe, 99 of each material, and infinite health
+    and air.
+  * `sandwich` — drags the two leviathans together, starts a clash, and parks
+    you at a ringside seat to watch it.
+
+  A letter part-way through a code is swallowed rather than firing whatever it
+  is normally bound to, so typing `sandwich` does not open the databank on the
+  `i` or spend a medkit on the `h`.
 * **The Unreal build has never been compiled.** It was written without an engine
   available; expect to shake out compile errors on a first build. See
   `unreal/` and the toolchain notes below.

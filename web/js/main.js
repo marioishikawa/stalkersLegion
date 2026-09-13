@@ -384,21 +384,55 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * Typing the code anywhere during play unlocks the full fabricator and tops
-   * the diver up. Kept to the last few letters pressed so it never interferes
-   * with the movement keys.
+   * Cheat codes, typed anywhere during play. Only the last few letters pressed
+   * are kept, so they never interfere with the movement keys.
    */
-  const CHEAT_CODE = 'sus';
+  const CHEATS = {
+    // Everything unlocked, stocked, and nothing can touch you.
+    sus(game) {
+      SL.Crafting.unlockAll(game);
+      game.hud.toast('CHEAT — all gear, infinite health and air');
+      game.hud.refreshFabricator();
+    },
+    // Put the two leviathans on each other and pull up a seat.
+    sandwich(game) {
+      SL.forceClash(game);
+    }
+  };
 
+  const CHEAT_CODES = Object.keys(CHEATS);
+
+  /**
+   * Feeds a keystroke to the cheat buffer and reports what it meant.
+   *
+   * The buffer only ever holds the longest tail that could still grow into a
+   * code, which is what lets the caller tell a letter typed mid-cheat from an
+   * ordinary keypress: 'sandwich' contains i, h, c and b, all of which are
+   * bound to actions, so typing it would otherwise open the databank and spend
+   * a medkit on the way past.
+   *
+   * Returns 'fired', 'prefix' (mid-code, so swallow the key) or 'none'.
+   */
   function checkCheat(game, key) {
-    game.cheatBuffer = ((game.cheatBuffer || '') + key).slice(-CHEAT_CODE.length);
-    if (game.cheatBuffer !== CHEAT_CODE) return;
+    if (!game.started) return 'none';
 
-    game.cheatBuffer = '';
-    SL.Crafting.unlockAll(game);
-    game.audio.cheat();
-    game.hud.toast('CHEAT — all gear unlocked');
-    game.hud.refreshFabricator();
+    const buffer = (game.cheatBuffer || '') + key;
+
+    let live = '';
+    for (let i = 0; i < buffer.length; i++) {
+      const tail = buffer.slice(i);
+      if (CHEAT_CODES.some((code) => code.startsWith(tail))) { live = tail; break; }
+    }
+    game.cheatBuffer = live;
+
+    if (CHEATS[live]) {
+      game.cheatBuffer = '';
+      game.audio.cheat();
+      CHEATS[live](game);
+      return 'fired';
+    }
+
+    return live ? 'prefix' : 'none';
   }
 
   function bindInput(game) {
@@ -411,24 +445,33 @@
 
     window.addEventListener('keydown', (e) => {
       if (KEYS[e.code] !== undefined) { game.input[KEYS[e.code]] = true; e.preventDefault(); }
-      if (e.key && e.key.length === 1) checkCheat(game, e.key.toLowerCase());
+      const cheat = (e.key && e.key.length === 1)
+        ? checkCheat(game, e.key.toLowerCase())
+        : 'none';
+
+      // A letter part-way through a cheat code belongs to the code, not to
+      // whatever it is normally bound to.
+      if (cheat === 'none') {
+        switch (e.code) {
+          case 'KeyE': game.player.interact(); break;
+          case 'KeyF': game.player.toggleFlashlight(); break;
+          case 'KeyH': game.player.useMedkit(); break;
+          case 'KeyG': game.player.dropBeacon(); break;
+          case 'KeyB': game.player.throwBait(); break;
+          case 'KeyV': game.player.useRepel(); break;
+          case 'KeyI':
+            e.preventDefault();
+            game.toggleIndex();
+            break;
+          case 'KeyR': if (game.player.dead) game.player.respawn(); break;
+          case 'KeyM':
+            game.audio.setMuted(!game.audio.muted);
+            game.hud.showMuted(game.audio.muted);
+            break;
+        }
+      }
 
       switch (e.code) {
-        case 'KeyE': game.player.interact(); break;
-        case 'KeyF': game.player.toggleFlashlight(); break;
-        case 'KeyH': game.player.useMedkit(); break;
-        case 'KeyG': game.player.dropBeacon(); break;
-        case 'KeyB': game.player.throwBait(); break;
-        case 'KeyV': game.player.useRepel(); break;
-        case 'KeyI':
-          e.preventDefault();
-          game.toggleIndex();
-          break;
-        case 'KeyR': if (game.player.dead) game.player.respawn(); break;
-        case 'KeyM':
-          game.audio.setMuted(!game.audio.muted);
-          game.hud.showMuted(game.audio.muted);
-          break;
         case 'Tab':
           e.preventDefault();
           game.toggleFabricator();

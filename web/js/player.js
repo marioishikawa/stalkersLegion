@@ -24,6 +24,7 @@
   const _r = new THREE.Vector3();
   const _c1 = new THREE.Vector3();
   const _c2 = new THREE.Vector3();
+  const _normal = new THREE.Vector3();
 
   // Base knife stats live on the player rather than as constants, because the
   // fabricator upgrades them in place.
@@ -557,6 +558,7 @@
       this.velocity.lerp(_tmp, 1 - Math.exp(-6 * dt));
       this.position.addScaledVector(this.velocity, dt);
 
+      this.pushOutOfCreatures(dt);
       this.clampToWorld();
       this.updateOxygen(dt);
 
@@ -572,6 +574,65 @@
       if (this.focusTimer <= 0) { this.focusTimer = 0.12; this.updateFocus(); }
 
       this.updateKnife(dt);
+    }
+
+    /**
+     * Creatures are solid.
+     *
+     * Both sides are pushed apart, with the share decided by size: a leviathan
+     * barely notices and the diver bounces off it, while a shrimp is the one
+     * that gets shoved. That one rule covers everything from krill to a
+     * fifteen-metre whale without a shrimp behaving like a wall.
+     *
+     * Bodies are treated as capsules around the nose-to-tail spine, so you
+     * collide with the length of an animal rather than a ball at its middle.
+     */
+    pushOutOfCreatures(dt) {
+      const DIVER_RADIUS = 0.5;
+      const DIVER_MASS = 3;
+
+      const resolve = (creature) => {
+        if (creature.dead) return;
+
+        const reach = creature.bodyLength * 0.5 + creature.radius + DIVER_RADIUS;
+        if (creature.position.distanceToSquared(this.position) > reach * reach) return;
+
+        creature.object.getWorldDirection(_axis);
+        const half = creature.bodyLength * 0.5;
+        _bodyA.copy(creature.position).addScaledVector(_axis, -half);
+        _bodyB.copy(creature.position).addScaledVector(_axis, half);
+
+        // Closest point on the creature's spine to the diver.
+        _d1.subVectors(_bodyB, _bodyA);
+        const lengthSq = _d1.lengthSq() || 1;
+        const t = SL.clamp(_r.subVectors(this.position, _bodyA).dot(_d1) / lengthSq, 0, 1);
+        _c1.copy(_bodyA).addScaledVector(_d1, t);
+
+        const minimum = (creature.radius || 0.2) + DIVER_RADIUS;
+        _normal.subVectors(this.position, _c1);
+        const distance = _normal.length();
+        const overlap = minimum - distance;
+        if (overlap <= 0) return;
+
+        // Straight through the middle: pick any sideways direction.
+        if (distance < 1e-4) _normal.set(1, 0, 0); else _normal.divideScalar(distance);
+
+        const creatureMass = Math.max(0.05, creature.bodyLength * creature.bodyLength);
+        const diverShare = creatureMass / (creatureMass + DIVER_MASS);
+
+        this.position.addScaledVector(_normal, overlap * diverShare);
+        creature.object.position.addScaledVector(_normal, -overlap * (1 - diverShare));
+
+        // Stop swimming into it, and let it know it was bumped.
+        const closing = this.velocity.dot(_normal);
+        if (closing < 0) this.velocity.addScaledVector(_normal, -closing);
+        if (typeof creature.startle === 'function') creature.startle(this.position, 2.5);
+      };
+
+      for (const c of this.game.fish) resolve(c);
+      for (const c of this.game.stalkers) resolve(c);
+      for (const c of this.game.kings) resolve(c);
+      for (const c of this.game.whales) resolve(c);
     }
 
     clampToWorld() {
