@@ -26,6 +26,7 @@
       this.whales = [];
       this.puffers = [];
       this.kelperLevs = [];
+      this.glowLevs = [];
       this.kelpers = [];
       this.pets = [];
       this.petRespawn = 0;
@@ -65,6 +66,15 @@
         glow: new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }),
         water: new THREE.MeshBasicMaterial({
           vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.9
+        }),
+
+        // Light bleeding into the water around something that produces it.
+        // Additive and depth-write-off so it layers over whatever is behind it
+        // instead of cutting a hole, and back-faced so the body still reads
+        // through its own halo.
+        halo: new THREE.MeshBasicMaterial({
+          color: 0x6ee8ff, transparent: true, opacity: 0.16, depthWrite: false,
+          side: THREE.BackSide, blending: THREE.AdditiveBlending
         })
       };
 
@@ -119,6 +129,7 @@
       this.whales.length = 0;
       this.puffers.length = 0;
       this.kelperLevs.length = 0;
+      this.glowLevs.length = 0;
       this.kelpers.length = 0;
       this.pets.length = 0;
       this.petRespawn = 0;
@@ -141,7 +152,7 @@
 
     /** Every leviathan in the world, in the one list the chart wants. */
     leviathans() {
-      return this.kings.concat(this.whales, this.puffers, this.kelperLevs);
+      return this.kings.concat(this.whales, this.puffers, this.kelperLevs, this.glowLevs);
     }
 
     /** Generates a world from a seed. The same seed always gives the same ocean. */
@@ -345,6 +356,14 @@
       }
       for (const lev of this.kelperLevs) {
         lev.object.visible = lev.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
+        lev.update(dt);
+      }
+
+      // The glow one carries a light that reaches ninety metres, so it stays
+      // drawn well past the range anything else would be culled at - being
+      // visible from a long way off in the dark is the entire animal.
+      for (const lev of this.glowLevs) {
+        lev.object.visible = lev.position.distanceToSquared(playerPos) < 25 * CULL_DISTANCE * CULL_DISTANCE;
         lev.update(dt);
       }
 

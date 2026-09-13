@@ -424,6 +424,7 @@
       for (const c of this.game.kelperLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.kelpers) if (!c.dead) considerCreature(c);
       for (const c of this.game.carnis) if (!c.dead) considerCreature(c);
+      for (const c of this.game.glowLevs) if (!c.dead) considerCreature(c);
 
       for (const s of this.game.scrap) if (!s.dead && !s.isHeld) considerPoint(s);
       for (const c of this.game.crystals) if (!c.dead) considerPoint(c);
@@ -495,6 +496,7 @@
       for (const c of this.game.kelperLevs) if (!c.dead) consider(c);
       for (const c of this.game.kelpers) if (!c.dead) consider(c);
       for (const c of this.game.carnis) if (!c.dead) consider(c);
+      for (const c of this.game.glowLevs) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 
@@ -696,6 +698,7 @@
         if (!c.dead) consider(c.stolen ? 'Kelper   carrying your gear' : c.species.name, c.position, 20);
       }
       for (const c of this.game.carnis) if (!c.dead) consider(c.species.name, c.position, 30);
+      for (const c of this.game.glowLevs) if (!c.dead) consider(c.species.name, c.position, 60);
       for (const n of this.game.nests) {
         consider(n.species.name + ' nest', n.position, 10);
       }
@@ -826,6 +829,7 @@
       for (const c of this.game.kelperLevs) resolve(c);
       for (const c of this.game.kelpers) resolve(c);
       for (const c of this.game.carnis) resolve(c);
+      for (const c of this.game.glowLevs) resolve(c);
 
       this.pushOutOfVines();
     }

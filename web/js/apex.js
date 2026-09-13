@@ -586,3 +586,207 @@
 
   SL.RedPuff = RedPuff;
 })(window.SL);
+
+/**
+ * The Glow Leviathan.
+ *
+ * The abyssal plain is half the sea floor and it is meant to feel like
+ * crossing nothing. This is the one thing out there - a thirteen-metre fish
+ * lit from the inside, which is the only leviathan that is genuinely a light
+ * source rather than a shape you make out. Everything else in the game is lit
+ * by three fixed lights; this one carries its own and drags it across the dark.
+ *
+ * It wants nothing. It drifts, it breathes, and if you cut it it turns white
+ * and comes at you.
+ */
+(function (SL) {
+  'use strict';
+
+  const _tmp = new THREE.Vector3();
+
+  const LABELS = {
+    drift: 'crossing the dark',
+    flare: 'lighting you up',
+    angry: 'blazing'
+  };
+
+  /**
+   * Resting light, and what a flare or a wound pushes it to.
+   *
+   * These are large against a scene whose three fixed lights deliberately total
+   * about 1.0 - but this one is a local light in the darkest biome in the game,
+   * and if it does not visibly lay a pool of light on the sea floor then it is
+   * a painted fish rather than a lamp.
+   */
+  const CALM_LIGHT = 5.5;
+  const FLARE_LIGHT = 14;
+
+  /** How far the light reaches. Far - it is supposed to be a landmark. */
+  const LIGHT_RANGE = 120;
+
+  class GlowLeviathan extends SL.Creature {
+    constructor(game, species, x, y, z) {
+      super(game, species, x, y, z);
+      this.territoryRadius = 150;
+      this.state = 'drift';
+      this.stateTimer = 0;
+      this.biteCooldown = 0;
+      this.aggro = 0;
+      this.threat = null;
+      this.driftTarget = new THREE.Vector3(x, y, z);
+
+      // Its own light, carried in the middle of the body. This is the whole
+      // creature really - the mesh is unlit and would read the same in a jar;
+      // what makes it a leviathan is that the sea floor lights up under it.
+      this.glow = 1;
+      // A slow falloff, so the light is a wide dim pool rather than a hotspot.
+      this.lamp = new THREE.PointLight(0x69e4ff, CALM_LIGHT, LIGHT_RANGE, 1.0);
+      this.object.add(this.lamp);
+
+      // Its own materials, because of one flag: fog is off.
+      //
+      // Every other colour in the game is fogged, which is what makes the murk
+      // work - but a fogged light source dims with distance, and a light that
+      // dims with distance is not a landmark. Bioluminescence in dark water
+      // reads at range precisely because it is emitting rather than reflecting,
+      // so this animal is the one thing the murk does not eat.
+      const lit = game.materials.glow.clone();
+      lit.fog = false;
+      this.bodyMesh.material = lit;
+      this.tailMesh.material = lit;
+      if (this.jawMesh) this.jawMesh.material = lit;
+
+      // A halo, which is what actually reads as the light coming off it. The
+      // lamp lights things near it, but the abyssal floor out here is coarse
+      // terrain on per-vertex Lambert and a point light barely marks it - the
+      // glow has to be something you can see in the water itself.
+      this.halo = new THREE.Mesh(this.bodyMesh.geometry, game.materials.halo.clone());
+      this.halo.material.fog = false;
+      this.halo.scale.setScalar(1.5);
+      this.object.add(this.halo);
+
+      this.pulse = SL.random() * Math.PI * 2;
+    }
+
+    get stateLabel() { return LABELS[this.state] || ''; }
+    get biteReach() { return this.bodyLength * 0.44 + 3; }
+
+    enterState(state) {
+      if (this.state === state) return;
+      this.state = state;
+      this.stateTimer = 0;
+    }
+
+    /** It starts nothing. Cut it and it stops being scenery. */
+    provoke(threat) {
+      if (this.dead || !threat) return;
+      this.threat = threat;
+      this.aggro = 24;
+      if (this.state !== 'angry') {
+        this.enterState('angry');
+        this.game.hud.toast('The Glow Leviathan flares');
+      }
+    }
+
+    onHurt(damage, source) { this.provoke(source); }
+
+    onDeath() {
+      // The light goes out with it.
+      this.lamp.intensity = 0;
+      SL.Pickup.burst(this.game, 'quartz', this.position, 12);
+      SL.Pickup.burst(this.game, 'diamond', this.position, 4);
+      SL.Pickup.burst(this.game, 'titanium', this.position, 8);
+      this.game.hud.toast('The Glow Leviathan is dark');
+    }
+
+    /** The light breathes, and dies with the animal. */
+    animate(dt) {
+      super.animate(dt);
+
+      this.pulse += dt * (this.state === 'drift' ? 0.9 : 2.6);
+
+      const target = this.dead ? 0
+        : (this.state === 'drift' ? CALM_LIGHT : FLARE_LIGHT);
+      this.glow = SL.damp(this.glow, target / CALM_LIGHT, 2.2, dt);
+
+      const breath = 1 + Math.sin(this.pulse) * 0.16 + Math.sin(this.pulse * 2.7) * 0.06;
+      this.lamp.intensity = Math.max(0, this.glow * CALM_LIGHT * breath);
+
+      // Cold blue at rest, hot white when it is angry, so the colour of the
+      // water around it tells you what it is doing before the label does.
+      const heat = SL.clamp((this.lamp.intensity - CALM_LIGHT) / (FLARE_LIGHT - CALM_LIGHT), 0, 1);
+      this.lamp.color.setRGB(
+        SL.lerp(0.41, 1.0, heat),
+        SL.lerp(0.89, 0.97, heat),
+        1.0);
+
+      // The halo breathes with the lamp and swells when it flares, so the glow
+      // reads from far enough away to be a landmark.
+      const shine = Math.min(this.glow, 3);
+      this.halo.material.opacity = 0.22 * shine * breath;
+      this.halo.material.color.copy(this.lamp.color);
+      this.halo.scale.setScalar(1.35 + shine * 0.22 + Math.sin(this.pulse) * 0.05);
+      this.halo.visible = this.halo.material.opacity > 0.01;
+    }
+
+    desiredVelocity(dt) {
+      const S = this.species;
+      const player = this.game.player;
+
+      this.stateTimer += dt;
+      this.aggro = Math.max(0, this.aggro - dt);
+      this.biteCooldown = Math.max(0, this.biteCooldown - dt);
+
+      const playerDistance = player.dead ? Infinity : player.position.distanceTo(this.position);
+
+      if (this.state === 'angry') {
+        this.jawOpen = SL.damp(this.jawOpen, playerDistance < 18 ? 0.9 : 0.35, 3, dt);
+
+        if (!this.threat || this.threat.dead || this.aggro <= 0 || playerDistance > 130) {
+          this.threat = null;
+          this.enterState('drift');
+          return _tmp.set(0, 0, 0);
+        }
+
+        if (playerDistance < this.biteReach && this.biteCooldown <= 0) {
+          this.biteCooldown = S.biteInterval;
+          this.game.audio.bite(0);
+          this.threat.hurt(S.biteDamage, this);
+        }
+
+        return _tmp.subVectors(this.threat.position, this.position).normalize()
+          .multiplyScalar(S.sprintSpeed);
+      }
+
+      // A flare is a display, not a threat: it brightens when someone comes
+      // close and goes back to its business. Nothing about it does damage.
+      if (this.state === 'flare') {
+        this.jawOpen = SL.damp(this.jawOpen, 0.2, 2, dt);
+        if (this.stateTimer > 7 || playerDistance > S.senseRadius * 1.3) this.enterState('drift');
+      } else if (playerDistance < S.senseRadius * 0.45 && this.stateTimer > 12) {
+        this.enterState('flare');
+      }
+
+      this.jawOpen = SL.damp(this.jawOpen, 0.12, 1, dt);
+
+      // --- Crossing ------------------------------------------------------------
+      //
+      // A long, slow line across open water rather than a circuit, because the
+      // point of it is that you meet it somewhere out there.
+      if (this.driftTarget.distanceToSquared(this.position) < 225 || this.stateTimer > 70) {
+        this.stateTimer = 0;
+        const angle = SL.random() * Math.PI * 2;
+        const radius = SL.randRange(60, this.territoryRadius);
+        const x = this.territory.x + Math.cos(angle) * radius;
+        const z = this.territory.z + Math.sin(angle) * radius;
+        this.driftTarget.set(x,
+          Math.min(SL.Biomes.floorHeightAt(x, z) + SL.randRange(7, 16), SL.WATER_LEVEL - 8), z);
+      }
+
+      return _tmp.subVectors(this.driftTarget, this.position).normalize()
+        .multiplyScalar(S.cruiseSpeed);
+    }
+  }
+
+  SL.GlowLeviathan = GlowLeviathan;
+})(window.SL);

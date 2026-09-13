@@ -442,6 +442,27 @@
                tailSweep: 0.26, tailFork: 0.2, dorsalFin: 0.30, ventralFin: 0.26,
                sideFin: 0.12, eyeSize: 0.055, spineSegments: 14 }
     }),
+    fish('glowlev', 'Glow Leviathan', 'abyss', 'torpedo', {
+      leviathan: true, markerColor: '#5ce7ff',
+      diet: 'carnivore', groups: 0,
+      note: 'A very large fish that is lit from the inside. It crosses the ' +
+            'abyssal plain on no particular errand, throwing enough light to ' +
+            'read the sea floor by, and is the only thing you will ever see ' +
+            'out there. It wants nothing from you.',
+      // Everything about it is the glow, so the colours are the light.
+      backColor: C(0.20, 0.86, 1.0), bellyColor: C(0.86, 1.0, 1.0), finColor: C(0.36, 0.72, 1.0),
+      eyeColor: C(1.0, 0.98, 0.72), glow: 1,
+      maxHealth: 1400, cruiseSpeed: 1.7, sprintSpeed: 5.0, turnRate: 0.7,
+      senseRadius: 70, biteDamage: 30, biteInterval: 3.4,
+      schoolSize: 1, altitude: 20, wagRate: 0.9,
+      shape: { length: 13, height: 0.30, width: 0.22, bellyPosition: 0.38,
+               noseSharpness: 0.42, crossSection: 2.4, tailHeight: 0.34,
+               tailSweep: 0.26, tailFork: 0.45, dorsalFin: 0.20,
+               ventralFin: 0.12, sideFin: 0.16,
+               eyeSize: 0.022, eyeRing: true, eyePosition: 0.16,
+               mouthLine: 0.010, jawLength: 0.14, stripes: 7,
+               spineSegments: 26, radialSegments: 12 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -570,6 +591,7 @@
     kelperLeviathan: byId.kelperlev,
     kelper: byId.kelper,
     walkingcarni: byId.walkingcarni,
+    glowLeviathan: byId.glowlev,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(

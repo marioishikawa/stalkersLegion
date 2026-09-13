@@ -2,8 +2,8 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, thirty-nine species, four leviathans, one island, and a kelp forest
-full of stalkers — long, armoured predators with a fixation on scrap metal.
+biomes, forty species, five leviathans, one island, and a kelp forest full of
+stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
 
@@ -319,6 +319,16 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   every few seconds normally; startled, it empties itself in a burst and bolts.
   Completely harmless. The bubbles rise, swell as the pressure drops, wobble on
   their own phase and pop at the surface.
+* **Glow Leviathan** — thirteen metres of fish lit from the inside, crossing the
+  abyssal plain on no particular errand. It is the only leviathan that is
+  genuinely a *light source* rather than a shape you make out: it carries a
+  120 m lamp that lays a pool of light on the sea floor under it, wrapped in an
+  additive halo that reads as the glow coming off it. Its materials are the one
+  place in the game where fog is switched off — a fogged light dims with
+  distance, and a light that dims with distance is not a landmark. Across a
+  black plain at 180 m it is a single cyan point, and the only thing you can
+  see. It wants nothing from you. Cut it and it turns from cold blue to hot
+  white and comes.
 * **Walkingcarni** — lives on the islet, and is the only animal in the game that
   is not swimming. Four legs, a long jaw, and it takes its height from the
   ground rather than integrating against the sea floor like everything else, so

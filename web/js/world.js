@@ -351,6 +351,27 @@
       game.kelperLevs.push(lev);
     }
 
+    // The glow one lives out on the plain, which is otherwise the emptiest
+    // water in the game. Placed deep and far, so crossing the abyss is how you
+    // find it rather than swimming to a marked spot.
+    let plain = null;
+    let plainDepth = 0;
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const candidate = SL.Biomes.randomPointIn(SL.Biomes.byId.abyss);
+      if (!candidate) break;
+
+      const depth = -SL.Biomes.floorHeightAt(candidate.x, candidate.z);
+      if (depth > plainDepth) { plainDepth = depth; plain = candidate; }
+      if (depth > 80) break;
+    }
+
+    if (plain) {
+      const y = Math.min(SL.Biomes.floorHeightAt(plain.x, plain.z) + 24, SL.WATER_LEVEL - 20);
+      const glow = new SL.GlowLeviathan(game, SL.Species.glowLeviathan, plain.x, y, plain.z);
+      glow.territory.set(plain.x, y, plain.z);
+      game.glowLevs.push(glow);
+    }
+
     const ground = SL.Biomes.whaleGround;
     if (ground) {
       const y = SL.Biomes.floorHeightAt(ground.x, ground.z) + 26;
