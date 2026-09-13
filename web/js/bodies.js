@@ -210,11 +210,34 @@
 
     // --- Eyes -------------------------------------------------------------------
     if (S.eyeSize > 0.001) {
-      const r = SL.clamp(ringAt(0.14), 1, rings - 1);
+      const r = SL.clamp(ringAt(S.eyePosition || 0.14), 1, rings - 1);
       const eyeRadius = length * S.eyeSize;
       for (const side of [1, -1]) {
-        Geo.sphere(body, side * halfWidths[r] * 0.75, halfHeights[r] * 0.45, spine[r].z,
-          eyeRadius, 7, species.eyeColor);
+        const ex = side * halfWidths[r] * 0.75;
+        const ey = halfHeights[r] * (S.eyeHeight !== undefined ? S.eyeHeight : 0.45);
+
+        // A pale ring behind the pupil, so an eye reads at a distance instead
+        // of vanishing into a dark body.
+        if (S.eyeRing) {
+          Geo.sphere(body, ex * 0.97, ey, spine[r].z, eyeRadius * 1.45, 7,
+            new THREE.Color(0.92, 0.90, 0.84));
+        }
+        Geo.sphere(body, ex, ey, spine[r].z, eyeRadius, 7, species.eyeColor);
+      }
+    }
+
+    // --- Mouth line: a dark seam along the jawline of a closed mouth ----------
+    if (S.mouthLine > 0.001) {
+      const mouthColor = species.backColor.clone().multiplyScalar(0.35);
+      const back = SL.clamp(ringAt(0.30), 1, rings - 1);
+      const front = SL.clamp(ringAt(0.04), 0, rings - 1);
+      for (const side of [1, -1]) {
+        Geo.quadPoly(body,
+          V(side * halfWidths[back] * 0.92, -halfHeights[back] * 0.1, spine[back].z),
+          V(side * halfWidths[front] * 0.92, -halfHeights[front] * 0.1, spine[front].z),
+          V(side * halfWidths[front] * 0.90, -halfHeights[front] * 0.1 - length * S.mouthLine, spine[front].z),
+          V(side * halfWidths[back] * 0.90, -halfHeights[back] * 0.1 - length * S.mouthLine, spine[back].z),
+          mouthColor, true);
       }
     }
 
@@ -242,26 +265,67 @@
       const halfW = halfWidths[r] * 0.85;
       const jawColor = species.backColor.clone().multiplyScalar(0.6);
 
-      // A wedge running forward from the hinge.
-      Geo.quadPoly(jawMesh,
-        V(-halfW, 0, 0), V(halfW, 0, 0),
-        V(halfW * 0.35, -jawLen * 0.12, jawLen), V(-halfW * 0.35, -jawLen * 0.12, jawLen),
-        jawColor, true);
+      if (S.jawTeeth === false) {
+        // A filter feeder's jaw is a solid, rounded scoop rather than a thin
+        // toothed wedge - built as its own little loft so it has volume and
+        // reads as part of the animal instead of a plank hung off it.
+        const jawSpine = [];
+        const jawWidths = [];
+        const jawHeights = [];
+        const jawColors = [];
+        const jawRings = 6;
 
-      // Teeth along both edges.
-      const toothColor = new THREE.Color(0.92, 0.90, 0.82);
-      const teeth = 6;
-      for (let i = 0; i < teeth; i++) {
-        const t = i / (teeth - 1);
-        const z = SL.lerp(jawLen * 0.9, jawLen * 0.1, t);
-        const w = SL.lerp(halfW * 0.4, halfW * 0.9, t);
-        const len = jawLen * 0.22 * SL.lerp(1, 0.6, t);
-        for (const side of [1, -1]) {
-          Geo.fin(jawMesh,
-            V(side * w, 0, z - len * 0.3),
-            V(side * w, 0, z + len * 0.3),
-            V(side * w * 0.9, len, z),
-            toothColor);
+        for (let i = 0; i < jawRings; i++) {
+          const t = i / (jawRings - 1);
+          jawSpine.push(V(0, 0, t * jawLen));
+          jawWidths.push(halfW * SL.lerp(1, 0.45, t * t));
+          jawHeights.push(jawLen * SL.lerp(0.16, 0.07, t));
+          jawColors.push(jawColor.clone().multiplyScalar(SL.lerp(1, 0.85, t)));
+        }
+
+        Geo.loft(jawMesh, jawSpine, jawWidths, jawHeights, jawColors, 8, 2.2,
+          species.bellyColor, 0.5);
+
+        // Baleen: short plates hanging inside the mouth, not off its edges.
+        const plates = 11;
+        const plateColor = new THREE.Color(0.14, 0.13, 0.12);
+        for (let i = 0; i < plates; i++) {
+          const t = i / (plates - 1);
+          const z = SL.lerp(jawLen * 0.85, jawLen * 0.15, t);
+          const w = halfW * SL.lerp(0.42, 0.88, t) * 0.82;
+          const drop = jawLen * 0.075;
+          const thickness = jawLen * 0.012;
+
+          for (const side of [1, -1]) {
+            Geo.quadPoly(jawMesh,
+              V(side * w, jawLen * 0.05, z - thickness),
+              V(side * w, jawLen * 0.05, z + thickness),
+              V(side * w * 0.9, jawLen * 0.05 + drop, z + thickness),
+              V(side * w * 0.9, jawLen * 0.05 + drop, z - thickness),
+              plateColor, true);
+          }
+        }
+      } else {
+        // A predator's jaw: a thin wedge running forward, lined with teeth.
+        Geo.quadPoly(jawMesh,
+          V(-halfW, 0, 0), V(halfW, 0, 0),
+          V(halfW * 0.35, -jawLen * 0.12, jawLen), V(-halfW * 0.35, -jawLen * 0.12, jawLen),
+          jawColor, true);
+
+        const toothColor = new THREE.Color(0.92, 0.90, 0.82);
+        const teeth = 6;
+        for (let i = 0; i < teeth; i++) {
+          const t = i / (teeth - 1);
+          const z = SL.lerp(jawLen * 0.9, jawLen * 0.1, t);
+          const w = SL.lerp(halfW * 0.4, halfW * 0.9, t);
+          const len = jawLen * 0.22 * SL.lerp(1, 0.6, t);
+          for (const side of [1, -1]) {
+            Geo.fin(jawMesh,
+              V(side * w, 0, z - len * 0.3),
+              V(side * w, 0, z + len * 0.3),
+              V(side * w * 0.9, len, z),
+              toothColor);
+          }
         }
       }
     }

@@ -251,7 +251,8 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Stalker Leviathan** — 8.4 m and 900 HP, the king. It sits on a pile of
   scrap its subjects drag out to it, and **will not touch you unless you touch
   it first**. Then it hits for 34.
-* **Glasswhale Leviathan** — 15 m, 2,600 HP, and the only thing that eats stalkers. It
+* **Glasswhale Leviathan** — 15 m, 2,600 HP, with a broad baleen mouth that
+  opens when it feeds and small dark eyes set behind pale rings. 15 m, and the only thing that eats stalkers. It
   swallows them whole and has **no interest in a diver at all** — it cannot hurt
   you, at any range, ever.
 

@@ -14,10 +14,19 @@
   const _right = new THREE.Vector3();
   const _tmp = new THREE.Vector3();
   const _toTarget = new THREE.Vector3();
+  const _axis = new THREE.Vector3();
+  const _swingA = new THREE.Vector3();
+  const _swingB = new THREE.Vector3();
+  const _bodyA = new THREE.Vector3();
+  const _bodyB = new THREE.Vector3();
+  const _d1 = new THREE.Vector3();
+  const _d2 = new THREE.Vector3();
+  const _r = new THREE.Vector3();
+  const _c1 = new THREE.Vector3();
+  const _c2 = new THREE.Vector3();
 
-  // Base knife stats. These live on the player rather than as constants because
-  // the fabricator upgrades them in place.
-  const KNIFE_ARC = Math.cos(THREE.MathUtils.degToRad(45));
+  // Base knife stats live on the player rather than as constants, because the
+  // fabricator upgrades them in place.
 
   /** The knife mesh, built from the same primitives as everything else. */
   function buildKnife() {
@@ -44,6 +53,57 @@
 
     mesh.computeNormals();
     return mesh.toGeometry();
+  }
+
+  /** Shortest distance from a point to a segment. */
+  function pointToSegment(point, a, bEnd) {
+    _d1.subVectors(bEnd, a);
+    const lengthSq = _d1.lengthSq();
+    const t = lengthSq > 1e-9
+      ? SL.clamp(_r.subVectors(point, a).dot(_d1) / lengthSq, 0, 1)
+      : 0;
+    return _c1.copy(a).addScaledVector(_d1, t).distanceTo(point);
+  }
+
+  /**
+   * Shortest distance between two segments (Ericson's closest-point routine).
+   * Used to ask whether a knife swing passed close enough to a body.
+   */
+  function segmentDistance(p1, q1, p2, q2) {
+    _d1.subVectors(q1, p1);
+    _d2.subVectors(q2, p2);
+    _r.subVectors(p1, p2);
+
+    const a = _d1.lengthSq();
+    const e = _d2.lengthSq();
+    const f = _d2.dot(_r);
+
+    let s = 0;
+    let t = 0;
+
+    if (a < 1e-9 && e < 1e-9) return _r.length();
+
+    if (a < 1e-9) {
+      t = SL.clamp(f / e, 0, 1);
+    } else {
+      const c = _d1.dot(_r);
+      if (e < 1e-9) {
+        t = 0;
+        s = SL.clamp(-c / a, 0, 1);
+      } else {
+        const bb = _d1.dot(_d2);
+        const denom = a * e - bb * bb;
+        s = denom > 1e-9 ? SL.clamp((bb * f - c * e) / denom, 0, 1) : 0;
+        t = (bb * s + f) / e;
+
+        if (t < 0) { t = 0; s = SL.clamp(-c / a, 0, 1); }
+        else if (t > 1) { t = 1; s = SL.clamp((bb - c) / a, 0, 1); }
+      }
+    }
+
+    _c1.copy(p1).addScaledVector(_d1, s);
+    _c2.copy(p2).addScaledVector(_d2, t);
+    return _c1.distanceTo(_c2);
   }
 
   class Player {
@@ -205,22 +265,50 @@
     /** Fired partway through the swing, once per swing. */
     resolveStrike() {
       this.camera.getWorldDirection(_forward);
-      let best = null, bestDist = this.knifeReach;
 
-      const consider = (target, position) => {
-        _toTarget.subVectors(position, this.position);
-        const distance = _toTarget.length() - (target.radius || 0.1);
-        if (distance > bestDist || distance < -1) return;
-        // Must be roughly under the crosshair, not merely nearby.
-        if (_toTarget.normalize().dot(_forward) < KNIFE_ARC) return;
-        bestDist = Math.max(0, distance);
-        best = target;
+      // The swing is a short segment running forward from the diver.
+      const swingStart = _swingA.copy(this.position);
+      const swingEnd = _swingB.copy(this.position).addScaledVector(_forward, this.knifeReach);
+
+      let best = null;
+      let bestDist = Infinity;
+
+      const take = (target, distance, slack) => {
+        if (distance > (target.radius || 0.1) + slack) return;
+        if (distance < bestDist) { bestDist = distance; best = target; }
       };
 
-      for (const c of this.game.fish) if (!c.dead) consider(c, c.position);
-      for (const c of this.game.stalkers) if (!c.dead) consider(c, c.position);
-      for (const s of this.game.scrap) if (!s.dead && !s.isHeld) consider(s, s.position);
-      for (const c of this.game.crystals) if (!c.dead) consider(c, c.position);
+      /**
+       * A leviathan is eight to fifteen metres long, so treating a creature as
+       * a point at its pivot makes everything but its middle unhittable. Each
+       * creature is measured as the segment running nose to tail through its
+       * body, and the swing as the segment in front of the diver: if those two
+       * pass close enough, the blade connects - head, flank or tail.
+       */
+      const considerCreature = (creature) => {
+        creature.object.getWorldDirection(_axis);
+        const half = creature.bodyLength * 0.5;
+
+        _bodyA.copy(creature.position).addScaledVector(_axis, -half);
+        _bodyB.copy(creature.position).addScaledVector(_axis, half);
+
+        take(creature, segmentDistance(swingStart, swingEnd, _bodyA, _bodyB), 0.35);
+      };
+
+      /** Scrap and crystals are small enough to stay points. */
+      const considerPoint = (target) => {
+        take(target, pointToSegment(target.position, swingStart, swingEnd), 0.55);
+      };
+
+      for (const c of this.game.fish) if (!c.dead) considerCreature(c);
+      for (const c of this.game.stalkers) if (!c.dead) considerCreature(c);
+      // Both leviathans were missing from this list, which is why neither of
+      // them could be hurt at all.
+      for (const c of this.game.kings) if (!c.dead) considerCreature(c);
+      for (const c of this.game.whales) if (!c.dead) considerCreature(c);
+
+      for (const s of this.game.scrap) if (!s.dead && !s.isHeld) considerPoint(s);
+      for (const c of this.game.crystals) if (!c.dead) considerPoint(c);
 
       if (!best) { this.game.audio.swingMiss(); return; }
 
@@ -228,8 +316,10 @@
         best.hurt(this.knifeDamage, this);
         this.game.audio.hit();
         this.game.hud.showHitMarker(best.species.name, best.dead);
-        // A stabbed stalker turns on you rather than shrugging it off.
-        if (best instanceof SL.Stalker && !best.dead) best.provoke(this);
+
+        // Anything that can be provoked turns on whoever stabbed it. The whale
+        // has no such response, and is meant not to.
+        if (typeof best.provoke === 'function' && !best.dead) best.provoke(this);
       } else if (best instanceof SL.Crystal) {
         const broken = best.bite(this.knifeDamage);
         this.game.hud.showHitMarker(broken ? 'Crystal broken' : 'Crystal', broken);
@@ -237,27 +327,6 @@
         best.bite(this.knifeDamage, _forward);
         this.game.audio.metalBite(0);
         this.game.hud.showHitMarker('Scrap Metal', false);
-      }
-    }
-
-    /** Pick up the nearest scrap, or throw what we are holding. */
-    interact() {
-      if (this.dead) return;
-
-      if (this.carriedScrap) {
-        this.camera.getWorldDirection(_forward);
-        _tmp.copy(_forward).multiplyScalar(9).add(_right.set(0, 1.2, 0));
-        this.carriedScrap.drop(_tmp.clone());
-        this.carriedScrap = null;
-        this.game.audio.throwScrap();
-        return;
-      }
-
-      const nearby = SL.Scrap.findNearest(this.game, this.position, 3.2);
-      if (nearby) {
-        nearby.carriedBy(this, this.carryPoint, new THREE.Vector3(0, 0, 0));
-        this.carriedScrap = nearby;
-        this.game.audio.pickUp();
       }
     }
 
@@ -439,6 +508,8 @@
 
       for (const c of this.game.fish) if (!c.dead) consider(c.species.name, c.position, 14);
       for (const c of this.game.stalkers) if (!c.dead) consider(c.species.name, c.position, 22);
+      for (const c of this.game.kings) if (!c.dead) consider(c.species.name, c.position, 40);
+      for (const c of this.game.whales) if (!c.dead) consider(c.species.name, c.position, 60);
       for (const c of this.game.crystals) {
         if (!c.dead) consider('Crystal   [knife] for quartz', c.position, 12);
       }

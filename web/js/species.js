@@ -35,6 +35,7 @@
       dorsalFin: 0.18, ventralFin: 0, sideFin: 0.12,
       eyeSize: 0.05, stripes: 0, backSpikes: 0, jawLength: 0,
       antennae: 0, legPairs: 0,
+      eyePosition: 0.14, eyeHeight: 0.45, eyeRing: false, mouthLine: 0, jawTeeth: true,
       spineSegments: 14, radialSegments: 10
     }, overrides.shape) });
   }
@@ -337,7 +338,8 @@
       schoolSize: 1, groups: 0, altitude: 8, wagRate: 1.4,
       shape: { length: 8.4, height: 0.125, width: 0.10, bellyPosition: 0.20, noseSharpness: 0.22,
                crossSection: 2.4, tailHeight: 0.26, tailSweep: 0.30, tailFork: 0.3,
-               dorsalFin: 0.13, ventralFin: 0.07, sideFin: 0.13, eyeSize: 0.018,
+               dorsalFin: 0.13, ventralFin: 0.07, sideFin: 0.13,
+               eyeSize: 0.020, eyeRing: true, mouthLine: 0.006,
                jawLength: 0.20, backSpikes: 12, spineSegments: 24, radialSegments: 11 }
     }),
 
@@ -355,7 +357,11 @@
       schoolSize: 1, groups: 0, altitude: 16, wagRate: 0.8,
       shape: { length: 15, height: 0.19, width: 0.17, bellyPosition: 0.30, noseSharpness: 0.10,
                crossSection: 2.2, tailHeight: 0.26, tailSweep: 0.24, tailFork: 0.55,
-               dorsalFin: 0.07, ventralFin: 0.04, sideFin: 0.16, eyeSize: 0.012,
+               dorsalFin: 0.07, ventralFin: 0.04, sideFin: 0.16,
+               // A face: small dark eyes set low and back behind a pale ring,
+               // and a broad baleen mouth that opens when it feeds.
+               eyeSize: 0.016, eyePosition: 0.19, eyeHeight: 0.05, eyeRing: true,
+               mouthLine: 0.012, jawLength: 0.17, jawTeeth: false,
                spineSegments: 26, radialSegments: 12 }
     })
   ];
