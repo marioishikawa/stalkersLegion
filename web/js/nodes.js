@@ -405,6 +405,97 @@
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Nests
+  // ---------------------------------------------------------------------------
+  //
+  // Not every fish builds one. The ones that do dig a shallow scrape in the
+  // floor and leave a clutch in it, and the school that owns the nest keeps its
+  // territory on top of it rather than wandering - so a nest is a reliable
+  // place to find that species, which is the point of them.
+  //
+  // The eggs are scenery you can cut, and cutting them does nothing good.
+
+  class Nest {
+    constructor(game, species, x, z, seed) {
+      SL.setSeed(seed);
+
+      this.game = game;
+      this.species = species;
+      this.dead = false;
+      this.eggsLeft = SL.randInt(4, 7);
+
+      const floor = SL.Biomes.floorHeightAt(x, z);
+      this.radius = SL.randRange(0.9, 1.4);
+
+      this.object = new THREE.Group();
+      this.object.position.set(x, floor, z);
+      this.object.rotation.y = SL.random() * Math.PI * 2;
+
+      const mesh = new SL.MeshData();
+
+      // The scrape: a low ring of pushed-up sand, tinted from the floor it is
+      // dug out of so it belongs to whatever biome it is in.
+      const sand = SL.Biomes.floorColorAt(x, z).clone()
+        .lerp(new THREE.Color(1, 0.98, 0.90), 0.55);
+      const rimCount = 14;
+      for (let i = 0; i < rimCount; i++) {
+        const a = (i / rimCount) * Math.PI * 2 + SL.randRange(-0.1, 0.1);
+        const r = this.radius * SL.randRange(0.94, 1.06);
+        SL.Geo.sphere(mesh,
+          Math.cos(a) * r, -0.16, Math.sin(a) * r,
+          this.radius * SL.randRange(0.15, 0.21), 6, sand);
+      }
+
+      // The clutch, coloured off the parent so you can tell whose it is.
+      const shell = species.bellyColor.clone().lerp(new THREE.Color(1, 1, 1), 0.35);
+      this.eggs = [];
+      for (let i = 0; i < this.eggsLeft; i++) {
+        const a = SL.random() * Math.PI * 2;
+        const d = Math.sqrt(SL.random()) * this.radius * 0.5;
+        SL.Geo.sphere(mesh, Math.cos(a) * d, 0.10, Math.sin(a) * d,
+          SL.randRange(0.10, 0.16), 7, shell);
+      }
+
+      mesh.computeNormals();
+      this.mesh = new THREE.Mesh(mesh.toGeometry(),
+        species.glow > 0.5 ? game.materials.glow : game.materials.surface);
+      this.object.add(this.mesh);
+
+      game.addToWorld(this.object);
+    }
+
+    /** Knifed. There is nothing in it for you, and the parents notice. */
+    bite() {
+      if (this.dead) return;
+      this.eggsLeft--;
+      this.game.audio.metalBite(this.game.distanceToPlayer(this.object.position));
+
+      // Everything of that species nearby bolts.
+      for (const fish of this.game.fish) {
+        if (fish.species !== this.species || fish.dead) continue;
+        if (fish.position.distanceToSquared(this.object.position) < 900) {
+          fish.startle(this.object.position, 8);
+        }
+      }
+
+      if (this.eggsLeft <= 0) {
+        this.dead = true;
+        if (this.object.parent) this.object.parent.remove(this.object);
+        const i = this.game.nests.indexOf(this);
+        if (i >= 0) this.game.nests.splice(i, 1);
+        this.game.hud.toast('You wrecked a nest');
+      } else {
+        this.mesh.scale.setScalar(0.94 + 0.06 * (this.eggsLeft / 7));
+      }
+    }
+
+    get position() { return this.object.position; }
+
+    update() {}
+  }
+
+  SL.Nest = Nest;
   SL.Bubble = Bubble;
   SL.Vine = Vine;
 })(window.SL);

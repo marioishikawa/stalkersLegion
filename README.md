@@ -1,9 +1,9 @@
 # Stalkers Legion
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
-surface with a survival knife and ninety seconds of air. Below you are ten
-biomes, thirty-two species, four leviathans, and a kelp forest full of stalkers
-— long, armoured predators with a fixation on scrap metal.
+surface with a survival knife and ninety seconds of air. Below you are eleven
+biomes, thirty-nine species, four leviathans, one island, and a kelp forest
+full of stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
 
@@ -179,9 +179,13 @@ longer just distance from the middle:
 * a **submarine canyon** that wanders across the whole map and bites into the
   shelf, putting the deepest water in the game within 90 m of home;
 * a **basin** gouged below the abyssal plain, where the king lives;
-* a **far bank**, a plateau rising 64 m out of the abyss at the very edge of the
+* a **far bank**, a plateau rising 78 m out of the abyss near the edge of the
   map, carrying the only kelp forest that is not on the shelf — and the
-  leviathan that holds it.
+  leviathan that holds it;
+* **the islet**, a seamount that did not stop at the surface. A sand cone
+  standing twenty-odd metres out of the water on a broad reef flat, on the far
+  side of the map from the far forest. It is the only dry ground in the game,
+  and something lives on it.
 
 Biomes then follow from what the floor *is* at a point — its depth, whether it
 sits on a seamount, whether it lies in the canyon — rather than from how far out
@@ -190,22 +194,48 @@ even past 120 m.
 
 | Biome | Where it occurs | Share of the floor |
 |---|---|---|
-| **Safe Shallows** | The shelf above ~6 m | ~6% |
-| **Kelp Forest** | The shelf, 6–27 m, where the ground is right for it | ~7% |
-| **Grassy Plateau** | Open shelf, 17–38 m | ~4% |
-| **Coral Seamount** | Sunlit seamount tops, wherever they rise | ~7% |
-| **Boulder Slope** | Shelf break, seamount flanks, the far bank's sides | ~12% |
-| **Crystal Caverns** | Mineral-rich deep floor, 38–76 m | ~13% |
-| **Deep Trench** | Inside the canyon | ~6% |
-| **King's Basin** | The gouged basin | ~2% |
-| **Kelper's Reach** | The sunlit crown of the far bank | ~1.5% |
-| **Abyssal Plain** | Everything below 76 m | ~42% |
+| **Safe Shallows** | The shelf above ~6 m | ~3% |
+| **Kelp Forest** | The shelf, 6–27 m, where the ground is right for it | ~8% |
+| **Grassy Plateau** | Open shelf, 17–38 m | ~3% |
+| **Coral Seamount** | Sunlit seamount tops, wherever they rise | ~6% |
+| **Boulder Slope** | Shelf break, seamount flanks, the far bank's sides | ~14% |
+| **Crystal Caverns** | Mineral-rich deep floor, 38–76 m | ~8% |
+| **Deep Trench** | Inside the canyon | ~4% |
+| **King's Basin** | The gouged basin | ~1% |
+| **Kelper's Reach** | The sunlit crown of the far bank | ~1% |
+| **The Islet** | The island and its reef flat | ~1% |
+| **Abyssal Plain** | Everything below 76 m | ~51% |
 
 Shares move with the seed, since the features are placed from it.
 
-The world is **800 m across**, and the four leviathans are spread around it —
-Kelper's Reach sits out near the rim, roughly 300 m from the surface you start
-on, which is several tanks of air away.
+The world is **1,690 m across**. The islet is about 545 m out and the far
+forest about 605 m, which is a serious swim at 4.2 m/s on ninety seconds of
+air — the fabricator exists to close that gap.
+
+### How the floor is built at that size
+
+One grid fine enough for the shelf, stretched over the whole map, is 630,000
+vertices and stalls the dive. So the sea floor is two grids: **2.2 m cells**
+over the 845 m you actually swim in, and **6.6 m cells** over the abyss you
+cross. Coarse cells are exactly three fine cells wide and the ring starts on a
+fine tile boundary, so the grids share vertices along the seam instead of
+tearing. It builds in about a second and a half on a real machine.
+
+### How many fish
+
+Population used to be a **share** of the map, which is why the ocean emptied
+out every single time the world got wider: the same fraction of four times the
+area meant the same schools spread four times as thin. It is now **absolute** —
+square metres of sea floor per unit of population — so a biome that covers
+twice the ground gets twice the fish, and widening the map adds ocean without
+diluting it. Biomes that should defy their size say so: the abyssal plain is
+scaled *down* (it is meant to feel like crossing nothing), the trench, the far
+forest, the basin and the islet all scaled *up*.
+
+A world carries roughly 5,400 fish, of which 12–40 are inside the 55 m you can
+see at any moment, and 90–130 over the islet's reef. Stepping all of them costs
+about 2.3 ms a frame; everything past the fog is neither drawn nor stepped at
+full rate.
 
 ## The databank
 
@@ -285,6 +315,22 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   gear or raw materials. Kill the one that robbed you and the item comes
   straight back; let it reach the forest and it is gone. The leviathan itself
   only bites what comes at it, for 24.
+* **Bubble Clown** — orange, banded, on the reef, and it shoots bubbles. A puff
+  every few seconds normally; startled, it empties itself in a burst and bolts.
+  Completely harmless. The bubbles rise, swell as the pressure drops, wobble on
+  their own phase and pop at the surface.
+* **Walkingcarni** — lives on the islet, and is the only animal in the game that
+  is not swimming. Four legs, a long jaw, and it takes its height from the
+  ground rather than integrating against the sea floor like everything else, so
+  it walks the island and wades the shallows. Its appetite is tiny: a fish every
+  few minutes out of the reef flat, and the rest of the time it does nothing in
+  particular. It has no opinion about divers until one cuts it — and it cannot
+  follow you into deep water, which is the whole defence against it.
+* **Snowfleck / Ghost Bell** — the open abyss: a glowing swarm that hangs in the
+  dark, and a slow pale bell that pulses rather than swims.
+* **Cobblejaw / Trench Dart / Weaverfish** — the boulder slope, the canyon and
+  the far forest respectively. Squat and rubble-coloured, mirror-sided and very
+  fast, and flat enough to vanish between the fronds.
 * **Bonded Stalker** — catalogue every fish in the databank and one of them
   bonds to you. It keeps station off your shoulder, goes after anything hunting
   you, and cannot hurt you whatever you do. Killed, it returns 10 seconds later.
@@ -302,6 +348,19 @@ fighting, it is a thing happening in the ocean rather than a fight you are in.
 
 None of them have skeletons. The body yaws gently and the tail wags a beat
 behind it, which costs almost nothing and reads as swimming.
+
+## Nests
+
+Six of the thirty-nine species build them — Bladefish, Grass Nibbler, Stone
+Gulper, Cobblejaw, Weaverfish and the Bubble Clown. A nest is a scrape in the
+floor with a clutch in it, tinted from the sea floor it is dug out of and the
+parent it belongs to.
+
+They are placed **before** the schools are, and a nesting species puts most of
+its schools on its own clutches rather than on arbitrary points. That is what
+makes a nest worth finding instead of a decoration: it is a reliable place to
+find that species. Cutting one takes an egg and scatters every parent within
+thirty metres, and there is nothing in it for you.
 
 ## Two ideas worth knowing
 
@@ -350,9 +409,14 @@ python3 web/tools/build-artifact.py
   rippled surface plane, not a water shader.
 * **Health regenerates slowly** (2.5/s after 18 seconds without damage). With no
   medkits, the alternative was a one-way trip.
-* **There are three cheat codes**, typed at any point while diving:
-  * `sus` — every fabricator recipe, 99 of each material, and infinite health
-    and air.
+* **There are four cheat codes**, typed at any point while diving:
+  * `sus` — every fabricator recipe, 99 of each material, infinite health and
+    air, and a 9.4 m/s cruise with a 22.6 m/s sprint, because the map is
+    1,690 m across and the point of this one is going to look at it.
+  * `candle` — a hacked candle in the off hand that **only catches in the Deep
+    Trench**. That is the thickest water in the game (0.070 fog against the
+    shallows' 0.012); the candle halves it there and warms what it lights, and
+    gutters out on the way over the lip. Anywhere else you carry an unlit stub.
   * `sandwich` — drags the king and the whale together, starts a clash, and
     parks you at a ringside seat to watch it.
   * `tame` — the bonded stalker now, without filling the databank first.

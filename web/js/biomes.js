@@ -78,6 +78,8 @@
     },
     {
       id: 'trench', name: 'Deep Trench',
+      // Narrow, so it loses out on area - but you are down there to see things.
+      populationBoost: 2.2,
       floorColor: new THREE.Color(0.12, 0.12, 0.15),
       waterColor: new THREE.Color(0.012, 0.035, 0.075),
       fogDensity: 0.070,
@@ -86,6 +88,8 @@
     },
     {
       id: 'kings', name: "King's Basin",
+      // Small, and the king's court should look like a court.
+      populationBoost: 2.4,
       floorColor: new THREE.Color(0.20, 0.17, 0.12),
       waterColor: new THREE.Color(0.05, 0.04, 0.03),
       fogDensity: 0.050,
@@ -96,6 +100,8 @@
       // A drowned plateau a long way offshore, shallow enough for kelp. The
       // only forest out here, and it belongs to something.
       id: 'farkelp', name: "Kelper's Reach",
+      // A small forest, but it is a long swim and it should be worth it.
+      populationBoost: 3,
       floorColor: new THREE.Color(0.26, 0.34, 0.20),
       waterColor: new THREE.Color(0.05, 0.22, 0.20),
       fogDensity: 0.030,
@@ -104,11 +110,28 @@
     },
     {
       id: 'abyss', name: 'Abyssal Plain',
+      // Half the sea floor, and it is supposed to feel like crossing nothing.
+      // Without this it ends up busier than the kelp forest purely on size.
+      populationBoost: 0.4,
       floorColor: new THREE.Color(0.10, 0.14, 0.18),
       waterColor: new THREE.Color(0.02, 0.07, 0.12),
       fogDensity: 0.030,
       scrapDensity: 0.15, stalkerDensity: 0,
       flora: ['glowPod', 'boulder'], floraDensity: 0.5
+    },
+
+    {
+      // The one piece of ground in the game that is out of the water, and the
+      // reef flat around it. A long way out, and absolutely stuffed with fish,
+      // because something up there is living off them.
+      id: 'islet', name: 'The Islet',
+      floorColor: new THREE.Color(0.88, 0.82, 0.62),
+      waterColor: new THREE.Color(0.16, 0.62, 0.66),
+      fogDensity: 0.010,
+      // A small place that has to feed something. Stacked deep on purpose.
+      populationBoost: 3.5,
+      scrapDensity: 0.25, stalkerDensity: 0,
+      flora: ['coralFan', 'seagrass', 'coralTube', 'boulder'], floraDensity: 1.6
     }
   ];
 
@@ -121,49 +144,92 @@
   let kingBasin = null;
   let whaleGround = null;
   let farBank = null;
+  let islet = null;
 
   function placeFeatures() {
     seamounts = [];
 
-    // Nine seamounts out past the shelf break, scattered all the way to the
-    // rim. There were five when the map was a good deal smaller; left at five,
-    // everything past the slope was one unbroken plain.
-    for (let i = 0; i < 9; i++) {
+    // Eighteen seamounts out past the shelf break, scattered to the rim. The
+    // count tracks the map: every time the world doubles, an unbroken abyssal
+    // plain is what you get if this does not.
+    for (let i = 0; i < 26; i++) {
       const angle = SL.hash(i, 11, SEED) * Math.PI * 2;
-      const radius = SL.lerp(120, 345, SL.hash(i, 22, SEED));
+      const radius = SL.lerp(230, 745, SL.hash(i, 22, SEED));
       seamounts.push({
         x: Math.cos(angle) * radius,
         z: Math.sin(angle) * radius,
-        // Three of them are tall enough to break into sunlight.
-        rise: SL.lerp(34, 62, SL.hash(i, 33, SEED)) * (i < 3 ? 1.25 : 0.85),
-        width: SL.lerp(30, 54, SL.hash(i, 44, SEED))
+        // A third of them are tall enough to break into sunlight.
+        rise: SL.lerp(34, 66, SL.hash(i, 33, SEED)) * (i % 3 === 0 ? 1.3 : 0.85),
+        width: SL.lerp(34, 62, SL.hash(i, 44, SEED))
       });
     }
 
     // The king sits in a basin gouged out beyond the trench.
     const kingAngle = SL.hash(7, 77, SEED) * Math.PI * 2;
     kingBasin = {
-      x: Math.cos(kingAngle) * 248,
-      z: Math.sin(kingAngle) * 248,
-      radius: 52
+      x: Math.cos(kingAngle) * 430,
+      z: Math.sin(kingAngle) * 430,
+      radius: 72
     };
 
     // The whale works open water on the far side of the map from the king.
     whaleGround = {
-      x: Math.cos(kingAngle + Math.PI) * 235,
-      z: Math.sin(kingAngle + Math.PI) * 235,
-      radius: 72
+      x: Math.cos(kingAngle + Math.PI) * 400,
+      z: Math.sin(kingAngle + Math.PI) * 400,
+      radius: 100
     };
 
     // The far bank: a plateau rising out of the abyss, a long swim from
     // anywhere, carrying the only kelp forest outside the shelf.
     const bankAngle = SL.hash(13, 131, SEED) * Math.PI * 2;
     farBank = {
-      x: Math.cos(bankAngle) * 322,
-      z: Math.sin(bankAngle) * 322,
-      radius: 78,
-      rise: 64
+      x: Math.cos(bankAngle) * 605,
+      z: Math.sin(bankAngle) * 605,
+      radius: 92,
+      rise: 78
     };
+
+    // The islet: a seamount that did not stop at the surface. Put on the far
+    // side of the map from the far forest, so the two long swims are two
+    // different swims.
+    const isletAngle = bankAngle + Math.PI * SL.lerp(0.62, 1.38, SL.hash(17, 171, SEED));
+    islet = {
+      x: Math.cos(isletAngle) * 545,
+      z: Math.sin(isletAngle) * 545,
+      // The reef flat it stands on, and the peak that comes out of it.
+      flatRadius: 108,
+      flatRise: 82,
+      peakRadius: 26,
+      peakRise: 30
+    };
+  }
+
+  /**
+   * The islet, in two parts: a broad reef flat lifting the abyss into sunlight,
+   * and a narrow peak on top of it that carries on past the waterline.
+   */
+  function isletRise(x, z) {
+    if (!islet) return 0;
+    const dx = x - islet.x;
+    const dz = z - islet.z;
+    const d = Math.sqrt(dx * dx + dz * dz);
+
+    let rise = 0;
+    const flat = d / islet.flatRadius;
+    if (flat < 2.4) rise += islet.flatRise * Math.exp(-flat * flat * 1.2);
+
+    const peak = d / islet.peakRadius;
+    if (peak < 3) rise += islet.peakRise * Math.exp(-peak * peak * 1.1);
+
+    return rise;
+  }
+
+  /** How far above the waterline the islet reaches at a point, 0 elsewhere. */
+  function isletHead(x, z) {
+    if (!islet) return 0;
+    const d = Math.hypot(x - islet.x, z - islet.z) / islet.peakRadius;
+    if (d > 3) return 0;
+    return islet.peakRise * Math.exp(-d * d * 1.1);
   }
 
   /** How far the far bank lifts the floor at a point, in metres. */
@@ -177,9 +243,9 @@
   /** How far into the trench a point lies, 0 outside to 1 at the axis. */
   function trenchInfluence(x, z) {
     // The trench wanders across the whole map rather than ringing the middle.
-    const axis = Math.sin(x * 0.0085) * 110 + Math.sin(x * 0.023) * 22;
+    const axis = Math.sin(x * 0.0055) * 190 + Math.sin(x * 0.017) * 34;
     const distance = Math.abs(z - axis);
-    const halfWidth = 40 + Math.sin(x * 0.015) * 11;
+    const halfWidth = 52 + Math.sin(x * 0.011) * 15;
 
     // A submarine canyon: it bites well into the shelf rather than beginning
     // out in deep water, so there is deep water close to home and shallow water
@@ -202,26 +268,29 @@
 
   /** The underlying continental margin: shelf, shelf break, abyssal slope. */
   function marginProfile(r) {
-    if (r < 140) {
+    if (r < 260) {
       // The shelf, sloping gently away from the shallows. It is wide, because
       // the shelf is where the game is - kelp, scrap and stalkers all live here.
-      return -3.5 - Math.pow(r / 140, 1.7) * 13;
+      return -3.5 - Math.pow(r / 260, 1.7) * 13;
     }
-    if (r < 250) {
+    if (r < 470) {
       // The shelf break: the floor falls away fast.
-      return SL.lerp(-16.5, -66, SL.smoothstep((r - 140) / 110));
+      return SL.lerp(-16.5, -66, SL.smoothstep((r - 260) / 210));
     }
-    // The abyssal slope beyond it, still descending, but slowly.
-    return -66 - (r - 250) * 0.06;
+    // The abyssal slope beyond it, still descending, but slowly - it has a
+    // third of a kilometre to do it in.
+    return -66 - (r - 470) * 0.03;
   }
 
   function floorHeightAt(x, z) {
     const r = Math.hypot(x, z);
     let y = marginProfile(r);
 
-    // Seamounts rise out of whatever is underneath them, and so does the bank.
+    // Seamounts rise out of whatever is underneath them, and so do the bank
+    // and the islet.
     y += seamountRise(x, z);
     y += bankRise(x, z);
+    y += isletRise(x, z);
 
     // The king's basin is gouged below the surrounding floor.
     if (kingBasin) {
@@ -238,7 +307,10 @@
     y += SL.fbm(x, z, 4, 0.032, 2.0, 0.5, SEED) * relief * 2.4;
     y += SL.fbm(x, z, 3, 0.21, 2.3, 0.45, SEED + 977) * relief * 0.7;
 
-    return Math.min(y, SL.WATER_LEVEL - 2.2);
+    // Everything is held under the surface - except the islet, whose peak is
+    // allowed through by exactly as much as it rises. Written as a lifted cap
+    // rather than a branch so the shoreline is smooth instead of stepped.
+    return Math.min(y, SL.WATER_LEVEL - 2.2 + isletHead(x, z));
   }
 
   /** Which biome the sea floor at this point belongs to. */
@@ -256,6 +328,9 @@
 
     // The trench is the trench regardless of how deep the floor around it is.
     if (trenchInfluence(x, z) > 0.45 && depth > 34) return byId.trench;
+
+    // The islet and its reef flat, which includes the dry part.
+    if (isletRise(x, z) > 14) return depth < 22 ? byId.islet : byId.boulders;
 
     // The far bank's shallows are kelp; its flanks are rubble.
     const bank = bankRise(x, z);
@@ -291,7 +366,7 @@
   // results. The same pass feeds the minimap, so the map you navigate by is
   // literally the map the world was populated from.
 
-  const INDEX_RESOLUTION = 150;
+  const INDEX_RESOLUTION = 220;
   let index = null;
 
   function buildIndex() {
@@ -354,7 +429,8 @@
     get kingBasin() { return kingBasin; },
     get whaleGround() { return whaleGround; },
     get farBank() { return farBank; },
-    bankRise,
+    get islet() { return islet; },
+    bankRise, isletRise, isletHead,
     trenchInfluence, seamountRise
   };
 })(window.SL);

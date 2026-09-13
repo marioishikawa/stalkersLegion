@@ -11,7 +11,7 @@ window.SL = window.SL || {};
   'use strict';
 
   SL.WATER_LEVEL = 0;      // y of the sea surface
-  SL.WORLD_RADIUS = 400;   // metres from the origin to the edge of the map
+  SL.WORLD_RADIUS = 800;   // metres from the origin to the edge of the map
 
   // --- Math -----------------------------------------------------------------
 
@@ -21,6 +21,17 @@ window.SL = window.SL || {};
 
   /** Frame-rate independent approach to a target. */
   SL.damp = (current, target, speed, dt) => SL.lerp(current, target, 1 - Math.exp(-speed * dt));
+
+  /**
+   * Damp towards an angle the short way round, so a heading crossing pi turns
+   * a few degrees rather than spinning all the way back through zero.
+   */
+  SL.dampAngle = (current, target, speed, dt) => {
+    let delta = (target - current) % (Math.PI * 2);
+    if (delta > Math.PI) delta -= Math.PI * 2;
+    if (delta < -Math.PI) delta += Math.PI * 2;
+    return current + delta * (1 - Math.exp(-speed * dt));
+  };
 
   /**
    * A seeded random stream (mulberry32). World generation draws from this so

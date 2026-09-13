@@ -423,9 +423,11 @@
       for (const c of this.game.puffers) if (!c.dead) considerCreature(c);
       for (const c of this.game.kelperLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.kelpers) if (!c.dead) considerCreature(c);
+      for (const c of this.game.carnis) if (!c.dead) considerCreature(c);
 
       for (const s of this.game.scrap) if (!s.dead && !s.isHeld) considerPoint(s);
       for (const c of this.game.crystals) if (!c.dead) considerPoint(c);
+      for (const n of this.game.nests) if (!n.dead) considerPoint(n);
 
       // A vine is a standing stalk, so it is measured along its own height.
       for (const v of this.game.vines) {
@@ -448,6 +450,10 @@
       } else if (best instanceof SL.Vine) {
         const cut = best.bite(this.knifeDamage);
         this.game.hud.showHitMarker(cut ? 'Vine cut' : 'Vine', cut);
+      } else if (best instanceof SL.Nest) {
+        const wrecked = best.eggsLeft <= 1;
+        best.bite();
+        this.game.hud.showHitMarker(wrecked ? 'Nest wrecked' : 'Egg', wrecked);
       } else if (best instanceof SL.Crystal) {
         const broken = best.bite(this.knifeDamage);
         this.game.hud.showHitMarker(broken ? 'Crystal broken' : 'Crystal', broken);
@@ -488,6 +494,7 @@
       for (const c of this.game.puffers) if (!c.dead) consider(c);
       for (const c of this.game.kelperLevs) if (!c.dead) consider(c);
       for (const c of this.game.kelpers) if (!c.dead) consider(c);
+      for (const c of this.game.carnis) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 
@@ -688,6 +695,10 @@
       for (const c of this.game.kelpers) {
         if (!c.dead) consider(c.stolen ? 'Kelper   carrying your gear' : c.species.name, c.position, 20);
       }
+      for (const c of this.game.carnis) if (!c.dead) consider(c.species.name, c.position, 30);
+      for (const n of this.game.nests) {
+        consider(n.species.name + ' nest', n.position, 10);
+      }
       for (const c of this.game.crystals) {
         if (!c.dead) consider('Crystal   [knife] for quartz', c.position, 12);
       }
@@ -814,6 +825,7 @@
       for (const c of this.game.puffers) resolve(c);
       for (const c of this.game.kelperLevs) resolve(c);
       for (const c of this.game.kelpers) resolve(c);
+      for (const c of this.game.carnis) resolve(c);
 
       this.pushOutOfVines();
     }

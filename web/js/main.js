@@ -32,6 +32,8 @@
       this.beacons = [];
       this.vines = [];
       this.bubbles = [];
+      this.nests = [];
+      this.carnis = [];
 
       // Paused covers the title card, the pause screen and the fabricator. The
       // world keeps moving so the ocean stays alive behind them, but the diver
@@ -123,6 +125,8 @@
       this.beacons.length = 0;
       this.vines.length = 0;
       this.bubbles.length = 0;
+      this.nests.length = 0;
+      this.carnis.length = 0;
 
       if (this.worldGroup) {
         this.worldGroup.traverse((node) => {
@@ -350,6 +354,13 @@
         const kelper = this.kelpers[i];
         kelper.object.visible = kelper.position.distanceToSquared(playerPos) < 4 * CULL_DISTANCE * CULL_DISTANCE;
         kelper.update(dt);
+      }
+
+      // The islander walks the one island in the world; there are never more
+      // than a couple and they are worth seeing from a long way off.
+      for (const carni of this.carnis) {
+        carni.object.visible = carni.position.distanceToSquared(playerPos) < 6 * CULL_DISTANCE * CULL_DISTANCE;
+        carni.update(dt);
       }
 
       // The pet is always beside you, so it is never culled.

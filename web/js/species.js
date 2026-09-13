@@ -34,7 +34,7 @@
       tailHeight: 0.35, tailSweep: 0.25, tailFork: 0.4,
       dorsalFin: 0.18, ventralFin: 0, sideFin: 0.12,
       eyeSize: 0.05, stripes: 0, backSpikes: 0, jawLength: 0,
-      antennae: 0, legPairs: 0,
+      antennae: 0, legPairs: 0, legScale: 0.11,
       eyePosition: 0.14, eyeHeight: 0.45, eyeRing: false, mouthLine: 0, jawTeeth: true,
       spineSegments: 14, radialSegments: 10
     }, overrides.shape) });
@@ -43,6 +43,7 @@
   const SPECIES = [
     // ------------------------------------------------------------- Safe Shallows
     fish('glimmerfin', 'Glimmerfin', 'shallows', 'torpedo', {
+      alsoIn: ['islet'],
       note: "Small, quick and mirror-bright. The first fish anyone sees.",
       // Small, quick, mirror-bright. The first fish you ever see.
       backColor: C(0.35, 0.72, 0.85), bellyColor: C(0.95, 0.96, 0.90), finColor: C(0.95, 0.78, 0.30),
@@ -50,6 +51,7 @@
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
     }),
     fish('bubblepeep', 'Bubblepeep', 'shallows', 'bulb', {
+      alsoIn: ['islet'],
       note: "Round, slow and comically wide-eyed. Bumps into things.",
       // Round, slow, comically wide-eyed. Easy knife practice.
       backColor: C(0.95, 0.55, 0.18), bellyColor: C(1.0, 0.92, 0.70), finColor: C(1.0, 0.80, 0.45),
@@ -60,6 +62,7 @@
 
     // -------------------------------------------------------------- Kelp Forest
     fish('bladefish', 'Bladefish', 'kelp', 'ribbon', {
+      nests: true,
       note: "Tall, flat and green. Turns edge-on and vanishes into the kelp.",
       // Tall, flat and green - hides edge-on between kelp stalks.
       backColor: C(0.16, 0.42, 0.14), bellyColor: C(0.72, 0.80, 0.45), finColor: C(0.28, 0.55, 0.20),
@@ -87,6 +90,7 @@
                tailHeight: 0.28, tailFork: 0.30, dorsalFin: 0.26, ventralFin: 0.24, sideFin: 0.13, stripes: 3 }
     }),
     fish('nibbler', 'Grass Nibbler', 'plateau', 'diamond', {
+      nests: true,
       note: "Angular grazer with hard shoulders, nosing through the grass.",
       // Angular grazer with hard shoulders; noses through the grass.
       backColor: C(0.45, 0.25, 0.62), bellyColor: C(0.90, 0.82, 0.95), finColor: C(0.62, 0.40, 0.80),
@@ -96,6 +100,7 @@
     }),
 
     fish('stingray', 'Stingray', 'plateau', 'disc', {
+      alsoIn: ['islet'],
       note: "All wing and whip tail, hugging the plateau grass. Harmless.",
       // Broad wings, a whip tail, and it hugs the grass. Harmless.
       backColor: C(0.36, 0.30, 0.22), bellyColor: C(0.90, 0.86, 0.76), finColor: C(0.44, 0.37, 0.27),
@@ -147,6 +152,7 @@
                spineSegments: 12, radialSegments: 8 }
     }),
     fish('embershrimp', 'Ember Shrimp', 'coral', 'shrimp', {
+      alsoIn: ['islet'],
       note: 'Banded red and cream, and it keeps to the coral it matches.',
       backColor: C(0.82, 0.22, 0.16), bellyColor: C(0.98, 0.88, 0.72), finColor: C(0.92, 0.46, 0.20),
       eyeColor: C(0.08, 0.05, 0.04), glow: 0.2,
@@ -160,6 +166,8 @@
 
     // ----------------------------------------------------------- Red Coral Reef
     fish('bubbleclown', 'Bubble Clown', 'coral', 'disc', {
+      alsoIn: ['islet'],
+      nests: true,
       note: 'Orange and banded, and it shoots bubbles. Nobody has worked out ' +
             'how. Startle one and it empties itself in a panic and bolts.',
       backColor: C(0.98, 0.44, 0.10), bellyColor: C(1.0, 0.96, 0.92), finColor: C(0.12, 0.11, 0.14),
@@ -177,6 +185,7 @@
                spineSegments: 14 }
     }),
     fish('emberfin', 'Emberfin', 'coral', 'diamond', {
+      alsoIn: ['islet'],
       note: "Hot-coloured reef fish with a deeply forked tail.",
       // Hot-coloured reef fish with a deep forked tail.
       backColor: C(0.85, 0.18, 0.10), bellyColor: C(1.0, 0.78, 0.40), finColor: C(1.0, 0.45, 0.08),
@@ -185,6 +194,7 @@
                tailHeight: 0.40, tailSweep: 0.30, tailFork: 0.80, dorsalFin: 0.24, ventralFin: 0.14, stripes: 5 }
     }),
     fish('boxfish', 'Coral Boxfish', 'coral', 'boxy', {
+      alsoIn: ['islet'],
       note: "A swimming brick. Slow, armoured and entirely unbothered.",
       // A swimming brick. Slow, armoured, unbothered.
       backColor: C(0.95, 0.82, 0.15), bellyColor: C(0.98, 0.95, 0.75), finColor: C(0.20, 0.18, 0.15),
@@ -207,6 +217,7 @@
 
     // ------------------------------------------------------------ Boulder Field
     fish('gulper', 'Stone Gulper', 'boulders', 'bulb', {
+      nests: true,
       note: "Heavy bottom-feeder with a huge round head and a spined back.",
       // Heavy bottom-feeder with a huge round head.
       backColor: C(0.30, 0.30, 0.33), bellyColor: C(0.70, 0.68, 0.60), finColor: C(0.42, 0.40, 0.38),
@@ -218,6 +229,7 @@
     }),
 
     fish('cobblejaw', 'Cobblejaw', 'boulders', 'boxy', {
+      nests: true,
       note: 'Squat and armoured, the colour of the rubble it grazes. Sits ' +
             'still often enough that you find them by moving, not by looking.',
       backColor: C(0.40, 0.38, 0.34), bellyColor: C(0.72, 0.70, 0.62), finColor: C(0.52, 0.46, 0.36),
@@ -419,6 +431,7 @@
 
     // The leviathan's servants: small, quick, and after your pockets.
     fish('weaverfish', 'Weaverfish', 'farkelp', 'diamond', {
+      nests: true,
       note: 'Hangs between the fronds of the far forest with its fins spread, ' +
             'and is almost impossible to pick out until it moves.',
       backColor: C(0.30, 0.44, 0.20), bellyColor: C(0.86, 0.88, 0.62), finColor: C(0.44, 0.58, 0.24),
@@ -428,6 +441,26 @@
                noseSharpness: 0.40, crossSection: 1.8, tailHeight: 0.30,
                tailSweep: 0.26, tailFork: 0.2, dorsalFin: 0.30, ventralFin: 0.26,
                sideFin: 0.12, eyeSize: 0.055, spineSegments: 14 }
+    }),
+    fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
+      diet: 'carnivore', groups: 0,
+      note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
+            'little appetite - it takes a fish or two a day out of the reef ' +
+            'flat and spends the rest of its time doing nothing in particular. ' +
+            'It has no interest in divers whatsoever, until one cuts it.',
+      backColor: C(0.46, 0.34, 0.20), bellyColor: C(0.84, 0.76, 0.56), finColor: C(0.32, 0.24, 0.14),
+      eyeColor: C(0.95, 0.72, 0.12), glow: 0.2,
+      maxHealth: 120, cruiseSpeed: 1.6, sprintSpeed: 5.2, turnRate: 2.0,
+      senseRadius: 26, biteDamage: 18, biteInterval: 2.6,
+      schoolSize: 1, altitude: 0.6, wagRate: 2.2,
+      drops: { tooth: [2, 4], titanium: [1, 2] },
+      shape: { length: 1.8, height: 0.24, width: 0.30, bellyPosition: 0.46,
+               noseSharpness: 0.34, crossSection: 4.6, tailHeight: 0.07,
+               tailSweep: 0.62, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.040, eyeRing: true, eyePosition: 0.11,
+               mouthLine: 0.014, jawLength: 0.22, backSpikes: 8,
+               legPairs: 2, legScale: 0.30,
+               spineSegments: 16, radialSegments: 10 }
     }),
     fish('kelper', 'Kelper', 'farkelp', 'arrow', {
       diet: 'carnivore', groups: 0,
@@ -536,9 +569,11 @@
     petStalker: byId.petstalker,
     kelperLeviathan: byId.kelperlev,
     kelper: byId.kelper,
+    walkingcarni: byId.walkingcarni,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(
-      (s) => s.biome === biomeId && s.diet !== 'carnivore' && s.diet !== 'whale')
+      (s) => (s.biome === biomeId || (s.alsoIn && s.alsoIn.indexOf(biomeId) >= 0))
+        && s.diet !== 'carnivore' && s.diet !== 'whale')
   };
 })(window.SL);

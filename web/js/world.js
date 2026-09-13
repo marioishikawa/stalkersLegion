@@ -8,45 +8,80 @@
 
   const { MeshData } = SL;
 
-  /** The sea floor, as tiles sampled from the analytic height field. */
+  const CELLS = 32;
+
+  /** Emits one square tile of sea floor, sampled from the height field. */
+  function buildTile(game, originX, originZ, cellSize) {
+    const mesh = new MeshData();
+    const verts = CELLS + 1;
+
+    for (let z = 0; z < verts; z++) {
+      for (let x = 0; x < verts; x++) {
+        // Vertices are in world space, so neighbouring tiles of the same
+        // resolution share exact edge heights and the floor has no seams.
+        const wx = originX + x * cellSize;
+        const wz = originZ + z * cellSize;
+        const color = SL.Biomes.floorColorAt(wx, wz);
+        mesh.vertex(wx, SL.Biomes.floorHeightAt(wx, wz), wz, 0, 1, 0, color);
+      }
+    }
+
+    for (let z = 0; z < CELLS; z++) {
+      for (let x = 0; x < CELLS; x++) {
+        const a = z * verts + x;
+        mesh.quad(a, a + verts, a + verts + 1, a + 1);
+      }
+    }
+
+    mesh.computeNormals();
+    game.addToWorld(new THREE.Mesh(mesh.toGeometry(), game.materials.surface));
+  }
+
+  /**
+   * The sea floor, in two resolutions.
+   *
+   * A single grid fine enough for the shelf, stretched over a 1,690 m map,
+   * is 630,000 vertices and takes long enough to build that the dive stalls on
+   * it. So the floor is a fine inner grid over the water you actually swim in
+   * and a coarse outer ring over the abyss you cross, which costs a third of
+   * that for the same extent.
+   *
+   * The coarse cells are exactly three fine cells wide and the ring starts on
+   * a fine tile boundary, so the two grids share vertices along the seam rather
+   * than tearing. What is left is T-junctions - two fine vertices between every
+   * pair of coarse ones - which are sub-metre and 420 m out in water whose fog
+   * hides anything past fifty.
+   */
   function buildTerrain(game) {
-    // 12 x 12 tiles of 32 cells at 2.2 m covers roughly 845 m across, holding
-    // the 400 m world radius with margin. Cells are a little coarser than they
-    // were on the smaller map, which is the trade for nearly four times the sea
-    // floor; tiles are frustum-culled, so only a fraction is ever drawn.
-    const TILES = 12;
-    const CELLS = 32;
-    const CELL_SIZE = 2.2;
-    const tileSize = CELLS * CELL_SIZE;
-    const half = tileSize * TILES * 0.5;
+    const FINE = 2.2;
+    const COARSE = FINE * 3;          // 6.6 m, so the grids line up
+    const FINE_TILES = 12;            // 12 x 12 x 32 x 2.2 m = 845 m across
+    const COARSE_TILES = 8;           // 8 x 8 x 32 x 6.6 m = 1,690 m across
 
-    for (let ty = 0; ty < TILES; ty++) {
-      for (let tx = 0; tx < TILES; tx++) {
-        const originX = -half + tx * tileSize;
-        const originZ = -half + ty * tileSize;
-        const mesh = new MeshData();
-        const verts = CELLS + 1;
+    const fineTile = CELLS * FINE;
+    const fineHalf = fineTile * FINE_TILES * 0.5;
 
-        for (let z = 0; z < verts; z++) {
-          for (let x = 0; x < verts; x++) {
-            // Vertices are in world space, so neighbouring tiles share exact
-            // edge heights and the floor has no visible seams.
-            const wx = originX + x * CELL_SIZE;
-            const wz = originZ + z * CELL_SIZE;
-            const color = SL.Biomes.floorColorAt(wx, wz);
-            mesh.vertex(wx, SL.Biomes.floorHeightAt(wx, wz), wz, 0, 1, 0, color);
-          }
-        }
+    const coarseTile = CELLS * COARSE;
+    const coarseHalf = coarseTile * COARSE_TILES * 0.5;
 
-        for (let z = 0; z < CELLS; z++) {
-          for (let x = 0; x < CELLS; x++) {
-            const a = z * verts + x;
-            mesh.quad(a, a + verts, a + verts + 1, a + 1);
-          }
-        }
+    // The coarse ring first, with the middle left out - the fine grid covers
+    // exactly the central four-by-four block of it.
+    for (let ty = 0; ty < COARSE_TILES; ty++) {
+      for (let tx = 0; tx < COARSE_TILES; tx++) {
+        const originX = -coarseHalf + tx * coarseTile;
+        const originZ = -coarseHalf + ty * coarseTile;
 
-        mesh.computeNormals();
-        game.addToWorld(new THREE.Mesh(mesh.toGeometry(), game.materials.surface));
+        const inside = originX >= -fineHalf && originX + coarseTile <= fineHalf
+          && originZ >= -fineHalf && originZ + coarseTile <= fineHalf;
+        if (inside) continue;
+
+        buildTile(game, originX, originZ, COARSE);
+      }
+    }
+
+    for (let ty = 0; ty < FINE_TILES; ty++) {
+      for (let tx = 0; tx < FINE_TILES; tx++) {
+        buildTile(game, -fineHalf + tx * fineTile, -fineHalf + ty * fineTile, FINE);
       }
     }
   }
@@ -209,15 +244,35 @@
   const POPULATION = 1.35;
 
   /**
-   * Biomes do not occupy tidy rings - a seamount reef may be a tenth the size
-   * of the abyssal plain - so populations are expressed as a density and
-   * multiplied by how much sea floor the biome actually covers in this world.
+   * The sea floor a biome covers, in square metres.
    *
-   * The ceiling exists so the one enormous biome does not swallow the whole
-   * budget; the floor so a small one still gets a few schools.
+   * This is deliberately absolute rather than a share of the map. It used to be
+   * a share, and that is why the ocean emptied out every single time the world
+   * got wider: a biome holding the same fraction of a map with four times the
+   * area got the same number of schools spread over four times the water. Now
+   * a biome that covers twice the ground gets twice the fish, and widening the
+   * map adds ocean without thinning it.
+   */
+  function areaOf(biome) {
+    return SL.Biomes.areaShareOf(biome) * Math.PI * SL.WORLD_RADIUS * SL.WORLD_RADIUS;
+  }
+
+  /**
+   * Square metres of sea floor per unit of population. Derived from the map
+   * this was last tuned by eye on - a 400 m radius, where a biome holding a
+   * ninth of the floor felt right at a factor of 1 - so the numbers authored
+   * per species still mean what they meant.
+   */
+  const AREA_PER_UNIT = Math.PI * 400 * 400 / 9;
+
+  /**
+   * The ceiling stops the one enormous biome eating the whole frame budget;
+   * the floor keeps a small biome from being empty. Some biomes are meant to
+   * be thick with fish regardless of size, and say so.
    */
   function areaFactorOf(biome) {
-    return SL.clamp(SL.Biomes.areaShareOf(biome) * 9, 0.5, 4.5);
+    const factor = areaOf(biome) / AREA_PER_UNIT;
+    return SL.clamp(factor * (biome.populationBoost || 1), 0.5, 14);
   }
 
   /**
@@ -305,8 +360,62 @@
     }
   }
 
+  /**
+   * Nests, for the six species that build them.
+   *
+   * Placed before the schools are, because a nesting school is then anchored to
+   * a nest rather than to an arbitrary point - which is what makes a nest worth
+   * finding, instead of a decoration that happens to sit near some fish.
+   */
+  function scatterNests(game) {
+    for (const species of SL.Species.list) {
+      if (!species.nests) continue;
+
+      const biomes = [species.biome].concat(species.alsoIn || []);
+      for (const biomeId of biomes) {
+        const biome = SL.Biomes.byId[biomeId];
+        if (!biome) continue;
+
+        const count = Math.max(1, Math.round(3 * areaFactorOf(biome)));
+        for (let i = 0; i < count; i++) {
+          const point = SL.Biomes.randomPointIn(biome);
+          if (!point) continue;
+
+          // Nothing nests where it would be left high and dry.
+          if (SL.Biomes.floorHeightAt(point.x, point.z) > SL.WATER_LEVEL - 2.5) continue;
+
+          game.nests.push(new SL.Nest(game, species, point.x, point.z,
+            (SL.random() * 1e9) | 0));
+        }
+      }
+    }
+  }
+
+  /** The islet's resident, standing on the only dry ground in the world. */
+  function spawnIslander(game) {
+    const islet = SL.Biomes.islet;
+    if (!islet || !SL.Walkingcarni) return;
+
+    // The highest of a handful of tries, so it starts on the island rather
+    // than in the surf around it.
+    let spot = null;
+    let best = -1e9;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const angle = SL.random() * Math.PI * 2;
+      const radius = Math.sqrt(SL.random()) * islet.peakRadius * 1.5;
+      const x = islet.x + Math.cos(angle) * radius;
+      const z = islet.z + Math.sin(angle) * radius;
+      const y = SL.Biomes.floorHeightAt(x, z);
+      if (y > best) { best = y; spot = { x, z }; }
+    }
+
+    if (spot) game.carnis.push(new SL.Walkingcarni(game, spot.x, spot.z));
+  }
+
   function spawnCreatures(game) {
     spawnLeviathans(game);
+    scatterNests(game);
+    spawnIslander(game);
 
     for (const biome of SL.Biomes.list) {
       const density = POPULATION * areaFactorOf(biome);
@@ -314,8 +423,21 @@
       // --- Fish -------------------------------------------------------------
       for (const species of SL.Species.ofBiome(biome.id)) {
         const groups = Math.max(1, Math.round(species.groups * density));
+
+        // A nesting species keeps most of its schools over its own clutches.
+        const nests = species.nests
+          ? game.nests.filter((n) => n.species === species
+              && SL.Biomes.biomeAt(n.position.x, n.position.z) === biome)
+          : null;
+
         for (let g = 0; g < groups; g++) {
-          const point = SL.Biomes.randomPointIn(biome);
+          const nest = nests && nests.length && SL.random() < 0.6
+            ? nests[Math.floor(SL.random() * nests.length)]
+            : null;
+
+          const point = nest
+            ? { x: nest.position.x + SL.randRange(-4, 4), z: nest.position.z + SL.randRange(-4, 4) }
+            : SL.Biomes.randomPointIn(biome);
           if (!point) continue;
 
           const floor = SL.Biomes.floorHeightAt(point.x, point.z);
@@ -420,5 +542,6 @@
   }
 
   SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap,
-    scatterCrystals, spawnCreatures, spawnLeviathans, replenishScrap, updateAmbience };
+    scatterCrystals, spawnCreatures, spawnLeviathans, scatterNests, spawnIslander,
+    replenishScrap, updateAmbience };
 })(window.SL);

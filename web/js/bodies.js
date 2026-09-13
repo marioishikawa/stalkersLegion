@@ -184,7 +184,7 @@
     for (let i = 0; i < (S.legPairs || 0); i++) {
       const t = SL.lerp(0.28, 0.62, S.legPairs > 1 ? i / (S.legPairs - 1) : 0.5);
       const r = ringAt(t);
-      const legLength = length * 0.11;
+      const legLength = length * (S.legScale || 0.11);
       for (const side of [1, -1]) {
         const root = V(side * halfWidths[r] * 0.8, -halfHeights[r] * 0.6, spine[r].z);
         Geo.fin(body,
