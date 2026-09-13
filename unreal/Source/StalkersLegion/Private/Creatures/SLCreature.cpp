@@ -237,8 +237,9 @@ void ASLCreature::UpdateSwimAnimation(float DeltaSeconds)
 
 	if (JawMesh->IsVisible())
 	{
-		// Positive pitch drops the jaw open (the jaw mesh runs along -X).
-		JawMesh->SetRelativeRotation(FRotator(JawOpen * 32.f, 0.f, 0.f));
+		// The jaw runs forward along +X, and positive pitch raises +X toward +Z,
+		// so opening it downward takes a negative pitch.
+		JawMesh->SetRelativeRotation(FRotator(-JawOpen * 32.f, 0.f, 0.f));
 	}
 }
 

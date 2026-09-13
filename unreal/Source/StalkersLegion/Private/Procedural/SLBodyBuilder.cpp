@@ -222,12 +222,12 @@ namespace SLBodyBuilder
 			const float JawHalfWidth = HalfWidths[JawRing] * 0.85f;
 			const FLinearColor JawColor = Species.BackColor * 0.6f;
 
-			// A wedge running forward from the hinge.
+			// A wedge running forward from the hinge, toward the snout at +X.
 			SLProcMesh::AddQuadPoly(Result.Jaw,
 				FVector(0.f, -JawHalfWidth, 0.f),
 				FVector(0.f, JawHalfWidth, 0.f),
-				FVector(-JawLen, JawHalfWidth * 0.35f, -JawLen * 0.12f),
-				FVector(-JawLen, -JawHalfWidth * 0.35f, -JawLen * 0.12f),
+				FVector(JawLen, JawHalfWidth * 0.35f, -JawLen * 0.12f),
+				FVector(JawLen, -JawHalfWidth * 0.35f, -JawLen * 0.12f),
 				JawColor, true);
 
 			// Teeth along both edges of the jaw.
@@ -235,7 +235,7 @@ namespace SLBodyBuilder
 			for (int32 i = 0; i < ToothCount; ++i)
 			{
 				const float T = (float)i / (ToothCount - 1);
-				const float X = FMath::Lerp(-JawLen * 0.9f, -JawLen * 0.1f, T);
+				const float X = FMath::Lerp(JawLen * 0.9f, JawLen * 0.1f, T);
 				const float HalfW = FMath::Lerp(JawHalfWidth * 0.4f, JawHalfWidth * 0.9f, T);
 				const float ToothLen = JawLen * 0.22f * FMath::Lerp(1.f, 0.6f, T);
 
@@ -261,13 +261,20 @@ namespace SLBodyBuilder
 		// Collision box sized from the body, not counting the fins' reach.
 		Result.HalfExtent = FVector(Length * 0.5f, FMath::Max(MaxHalfWidth, Length * 0.06f), MaxHalfHeight);
 
-		// The loft is built nose-at-origin; recentre so the actor pivots mid-body.
-		const FTransform Recentre(FVector(-Length * 0.5f, 0.f, 0.f));
+		// The loft grows nose-at-origin toward +X, but an actor's forward vector
+		// is +X - so a body used as built swims tail-first. Turn it end for end
+		// and recentre, which puts the nose at +X and the tail root at -X with
+		// the actor pivoting mid-body.
+		//
+		// The tail and jaw are separate components placed at the pivots below,
+		// and both are authored along this corrected axis: the tail fin sweeps
+		// back toward -X, the jaw runs forward toward +X.
+		const FTransform Recentre(FRotator(0.f, 180.f, 0.f), FVector(Length * 0.5f, 0.f, 0.f));
 		FSLMeshData Centred;
 		Centred.Append(Result.Body, Recentre);
 		Result.Body = MoveTemp(Centred);
-		Result.TailPivot += FVector(-Length * 0.5f, 0.f, 0.f);
-		Result.JawPivot += FVector(-Length * 0.5f, 0.f, 0.f);
+		Result.TailPivot = Recentre.TransformPosition(Result.TailPivot);
+		Result.JawPivot = Recentre.TransformPosition(Result.JawPivot);
 
 		return Result;
 	}
