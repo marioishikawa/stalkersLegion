@@ -67,6 +67,7 @@
       this.damageResist = 0;
       this.visionBonus = 0;
       this.lanternBuilt = false;
+      this.invulnerable = false;
       this.dead = false;
       this.timeSinceDamage = 999;
 
@@ -75,6 +76,11 @@
       this.sprinting = false;
 
       this.carriedScrap = null;
+
+      // Scanning state, read by the HUD to draw the progress ring.
+      this.scanTarget = null;
+      this.scanProgress = 0;
+
       this.focusLabel = '';
       this.focusTimer = 0;
 
@@ -126,6 +132,7 @@
       this.damageResist = 0;
       this.visionBonus = 0;
       this.lanternBuilt = false;
+      this.invulnerable = false;
       this.swimSpeed = 4.2;
       this.swingDuration = 0.48;
       if (this.carriedScrap) { this.carriedScrap = null; }
@@ -154,8 +161,9 @@
     }
 
     hurt(damage, source) {
-      // Nothing touches the diver while the game is not being played.
-      if (this.dead || damage <= 0 || this.game.paused) return;
+      // Nothing touches the diver while the game is not being played, and
+      // nothing touches them at all once the cheat is in.
+      if (this.dead || damage <= 0 || this.game.paused || this.invulnerable) return;
 
       damage *= (1 - this.damageResist);
       this.health -= damage;
@@ -253,6 +261,61 @@
       }
     }
 
+    /**
+     * Holding the scan key on a creature catalogues it. Aim has to be held on
+     * the same animal for the whole duration, which is why the fast ones are
+     * harder to get than the dangerous ones.
+     */
+    updateScan(dt, scanning) {
+      if (!scanning || this.dead || !SL.Crafting.built.scanner) {
+        this.scanTarget = null;
+        this.scanProgress = 0;
+        return;
+      }
+
+      this.camera.getWorldDirection(_forward);
+      let best = null;
+      let bestDot = 0.975;
+
+      const consider = (creature) => {
+        _toTarget.subVectors(creature.position, this.position);
+        if (_toTarget.length() > 16) return;
+        const dot = _toTarget.normalize().dot(_forward);
+        if (dot > bestDot) { bestDot = dot; best = creature; }
+      };
+
+      for (const c of this.game.fish) if (!c.dead) consider(c);
+      for (const c of this.game.stalkers) if (!c.dead) consider(c);
+      for (const c of this.game.kings) if (!c.dead) consider(c);
+      for (const c of this.game.whales) if (!c.dead) consider(c);
+
+      if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
+
+      // Losing the target resets the hold.
+      if (best !== this.scanTarget) {
+        this.scanTarget = best;
+        this.scanProgress = 0;
+      }
+
+      const wasWhole = Math.floor(this.scanProgress * 6);
+      this.scanProgress += dt / 1.4;
+      if (Math.floor(this.scanProgress * 6) !== wasWhole) this.game.audio.scanTick();
+
+      if (this.scanProgress >= 1) {
+        this.scanProgress = 0;
+        const species = best.species;
+        this.scanTarget = null;
+
+        if (SL.Index.record(species.id)) {
+          this.game.audio.scanDone();
+          this.game.hud.toast(species.name + ' catalogued  ·  '
+            + SL.Index.count + '/' + SL.Index.total);
+        } else {
+          this.game.hud.toast(species.name + ' — already catalogued');
+        }
+      }
+    }
+
     /** Spends a medkit, if one is held and it would do anything. */
     useMedkit() {
       if (this.dead || this.health >= this.maxHealth) return;
@@ -342,6 +405,8 @@
     }
 
     updateOxygen(dt) {
+      if (this.invulnerable) { this.oxygen = this.maxOxygen; return; }
+
       if (this.atSurface) {
         // Breaking the surface refills fast - the surface is always safety.
         this.oxygen = Math.min(this.maxOxygen, this.oxygen + dt * 28);
@@ -429,6 +494,8 @@
       if (this.timeSinceDamage > 18 && this.health < this.maxHealth && this.oxygen > 0) {
         this.health = Math.min(this.maxHealth, this.health + 2.5 * dt);
       }
+
+      this.updateScan(dt, input.scan);
 
       this.focusTimer -= dt;
       if (this.focusTimer <= 0) { this.focusTimer = 0.12; this.updateFocus(); }

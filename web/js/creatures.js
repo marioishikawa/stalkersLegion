@@ -97,9 +97,10 @@
         desired.y += speed * SL.clamp((floor + clearance - p.y) / clearance, 0, 2) * 1.6;
       }
 
-      // Surface: nothing here breaches.
-      const ceiling = SL.WATER_LEVEL - 1.2;
-      if (p.y > ceiling) {
+      // Surface: fish are held under it, but an air breather on its way up is
+      // allowed through - that is the whole point of the climb.
+      const ceiling = SL.WATER_LEVEL - (this.isMammal ? 0.35 : 1.2);
+      if (p.y > ceiling && this.state !== 'surfacing') {
         desired.y -= speed * SL.clamp((p.y - ceiling) / 2, 0, 2) * 1.6;
       }
 
@@ -196,6 +197,14 @@
   class Fish extends Creature {
     constructor(game, species, x, y, z) {
       super(game, species, x, y, z);
+
+      // Mammals carry a lungful rather than gills. Staggered at spawn so a pod
+      // does not all surface on the same tick.
+      this.isMammal = species.diet === 'mammal';
+      this.breath = species.breathSeconds
+        ? species.breathSeconds * SL.randRange(0.35, 1)
+        : 0;
+
       this.state = 'cruise';
       this.leader = null;
       this.slot = new THREE.Vector3();
@@ -271,6 +280,34 @@
       this.senseTimer -= dt;
       if (this.senseTimer <= 0) { this.senseTimer = SL.randRange(0.3, 0.6); this.sense(); }
       this.stateTimer += dt;
+
+      // --- Breathing ----------------------------------------------------------
+      //
+      // An air breather that is running out of air stops caring about anything
+      // else and climbs. It is the one thing that outranks fleeing.
+      if (this.isMammal) {
+        this.breath -= dt;
+
+        const atSurface = p.y > SL.WATER_LEVEL - 1.4;
+        if (atSurface && this.breath < this.species.breathSeconds) {
+          // Break the surface, blow, and go back down with a full lungful.
+          this.breath = this.species.breathSeconds;
+          this.state = 'cruise';
+          this.surfacedAt = this.game.time;
+          if (this.game.distanceToPlayer(p) < 30) this.game.audio.blow();
+        }
+
+        // Start climbing with enough air left to actually get there.
+        const climbDepth = SL.WATER_LEVEL - p.y;
+        if (this.breath < 12 + climbDepth * 0.35) {
+          this.state = 'surfacing';
+          const rise = _tmp.set(0, 1, 0);
+          // Keep a little forward motion so the climb reads as swimming.
+          return rise.multiplyScalar(this.species.sprintSpeed * 0.75)
+            .addScaledVector(_look.copy(this.velocity).setY(0).normalize(),
+              this.species.cruiseSpeed * 0.5);
+        }
+      }
 
       // --- Fleeing ------------------------------------------------------------
       if (this.fleeTimer > 0) {

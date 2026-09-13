@@ -178,6 +178,18 @@
 
     pickUp() { this.tone(420, 'triangle', 0.15, 0.005, 0.1); }
 
+    /** A mammal blowing at the surface. */
+    blow() {
+      this.noise(0.22, 0.01, 0.35, 620, 'bandpass');
+      this.tone(180, 'sine', 0.10, 0.02, 0.3);
+    }
+
+    /** The scanner working, and the chirp when it completes. */
+    scanTick() { this.tone(1400, 'square', 0.03, 0.002, 0.05); }
+    scanDone() {
+      [880, 1320, 1760].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', 0.12, 0.005, 0.18), i * 70));
+    }
+
     /** A rising three-note chime when something is built. */
     craft() {
       [440, 660, 880].forEach((freq, i) => {

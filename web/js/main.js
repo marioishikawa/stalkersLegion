@@ -31,6 +31,7 @@
       // is frozen - no air burned, no bites landed.
       this.paused = true;
       this.fabricatorOpen = false;
+      this.indexOpen = false;
 
       this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -66,7 +67,7 @@
       this.audio = new SL.Audio();
       this.input = {
         forward: false, back: false, left: false, right: false,
-        up: false, down: false, sprint: false
+        up: false, down: false, sprint: false, scan: false
       };
 
       this.scrapTimer = 20;
@@ -141,7 +142,9 @@
       // The player and HUD survive world changes; only the ocean is rebuilt.
       if (!this.player) this.player = new SL.Player(this);
       if (!this.hud) this.hud = new SL.Hud(this);
+      SL.Index.init(this);
       SL.Crafting.reset();
+      SL.Index.reset();
       this.player.resetLoadout();
 
       SL.World.spawnCreatures(this);
@@ -169,6 +172,8 @@
       this.paused = false;
       this.fabricatorOpen = false;
       this.hud.setFabricatorOpen(false);
+      this.indexOpen = false;
+      SL.Index.setOpen(false);
       document.getElementById('pauseScreen').classList.remove('is-visible');
 
       if (this.lookMode !== 'pointerlock') { this.updateCursor(); return; }
@@ -180,7 +185,8 @@
       // fall back to drag-look rather than leaving the player unable to aim.
       clearTimeout(this._lockCheck);
       this._lockCheck = setTimeout(() => {
-        if (document.pointerLockElement !== this.canvas && this.started && !this.fabricatorOpen) {
+        if (document.pointerLockElement !== this.canvas && this.started
+          && !this.fabricatorOpen && !this.indexOpen) {
           this.useDragLook();
         }
       }, 700);
@@ -206,7 +212,8 @@
 
     togglePause(paused) {
       this.setPaused(paused);
-      const show = paused && this.started && !this.player.dead && !this.fabricatorOpen;
+      const show = paused && this.started && !this.player.dead
+        && !this.fabricatorOpen && !this.indexOpen;
       document.getElementById('pauseScreen').classList.toggle('is-visible', show);
       this.updateCursor();
     }
@@ -249,6 +256,16 @@
       this.paused = paused;
       if (paused && document.pointerLockElement === this.canvas) document.exitPointerLock();
       this.updateCursor();
+    }
+
+    /** The databank is a reading screen, so it pauses like the fabricator. */
+    toggleIndex() {
+      if (!this.started || this.player.dead) return;
+      this.indexOpen = !this.indexOpen;
+      SL.Index.setOpen(this.indexOpen);
+      this.setPaused(this.indexOpen);
+      this.audio.click();
+      if (!this.indexOpen) this.enter();
     }
 
     toggleFabricator() {
@@ -388,7 +405,8 @@
     const KEYS = {
       KeyW: 'forward', KeyS: 'back', KeyA: 'left', KeyD: 'right',
       ArrowUp: 'forward', ArrowDown: 'back', ArrowLeft: 'left', ArrowRight: 'right',
-      Space: 'up', ControlLeft: 'down', KeyC: 'down', ShiftLeft: 'sprint'
+      Space: 'up', ControlLeft: 'down', KeyC: 'down', ShiftLeft: 'sprint',
+      KeyX: 'scan'
     };
 
     window.addEventListener('keydown', (e) => {
@@ -402,6 +420,10 @@
         case 'KeyG': game.player.dropBeacon(); break;
         case 'KeyB': game.player.throwBait(); break;
         case 'KeyV': game.player.useRepel(); break;
+        case 'KeyI':
+          e.preventDefault();
+          game.toggleIndex();
+          break;
         case 'KeyR': if (game.player.dead) game.player.respawn(); break;
         case 'KeyM':
           game.audio.setMuted(!game.audio.muted);
@@ -499,7 +521,8 @@
       // Losing the lock means Esc, or the window lost focus. Either way: pause,
       // free the cursor, and wait for a click. Drag-look never pauses this way,
       // because it never held the cursor in the first place.
-      if (game.lookMode === 'pointerlock' && game.started && !game.fabricatorOpen) {
+      if (game.lookMode === 'pointerlock' && game.started
+        && !game.fabricatorOpen && !game.indexOpen) {
         game.togglePause(true);
       }
     });

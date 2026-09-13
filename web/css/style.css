@@ -741,3 +741,103 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
   .chart canvas { width: 108px; height: 108px; }
   .chart__legend { font-size: 0.64rem; }
 }
+
+/* --------------------------------------------------------- Scanner readout */
+
+.scan {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 58px);
+  transform: translateX(-50%);
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+
+.scan.is-visible { opacity: 1; }
+
+.scan__bar {
+  width: 130px;
+  height: 3px;
+  background: color-mix(in srgb, var(--hull) 85%, transparent);
+  border: 1px solid var(--hull-line);
+  overflow: hidden;
+}
+
+.scan__fill {
+  display: block;
+  height: 100%;
+  background: var(--phosphor);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.scan__label {
+  font: var(--label);
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- The databank */
+
+.index-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 1px;
+  background: color-mix(in srgb, var(--hull-line) 60%, transparent);
+  max-height: 58vh;
+  overflow-y: auto;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--hull);
+}
+
+/* An unscanned entry keeps its slot but gives nothing away. */
+.entry:not(.is-known) .entry__name { color: var(--muted); font-style: italic; }
+
+.entry__art {
+  width: 108px;
+  height: 62px;
+  background: color-mix(in srgb, var(--abyss) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hull-line) 70%, transparent);
+}
+
+.entry__body { display: grid; gap: 2px; min-width: 0; }
+
+.entry__name {
+  margin: 0;
+  font: var(--label);
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+.entry__stats {
+  margin: 0;
+  font: var(--readout);
+  font-size: 0.68rem;
+  color: var(--phosphor);
+}
+
+.entry__note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+@media (max-width: 560px) {
+  .index-list { grid-template-columns: 1fr; max-height: 50vh; }
+}

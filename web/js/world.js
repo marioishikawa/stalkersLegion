@@ -98,6 +98,22 @@
     game.addToWorld(new THREE.AmbientLight(0x1b3038, 0.12));
   }
 
+  /**
+   * Roughly how tall each kind of scenery grows at scale 1, in metres.
+   *
+   * Seamount tops come within a couple of metres of the surface and the shelf
+   * is shallow, so a full-height kelp stalk or coral fan planted there would
+   * stand up out of the sea. Every instance is scaled down to the headroom it
+   * actually has, and skipped when there is not enough to look right.
+   */
+  const FLORA_HEIGHT = {
+    kelp: 10.2, seagrass: 2.0, coralFan: 1.0, coralTube: 2.7,
+    boulder: 4.4, glowPod: 3.2, crystal: 1.8
+  };
+
+  /** Keeps the tallest point of anything planted this far under the surface. */
+  const SURFACE_CLEARANCE = 0.8;
+
   function scatterFlora(game) {
     let total = 0;
 
@@ -110,25 +126,35 @@
         const instances = [];
         const count = SL.randInt(8, 20);
         for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = Math.sqrt(Math.random()) * 7;
+          // Seeded throughout, so the same world regrows the same forest.
+          const angle = SL.random() * Math.PI * 2;
+          const dist = Math.sqrt(SL.random()) * 7;
           const x = center.x + Math.cos(angle) * dist;
           const z = center.z + Math.sin(angle) * dist;
 
+          const type = SL.pick(biome.flora);
+          const floorY = SL.Biomes.floorHeightAt(x, z);
+
+          // Nothing is allowed to break the surface.
+          const headroom = (SL.WATER_LEVEL - SURFACE_CLEARANCE) - floorY;
+          const scale = Math.min(SL.randRange(0.7, 1.4), headroom / FLORA_HEIGHT[type]);
+          if (scale < 0.25) continue;
+
           instances.push({
-            type: SL.pick(biome.flora),
+            type,
             // Patch-local, with each plant's foot on the sea floor.
             x: x - center.x,
-            y: SL.Biomes.floorHeightAt(x, z),
+            y: floorY,
             z: z - center.z,
-            yaw: Math.random() * Math.PI * 2,
-            scale: SL.randRange(0.7, 1.4),
-            seed: (Math.random() * 1e9) | 0
+            yaw: SL.random() * Math.PI * 2,
+            scale,
+            seed: (SL.random() * 1e9) | 0
           });
         }
 
         const patch = SL.buildFloraPatch(instances, game.materials);
         patch.position.set(center.x, 0, center.z);
+        patch.userData.flora = true;
         game.addToWorld(patch);
         total += instances.length;
       }
@@ -144,6 +170,10 @@
       for (let i = 0; i < nodes; i++) {
         const point = SL.Biomes.randomPointIn(biome);
         if (!point) continue;
+
+        const floorY = SL.Biomes.floorHeightAt(point.x, point.z);
+        if ((SL.WATER_LEVEL - SURFACE_CLEARANCE) - floorY < 2.6) continue;
+
         game.crystals.push(new SL.Crystal(game, point.x, point.z, (SL.random() * 1e9) | 0));
       }
     }
@@ -155,7 +185,7 @@
       for (let i = 0; i < count; i++) {
         const point = SL.Biomes.randomPointIn(biome);
         if (!point) continue;
-        game.scrap.push(new SL.Scrap(game, point.x, point.z, (Math.random() * 1e9) | 0));
+        game.scrap.push(new SL.Scrap(game, point.x, point.z, (SL.random() * 1e9) | 0));
       }
     }
   }
@@ -290,7 +320,7 @@
       const dz = point.z - game.player.position.z;
       if (dx * dx + dz * dz < 900) continue;
 
-      game.scrap.push(new SL.Scrap(game, point.x, point.z, (Math.random() * 1e9) | 0));
+      game.scrap.push(new SL.Scrap(game, point.x, point.z, (SL.random() * 1e9) | 0));
     }
   }
 

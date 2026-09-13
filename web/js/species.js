@@ -34,6 +34,7 @@
       tailHeight: 0.35, tailSweep: 0.25, tailFork: 0.4,
       dorsalFin: 0.18, ventralFin: 0, sideFin: 0.12,
       eyeSize: 0.05, stripes: 0, backSpikes: 0, jawLength: 0,
+      antennae: 0, legPairs: 0,
       spineSegments: 14, radialSegments: 10
     }, overrides.shape) });
   }
@@ -41,12 +42,14 @@
   const SPECIES = [
     // ------------------------------------------------------------- Safe Shallows
     fish('glimmerfin', 'Glimmerfin', 'shallows', 'torpedo', {
+      note: "Small, quick and mirror-bright. The first fish anyone sees.",
       // Small, quick, mirror-bright. The first fish you ever see.
       backColor: C(0.35, 0.72, 0.85), bellyColor: C(0.95, 0.96, 0.90), finColor: C(0.95, 0.78, 0.30),
       schoolSize: 10, groups: 6,
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
     }),
     fish('bubblepeep', 'Bubblepeep', 'shallows', 'bulb', {
+      note: "Round, slow and comically wide-eyed. Bumps into things.",
       // Round, slow, comically wide-eyed. Easy knife practice.
       backColor: C(0.95, 0.55, 0.18), bellyColor: C(1.0, 0.92, 0.70), finColor: C(1.0, 0.80, 0.45),
       cruiseSpeed: 1.2, sprintSpeed: 3.0, schoolSize: 4, groups: 4, wagRate: 5,
@@ -56,6 +59,7 @@
 
     // -------------------------------------------------------------- Kelp Forest
     fish('bladefish', 'Bladefish', 'kelp', 'ribbon', {
+      note: "Tall, flat and green. Turns edge-on and vanishes into the kelp.",
       // Tall, flat and green - hides edge-on between kelp stalks.
       backColor: C(0.16, 0.42, 0.14), bellyColor: C(0.72, 0.80, 0.45), finColor: C(0.28, 0.55, 0.20),
       maxHealth: 18, schoolSize: 5, groups: 5, altitude: 5, wagRate: 4.5,
@@ -64,6 +68,7 @@
                sideFin: 0.08, eyeSize: 0.035, spineSegments: 18 }
     }),
     fish('darter', 'Kelp Darter', 'kelp', 'arrow', {
+      note: "Needle-nosed sprinter. Bolts the instant anything looks at it.",
       // Needle-nosed sprinter. Bolts the instant anything looks at it.
       backColor: C(0.38, 0.46, 0.16), bellyColor: C(0.88, 0.90, 0.72), finColor: C(0.55, 0.62, 0.25),
       cruiseSpeed: 2.3, sprintSpeed: 5.6, turnRate: 3.4, schoolSize: 9, groups: 5, wagRate: 9,
@@ -73,6 +78,7 @@
 
     // ----------------------------------------------------------- Grassy Plateau
     fish('spadefin', 'Spadefin', 'plateau', 'disc', {
+      note: "A wafer-thin disc that turns sideways when it flees.",
       // Wafer-thin disc that turns sideways when it flees.
       backColor: C(0.12, 0.55, 0.55), bellyColor: C(0.93, 0.95, 0.88), finColor: C(0.10, 0.35, 0.42),
       schoolSize: 6, groups: 5,
@@ -80,6 +86,7 @@
                tailHeight: 0.28, tailFork: 0.30, dorsalFin: 0.26, ventralFin: 0.24, sideFin: 0.13, stripes: 3 }
     }),
     fish('nibbler', 'Grass Nibbler', 'plateau', 'diamond', {
+      note: "Angular grazer with hard shoulders, nosing through the grass.",
       // Angular grazer with hard shoulders; noses through the grass.
       backColor: C(0.45, 0.25, 0.62), bellyColor: C(0.90, 0.82, 0.95), finColor: C(0.62, 0.40, 0.80),
       maxHealth: 20, cruiseSpeed: 1.4, altitude: 1.8, groups: 5,
@@ -88,6 +95,7 @@
     }),
 
     fish('stingray', 'Stingray', 'plateau', 'disc', {
+      note: "All wing and whip tail, hugging the plateau grass. Harmless.",
       // Broad wings, a whip tail, and it hugs the grass. Harmless.
       backColor: C(0.36, 0.30, 0.22), bellyColor: C(0.90, 0.86, 0.76), finColor: C(0.44, 0.37, 0.27),
       maxHealth: 40, cruiseSpeed: 1.5, sprintSpeed: 3.4, turnRate: 1.3,
@@ -97,8 +105,61 @@
                dorsalFin: 0, ventralFin: 0, sideFin: 0, eyeSize: 0.024, spineSegments: 18 }
     }),
 
+    // ------------------------------------------------------------- The mammals
+    //
+    // Air breathers. They hold a lungful, and when it runs low they break off
+    // whatever they were doing and climb for the surface - which is why you
+    // mostly meet them on the shelf, where the trip up is short.
+    fish('porpoise', 'Reef Porpoise', 'kelp', 'torpedo', {
+      diet: 'mammal',
+      note: 'Air-breathing and curious. Pods work the kelp edge, then climb together to blow.',
+      backColor: C(0.24, 0.28, 0.34), bellyColor: C(0.92, 0.93, 0.90), finColor: C(0.30, 0.34, 0.40),
+      maxHealth: 60, cruiseSpeed: 2.6, sprintSpeed: 6.0, turnRate: 2.2,
+      senseRadius: 16, schoolSize: 4, groups: 4, altitude: 6, wagRate: 4.5,
+      breathSeconds: 70,
+      shape: { length: 1.9, height: 0.17, width: 0.13, bellyPosition: 0.34, noseSharpness: 0.55,
+               tailHeight: 0.17, tailSweep: 0.20, tailFork: 0.65, dorsalFin: 0.13,
+               sideFin: 0.15, eyeSize: 0.018, spineSegments: 18 }
+    }),
+    fish('seal', 'Sand Seal', 'shallows', 'bulb', {
+      diet: 'mammal',
+      note: 'Sleeps on the sand between breaths. Fat, fast off the mark, entirely harmless.',
+      backColor: C(0.44, 0.40, 0.34), bellyColor: C(0.88, 0.85, 0.76), finColor: C(0.36, 0.33, 0.28),
+      maxHealth: 70, cruiseSpeed: 1.9, sprintSpeed: 5.2, turnRate: 1.8,
+      senseRadius: 14, schoolSize: 2, groups: 4, altitude: 2.5, wagRate: 3,
+      breathSeconds: 95,
+      shape: { length: 1.5, height: 0.20, width: 0.18, bellyPosition: 0.32, noseSharpness: 0.2,
+               crossSection: 2.2, tailHeight: 0.13, tailSweep: 0.16, tailFork: 0.4,
+               dorsalFin: 0, sideFin: 0.20, eyeSize: 0.035, spineSegments: 16 }
+    }),
+
+    // ------------------------------------------------------------- The shrimp
+    fish('glassshrimp', 'Glass Shrimp', 'kelp', 'shrimp', {
+      note: 'Near-invisible until it moves. Swarms hang in the kelp like dust in a sunbeam.',
+      backColor: C(0.72, 0.82, 0.74), bellyColor: C(0.90, 0.95, 0.92), finColor: C(0.60, 0.76, 0.70),
+      eyeColor: C(0.05, 0.05, 0.06), glow: 0.3,
+      maxHealth: 6, cruiseSpeed: 0.8, sprintSpeed: 3.4, turnRate: 4.5,
+      senseRadius: 7, schoolSize: 14, groups: 7, altitude: 1.6, wagRate: 11,
+      shape: { length: 0.10, height: 0.20, width: 0.16, bellyPosition: 0.34, noseSharpness: 0.35,
+               tailHeight: 0.26, tailSweep: 0.18, tailFork: 0.35, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.09, antennae: 1.1, legPairs: 4,
+               spineSegments: 12, radialSegments: 8 }
+    }),
+    fish('embershrimp', 'Ember Shrimp', 'coral', 'shrimp', {
+      note: 'Banded red and cream, and it keeps to the coral it matches.',
+      backColor: C(0.82, 0.22, 0.16), bellyColor: C(0.98, 0.88, 0.72), finColor: C(0.92, 0.46, 0.20),
+      eyeColor: C(0.08, 0.05, 0.04), glow: 0.2,
+      maxHealth: 9, cruiseSpeed: 0.7, sprintSpeed: 3.0, turnRate: 4,
+      senseRadius: 7, schoolSize: 9, groups: 6, altitude: 1.2, wagRate: 10,
+      shape: { length: 0.14, height: 0.22, width: 0.17, bellyPosition: 0.34, noseSharpness: 0.3,
+               tailHeight: 0.28, tailSweep: 0.20, tailFork: 0.3, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.08, stripes: 5, antennae: 0.9, legPairs: 4,
+               spineSegments: 12, radialSegments: 8 }
+    }),
+
     // ----------------------------------------------------------- Red Coral Reef
     fish('emberfin', 'Emberfin', 'coral', 'diamond', {
+      note: "Hot-coloured reef fish with a deeply forked tail.",
       // Hot-coloured reef fish with a deep forked tail.
       backColor: C(0.85, 0.18, 0.10), bellyColor: C(1.0, 0.78, 0.40), finColor: C(1.0, 0.45, 0.08),
       glow: 0.15, schoolSize: 8, groups: 5,
@@ -106,6 +167,7 @@
                tailHeight: 0.40, tailSweep: 0.30, tailFork: 0.80, dorsalFin: 0.24, ventralFin: 0.14, stripes: 5 }
     }),
     fish('boxfish', 'Coral Boxfish', 'coral', 'boxy', {
+      note: "A swimming brick. Slow, armoured and entirely unbothered.",
       // A swimming brick. Slow, armoured, unbothered.
       backColor: C(0.95, 0.82, 0.15), bellyColor: C(0.98, 0.95, 0.75), finColor: C(0.20, 0.18, 0.15),
       maxHealth: 30, cruiseSpeed: 0.95, sprintSpeed: 2.0, turnRate: 1.4, schoolSize: 3, groups: 4, wagRate: 4,
@@ -115,6 +177,7 @@
     }),
 
     fish('puffer', 'Cinder Puffer', 'coral', 'bulb', {
+      note: "Spiky and ash-dark with an ember underside. Drifts rather than swims.",
       // Spiky, ash-dark, with an ember underside. Drifts rather than swims.
       backColor: C(0.28, 0.12, 0.10), bellyColor: C(0.95, 0.42, 0.12), finColor: C(0.55, 0.22, 0.12),
       glow: 0.2, maxHealth: 26, cruiseSpeed: 0.9, sprintSpeed: 2.2, turnRate: 1.3,
@@ -126,6 +189,7 @@
 
     // ------------------------------------------------------------ Boulder Field
     fish('gulper', 'Stone Gulper', 'boulders', 'bulb', {
+      note: "Heavy bottom-feeder with a huge round head and a spined back.",
       // Heavy bottom-feeder with a huge round head.
       backColor: C(0.30, 0.30, 0.33), bellyColor: C(0.70, 0.68, 0.60), finColor: C(0.42, 0.40, 0.38),
       maxHealth: 45, cruiseSpeed: 1.1, sprintSpeed: 2.4, turnRate: 1.2,
@@ -136,6 +200,7 @@
     }),
 
     fish('skate', 'Rift Skate', 'boulders', 'disc', {
+      note: "Wide and flat, gliding low over the rubble.",
       // Wide and flat rather than tall - a ray gliding over the rubble.
       backColor: C(0.26, 0.24, 0.28), bellyColor: C(0.78, 0.76, 0.70), finColor: C(0.34, 0.32, 0.34),
       maxHealth: 34, cruiseSpeed: 1.3, sprintSpeed: 3.2, turnRate: 1.5,
@@ -147,6 +212,7 @@
 
     // ---------------------------------------------------------- Crystal Caverns
     fish('goldfin', 'Goldfin', 'crystal', 'diamond', {
+      note: "Cast in soft gold. Slow, heavy, and worth cutting open.",
       // Cast in soft gold. Slow, heavy, and worth cutting open.
       backColor: C(0.95, 0.72, 0.12), bellyColor: C(1.0, 0.90, 0.52), finColor: C(0.78, 0.52, 0.06),
       eyeColor: C(0.15, 0.10, 0.02), glow: 0.25,
@@ -158,6 +224,7 @@
                dorsalFin: 0.16, sideFin: 0.12, eyeSize: 0.05, stripes: 2 }
     }),
     fish('diamondfish', 'Prism Diamondfish', 'crystal', 'boxy', {
+      note: "Faceted and near-colourless. Catches what little light gets down here.",
       // Faceted and near-colourless; it catches what little light reaches here.
       backColor: C(0.78, 0.92, 0.98), bellyColor: C(0.95, 0.99, 1.0), finColor: C(0.62, 0.86, 0.96),
       eyeColor: C(0.20, 0.35, 0.45), glow: 0.7,
@@ -168,7 +235,20 @@
                crossSection: 6, tailHeight: 0.20, tailSweep: 0.16, tailFork: 0.2,
                dorsalFin: 0.12, sideFin: 0.10, eyeSize: 0.05, backSpikes: 3, radialSegments: 7 }
     }),
+    fish('krill', 'Crystal Krill', 'crystal', 'shrimp', {
+      note: 'Swarms that glow faintly pink. The caverns are never entirely dark because of them.',
+      backColor: C(0.92, 0.52, 0.76), bellyColor: C(1.0, 0.80, 0.92), finColor: C(0.86, 0.40, 0.70),
+      eyeColor: C(0.20, 0.05, 0.14), glow: 1,
+      maxHealth: 5, cruiseSpeed: 0.9, sprintSpeed: 3.2, turnRate: 4.5,
+      senseRadius: 8, schoolSize: 16, groups: 7, altitude: 3, wagRate: 12,
+      drops: { quartz: [1, 1] },
+      shape: { length: 0.09, height: 0.20, width: 0.15, bellyPosition: 0.32, noseSharpness: 0.35,
+               tailHeight: 0.26, tailSweep: 0.18, tailFork: 0.35, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.09, antennae: 1.2, legPairs: 3,
+               spineSegments: 12, radialSegments: 8 }
+    }),
     fish('silverscale', 'Silverscale', 'crystal', 'torpedo', {
+      note: "Quick and bright. The crystal country has no shortage of them.",
       // Quick, bright and common - the biome's small change.
       backColor: C(0.80, 0.84, 0.88), bellyColor: C(0.96, 0.98, 1.0), finColor: C(0.60, 0.68, 0.76),
       glow: 0.3, maxHealth: 20, cruiseSpeed: 2.0, sprintSpeed: 4.6, turnRate: 2.6,
@@ -180,6 +260,7 @@
 
     // -------------------------------------------------------------- Deep Trench
     fish('lanternjaw', 'Lanternjaw', 'trench', 'eel', {
+      note: "Bioluminescent eel. Often the only thing visible in the trench.",
       // Bioluminescent eel. Often the only thing you can see down there.
       backColor: C(0.10, 0.55, 0.60), bellyColor: C(0.35, 0.95, 0.90), finColor: C(0.25, 0.85, 0.80),
       eyeColor: C(0.90, 1.0, 0.55), glow: 1, maxHealth: 26, cruiseSpeed: 1.3,
@@ -189,6 +270,7 @@
                eyeSize: 0.03, spineSegments: 22, radialSegments: 8 }
     }),
     fish('ribbon', 'Abyss Ribbon', 'trench', 'ribbon', {
+      note: "A metre of violet streamer, drifting in the dark.",
       // Long violet streamer that drifts in the dark.
       backColor: C(0.30, 0.10, 0.45), bellyColor: C(0.65, 0.40, 0.95), finColor: C(0.50, 0.20, 0.75),
       glow: 0.4, maxHealth: 22, cruiseSpeed: 1.05, sprintSpeed: 2.6, turnRate: 1.1,
@@ -200,6 +282,7 @@
 
     // ------------------------------------------------------------ King's Domain
     fish('crownfin', 'Crownfin', 'kings', 'diamond', {
+      note: "Bronze and armoured, living in the shadow of the hoard.",
       // Lives in the hoard's shadow. Bronze, armoured, unbothered by stalkers.
       backColor: C(0.42, 0.28, 0.10), bellyColor: C(0.82, 0.70, 0.44), finColor: C(0.62, 0.44, 0.16),
       glow: 0.15, maxHealth: 40, cruiseSpeed: 1.4, sprintSpeed: 3.4,
@@ -211,6 +294,7 @@
 
     // -------------------------------------------------------------- Whale Reach
     fish('bluedrifter', 'Blue Drifter', 'abyss', 'ribbon', {
+      note: "Open-water plankton feeder, drifting in loose ribbons.",
       // Open-water plankton feeder, drifting in loose ribbons near the whale.
       backColor: C(0.14, 0.32, 0.58), bellyColor: C(0.70, 0.88, 0.98), finColor: C(0.24, 0.48, 0.78),
       glow: 0.25, maxHealth: 24, cruiseSpeed: 1.2, sprintSpeed: 2.8, turnRate: 1.2,
@@ -222,6 +306,7 @@
 
     // ------------------------------------------------------------- The predator
     fish('stalker', 'Stalker', 'kelp', 'eel', {
+      note: "Obsessed with scrap metal. Chews it, hauls it, and bites whatever interrupts.",
       diet: 'carnivore',
       backColor: C(0.22, 0.26, 0.20), bellyColor: C(0.62, 0.60, 0.46), finColor: C(0.30, 0.34, 0.24),
       eyeColor: C(0.95, 0.85, 0.15),
@@ -239,6 +324,7 @@
 
     // ------------------------------------------------------- The Stalker King
     fish('kingstalker', 'Stalker Leviathan', 'kings', 'eel', {
+      note: "Sits on a hoard its subjects drag out to it. Ignores divers until struck.",
       leviathan: true, markerColor: '#e08a2c',
       // Three times a stalker in every dimension, sitting on a hoard of scrap
       // its subjects drag out to it. It will not start a fight with the diver -
@@ -257,6 +343,7 @@
 
     // ------------------------------------------------------------- The Whale
     fish('whale', 'Glasswhale Leviathan', 'abyss', 'bulb', {
+      note: "Eats stalkers whole. Has no concept of a diver as prey, and never harms one.",
       leviathan: true, markerColor: '#5fb8e8',
       // The only thing out here that eats stalkers. It has no interest in
       // anything as small as a diver and will never harm one.

@@ -81,6 +81,8 @@ worlds in memory for the session and says so on the menu.
 | `G` | Drop a marker beacon |
 | `B` | Throw a bait pod |
 | `V` | Set off a repel charge |
+| `X` | Hold on a creature to scan it (needs the Scanner) |
+| `I` | Open the databank |
 | `F` | Flashlight |
 | `M` | Mute |
 | `R` | Respawn, once you are dead |
@@ -143,6 +145,7 @@ to collect, then press `Tab`:
 | **Leviathan Tracker** | 3 gold, 4 quartz, 4 teeth | Both leviathans on the chart, with range, wherever they are |
 | **Bait Pod** | 2 titanium, 1 tooth | Throw with `B` — every stalker that hears it goes there, not at you |
 | **Repel Charge** | 3 quartz, 2 teeth | Press `V` — drives stalkers within 25 m off you |
+| **Scanner** | 3 titanium, 2 quartz, 1 gold | Hold `X` on a creature to catalogue it |
 
 Five materials in all. **Titanium** from cutting scrap, **teeth** from stalkers
 chewing it, and **quartz, gold and diamond** from the Crystal Caverns — the
@@ -190,6 +193,19 @@ even past 120 m.
 
 The world is 480 m across, and the two leviathans are on opposite sides of it.
 
+## The databank
+
+Build the **Scanner**, hold `X` on a creature for a second and a half, and it is
+catalogued. Press `I` to read the result.
+
+Each entry draws the animal's **actual silhouette** — not an illustration, but
+the same profile function its mesh is lofted from, fitted to the card with a
+single uniform scale so the proportions are the creature's real ones. A ribbon
+reads as a ribbon, a stingray as a flat sliver, an eel as a thin line. Unscanned
+species keep their slot as a blank grey contact.
+
+Scans belong to the world they were made in and are saved with it.
+
 ## The chart
 
 A larger, less predictable ocean needs a map, so the HUD carries one. It is
@@ -220,6 +236,13 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Lanternjaw** — bioluminescent eel, often the only thing visible in the trench.
 * **Abyss Ribbon** — 1.2 m violet streamer that drifts in the dark.
 * **Stingray** — 1.1 m of wing, hugging the plateau grass.
+* **Reef Porpoise / Sand Seal** — **air breathers**. They carry a lungful and,
+  when it runs low, break off whatever they were doing and climb for the
+  surface to blow. It outranks even fleeing, which is why you meet them on the
+  shelf where the trip up is short.
+* **Glass Shrimp / Ember Shrimp / Crystal Krill** — crustaceans, built on their
+  own body profile with antennae and paddle legs. They swarm low in dense
+  clouds; the krill glow, which is why the Crystal Caverns are never wholly dark.
 * **Goldfin / Prism Diamondfish / Silverscale** — cast in gold, diamond and
   silver. Kill them and they leave what they are made of.
 * **Crownfin** — bronze and armoured, living in the hoard's shadow.

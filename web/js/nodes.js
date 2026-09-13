@@ -130,7 +130,9 @@
 
       this.object = new THREE.Mesh(beaconGeometry, game.materials.glow);
       this.object.position.copy(position);
-      this.object.position.y = SL.Biomes.floorHeightAt(position.x, position.z) + 0.1;
+      // Sits on the floor, but never so high that its lamp pokes out of the sea.
+      const floorY = SL.Biomes.floorHeightAt(position.x, position.z);
+      this.object.position.y = Math.min(floorY + 0.1, SL.WATER_LEVEL - 1.1);
       game.addToWorld(this.object);
 
       if (game.beacons.filter((b) => b.light).length < LIT_BEACONS) {

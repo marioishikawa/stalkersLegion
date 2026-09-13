@@ -71,6 +71,19 @@
         h = w * 0.95;
         break;
 
+      case 'shrimp':
+        // A crustacean: heavy head and thorax, a narrowing abdomen, then a
+        // slight flare where the tail fan attaches.
+        if (t < 0.45) {
+          w = 0.35 + 0.65 * Math.sin(Math.PI * 0.5 * (t / 0.45));
+        } else if (t < 0.85) {
+          w = SL.lerp(1, 0.42, (t - 0.45) / 0.4);
+        } else {
+          w = SL.lerp(0.42, 0.6, (t - 0.85) / 0.15);
+        }
+        h = w * 1.25;
+        break;
+
       case 'bulb':
       default:
         // Fat round head with a thin whip of a tail.
@@ -150,6 +163,35 @@
         const tip = V(side * (halfWidths[r] + finLen), -finLen * 0.35, root.z - finLen * 0.7);
         const back = V(side * halfWidths[r] * 0.85, 0, root.z + finLen * 0.45);
         Geo.fin(body, root, back, tip, species.finColor);
+      }
+    }
+
+    // --- Antennae: long, thin, swept forward from the head --------------------
+    if (S.antennae > 0.001) {
+      const r = ringAt(0.1);
+      const reach = length * S.antennae;
+      for (const side of [1, -1]) {
+        const root = V(side * halfWidths[r] * 0.6, halfHeights[r] * 0.5, spine[r].z);
+        Geo.fin(body,
+          root,
+          root.clone().add(V(side * 0.02 * length, 0.02 * length, 0)),
+          root.clone().add(V(side * reach * 0.35, reach * 0.28, reach)),
+          species.finColor);
+      }
+    }
+
+    // --- Legs: small paired paddles under the thorax ---------------------------
+    for (let i = 0; i < (S.legPairs || 0); i++) {
+      const t = SL.lerp(0.28, 0.62, S.legPairs > 1 ? i / (S.legPairs - 1) : 0.5);
+      const r = ringAt(t);
+      const legLength = length * 0.11;
+      for (const side of [1, -1]) {
+        const root = V(side * halfWidths[r] * 0.8, -halfHeights[r] * 0.6, spine[r].z);
+        Geo.fin(body,
+          root,
+          root.clone().add(V(0, 0, legLength * 0.3)),
+          root.clone().add(V(side * legLength * 0.7, -legLength, -legLength * 0.2)),
+          species.finColor);
       }
     }
 

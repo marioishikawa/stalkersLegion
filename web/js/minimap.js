@@ -104,19 +104,32 @@
         }
       }
 
-      // The diver, as an arrow pointing where they are looking.
+      // The diver: a bright ringed dot so it is never lost against the sea
+      // floor colours, with a short tick showing which way they are facing.
       const p = this.project(game.player.position.x, game.player.position.z);
       ctx.save();
       ctx.translate(p.x, p.y);
+
       ctx.rotate(-game.player.yaw);
-      ctx.fillStyle = '#e8efe6';
+      ctx.strokeStyle = '#e8efe6';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(0, -5);
-      ctx.lineTo(3.5, 4);
-      ctx.lineTo(0, 2);
-      ctx.lineTo(-3.5, 4);
-      ctx.closePath();
+      ctx.moveTo(0, -3);
+      ctx.lineTo(0, -9);
+      ctx.stroke();
+      ctx.rotate(game.player.yaw);
+
+      // Dark halo first, so the dot reads on pale sand as well as dark abyss.
+      ctx.fillStyle = 'rgba(4, 20, 27, 0.85)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
   }

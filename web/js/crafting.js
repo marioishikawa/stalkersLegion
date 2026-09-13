@@ -98,6 +98,12 @@
       apply(player) { player.lanternBuilt = true; player.upgradeLight(); }
     },
     {
+      id: 'scanner',
+      name: 'Scanner',
+      blurb: 'Hold X on a creature to catalogue it. Press I to read the databank.',
+      cost: { titanium: 3, quartz: 2, gold: 1 }
+    },
+    {
       id: 'beacon',
       name: 'Marker Beacon',
       blurb: 'Drop one with G. It lights the spot and pins it to your chart.',
@@ -180,6 +186,9 @@
       }
       for (const key of Object.keys(this.inventory)) this.inventory[key] += 99;
 
+      // Infinite health and air: nothing bites through it and the tank never
+      // empties, so the far water can be explored without the trip home.
+      game.player.invulnerable = true;
       game.player.health = game.player.maxHealth;
       game.player.oxygen = game.player.maxOxygen;
     },

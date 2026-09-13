@@ -20,7 +20,8 @@
         'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
         'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName',
         'quartzCount', 'goldCount', 'diamondCount', 'medkitCount', 'resources',
-        'beaconCount', 'baitCount', 'repelCount', 'minimap', 'chartLegend']) {
+        'beaconCount', 'baitCount', 'repelCount', 'minimap', 'chartLegend',
+        'scan', 'scanFill', 'scanLabel']) {
         this.el[id] = document.getElementById(id);
       }
 
@@ -203,6 +204,16 @@
       }
 
       this.el.deathScreen.classList.toggle('is-visible', p.dead);
+
+      // --- Scanner progress ------------------------------------------------------
+      const scanning = p.scanTarget && p.scanProgress > 0;
+      this.el.scan.classList.toggle('is-visible', !!scanning);
+      if (scanning) {
+        this.el.scanFill.style.transform = 'scaleX(' + p.scanProgress.toFixed(3) + ')';
+        this.el.scanLabel.textContent = SL.Index.has(p.scanTarget.species.id)
+          ? p.scanTarget.species.name + ' — known'
+          : 'Scanning ' + p.scanTarget.species.name;
+      }
 
       this.updateChart();
 

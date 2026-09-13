@@ -37,6 +37,10 @@
     </div>
     <div class="focus" id="focus"></div>
     <div class="hit-marker" id="hitMarker"></div>
+    <div class="scan" id="scan">
+      <div class="scan__bar"><span class="scan__fill" id="scanFill"></span></div>
+      <div class="scan__label" id="scanLabel"></div>
+    </div>
   </div>
 
   <div class="hud__bottom">
@@ -114,7 +118,7 @@
   <div class="hint" id="hint">
     <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> swim &nbsp; <kbd>Space</kbd>/<kbd>Ctrl</kbd> rise &amp; sink &nbsp; <kbd>Shift</kbd> sprint</div>
     <div><kbd>Click</kbd> knife &nbsp; <kbd>E</kbd> scrap &nbsp; <kbd>H</kbd> medkit &nbsp; <kbd>G</kbd> beacon &nbsp; <kbd>B</kbd> bait &nbsp; <kbd>V</kbd> repel &nbsp; <kbd>F</kbd> light</div>
-    <div><kbd>Tab</kbd> fabricator &nbsp; — &nbsp; knife scrap for titanium, let stalkers chew it for teeth</div>
+    <div><kbd>Tab</kbd> fabricator &nbsp; <kbd>I</kbd> databank &nbsp; <kbd>X</kbd> hold to scan a creature</div>
     <div>Air refills at the surface. Scrap metal draws stalkers — use it.</div>
   </div>
 </div>
@@ -141,6 +145,21 @@
 
     <p class="menu__note" id="storageNote"></p>
     <p class="screen__meta">Each world has its own sea floor &nbsp;·&nbsp; Esc pauses &nbsp;·&nbsp; Tab is the fabricator</p>
+  </div>
+</div>
+
+<div class="fabricator" id="indexScreen">
+  <div class="fabricator__panel">
+    <header class="fabricator__head">
+      <h2 class="fabricator__title">Databank</h2>
+      <p class="fabricator__hint">
+        Build a scanner, then hold <kbd>X</kbd> on a creature to catalogue it.
+        Each outline is drawn from the same numbers the animal's body is built from.
+      </p>
+      <p class="fabricator__hint" id="indexProgress">0 of 0 catalogued</p>
+    </header>
+    <div class="index-list" id="indexList"></div>
+    <footer class="fabricator__foot"><kbd>I</kbd> to close</footer>
   </div>
 </div>
 
@@ -193,6 +212,7 @@
 <script src="js/saves.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/minimap.js"></script>
+<script src="js/index.js"></script>
 <script src="js/creatures.js"></script>
 <script src="js/apex.js"></script>
 <script src="js/nodes.js"></script>
