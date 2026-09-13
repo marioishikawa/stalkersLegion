@@ -15,8 +15,8 @@
   const _tmp = new THREE.Vector3();
   const _toTarget = new THREE.Vector3();
 
-  const KNIFE_DAMAGE = 28;
-  const KNIFE_REACH = 2.2;
+  // Base knife stats. These live on the player rather than as constants because
+  // the fabricator upgrades them in place.
   const KNIFE_ARC = Math.cos(THREE.MathUtils.degToRad(45));
 
   /** The knife mesh, built from the same primitives as everything else. */
@@ -60,6 +60,11 @@
       this.maxOxygen = 90;
       this.health = this.maxHealth;
       this.oxygen = this.maxOxygen;
+
+      // Upgradeable by the fabricator - see crafting.js.
+      this.knifeDamage = 28;
+      this.knifeReach = 2.2;
+      this.damageResist = 0;
       this.dead = false;
       this.timeSinceDamage = 999;
 
@@ -108,6 +113,7 @@
     get biome() { return SL.Biomes.biomeAt(this.position.x, this.position.z); }
 
     respawn() {
+      // Upgrades survive death; only health and air are restored.
       this.dead = false;
       this.health = this.maxHealth;
       this.oxygen = this.maxOxygen;
@@ -128,7 +134,10 @@
     }
 
     hurt(damage, source) {
-      if (this.dead || damage <= 0) return;
+      // Nothing touches the diver while the game is not being played.
+      if (this.dead || damage <= 0 || this.game.paused) return;
+
+      damage *= (1 - this.damageResist);
       this.health -= damage;
       this.timeSinceDamage = 0;
       this.game.audio.playerHurt();
@@ -168,7 +177,7 @@
     /** Fired partway through the swing, once per swing. */
     resolveStrike() {
       this.camera.getWorldDirection(_forward);
-      let best = null, bestDist = KNIFE_REACH;
+      let best = null, bestDist = this.knifeReach;
 
       const consider = (target, position) => {
         _toTarget.subVectors(position, this.position);
@@ -187,13 +196,13 @@
       if (!best) { this.game.audio.swingMiss(); return; }
 
       if (best instanceof SL.Creature) {
-        best.hurt(KNIFE_DAMAGE, this);
+        best.hurt(this.knifeDamage, this);
         this.game.audio.hit();
         this.game.hud.showHitMarker(best.species.name, best.dead);
         // A stabbed stalker turns on you rather than shrugging it off.
         if (best instanceof SL.Stalker && !best.dead) best.provoke(this);
       } else {
-        best.bite(KNIFE_DAMAGE * 0.5, _forward);
+        best.bite(this.knifeDamage, _forward);
         this.game.audio.metalBite(0);
         this.game.hud.showHitMarker('Scrap Metal', false);
       }

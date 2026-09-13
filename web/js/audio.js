@@ -170,6 +170,20 @@
     }
 
     pickUp() { this.tone(420, 'triangle', 0.15, 0.005, 0.1); }
+
+    /** A rising three-note chime when something is built. */
+    craft() {
+      [440, 660, 880].forEach((freq, i) => {
+        setTimeout(() => this.tone(freq, 'triangle', 0.16, 0.01, 0.22), i * 90);
+      });
+    }
+
+    /** Cheat accepted: the same chime, lower and dirtier. */
+    cheat() {
+      [330, 415, 523, 659].forEach((freq, i) => {
+        setTimeout(() => this.tone(freq, 'square', 0.10, 0.01, 0.3), i * 80);
+      });
+    }
     throwScrap() { this.noise(0.2, 0.01, 0.25, 900); }
     click() { this.tone(900, 'square', 0.06, 0.002, 0.04); }
 

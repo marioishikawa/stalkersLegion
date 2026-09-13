@@ -89,6 +89,8 @@
       }
 
       if (this.integrity <= 0) {
+        // Whoever finished it off, the salvage is left in the water.
+        SL.Pickup.burst(this.game, 'titanium', this.position, SL.randInt(2, 3));
         this.destroy();
         return true;
       }

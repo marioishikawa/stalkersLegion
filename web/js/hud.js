@@ -17,7 +17,8 @@
       this.el = {};
       for (const id of ['healthFill', 'healthValue', 'airFill', 'airValue', 'depthValue',
         'biomeName', 'focus', 'warning', 'warningText', 'hitMarker', 'damageFlash',
-        'deathScreen', 'carryNote', 'hint', 'muteNote']) {
+        'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
+        'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps']) {
         this.el[id] = document.getElementById(id);
       }
 
@@ -25,6 +26,75 @@
       this.damageTimer = 0;
       this.heartbeatTimer = 0;
       this.lastBiome = null;
+      this.buildFabricator();
+    }
+
+    // --- Fabricator ---------------------------------------------------------
+
+    /** Builds one row per recipe once; affordability is refreshed on open. */
+    buildFabricator() {
+      this.recipeRows = SL.Crafting.recipes.map((recipe) => {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'recipe';
+
+        const cost = Object.entries(recipe.cost)
+          .map(([type, n]) => n + ' ' + SL.Pickup.TYPES[type].label.replace('Stalker ', ''))
+          .join('  ·  ');
+
+        row.innerHTML =
+          '<span class="recipe__name"></span>' +
+          '<span class="recipe__cost"></span>' +
+          '<span class="recipe__blurb"></span>';
+        row.querySelector('.recipe__name').textContent = recipe.name;
+        row.querySelector('.recipe__cost').textContent = cost;
+        row.querySelector('.recipe__blurb').textContent = recipe.blurb;
+
+        row.addEventListener('click', () => {
+          if (SL.Crafting.craft(recipe, this.game)) this.refreshFabricator();
+        });
+
+        this.el.recipeList.appendChild(row);
+        return { recipe, row };
+      });
+    }
+
+    refreshFabricator() {
+      for (const { recipe, row } of this.recipeRows) {
+        const blocked = SL.Crafting.blockedReason(recipe);
+        row.classList.toggle('is-built', blocked === 'built');
+        row.classList.toggle('is-locked', blocked !== null && blocked !== 'built');
+        row.disabled = blocked !== null;
+
+        const note = blocked === 'built' ? 'equipped'
+          : blocked && blocked !== 'short' ? blocked
+          : '';
+        row.dataset.note = note;
+      }
+      this.updateResources();
+    }
+
+    updateResources() {
+      this.el.titaniumCount.textContent = SL.Crafting.inventory.titanium;
+      this.el.toothCount.textContent = SL.Crafting.inventory.tooth;
+    }
+
+    setFabricatorOpen(open) {
+      this.el.fabricator.classList.toggle('is-visible', open);
+      if (open) this.refreshFabricator();
+    }
+
+    /** A short message that stacks and fades, for pickups and crafting. */
+    toast(text) {
+      const node = document.createElement('div');
+      node.className = 'toast';
+      node.textContent = text;
+      this.el.toasts.appendChild(node);
+      setTimeout(() => node.classList.add('is-fading'), 900);
+      setTimeout(() => node.remove(), 1600);
+
+      // Never let a long session pile up hundreds of nodes.
+      while (this.el.toasts.childElementCount > 6) this.el.toasts.firstChild.remove();
     }
 
     flashDamage() { this.damageTimer = 0.8; }
@@ -71,6 +141,8 @@
         this.el.biomeName.classList.add('is-entering');
       }
 
+      this.updateResources();
+
       // --- Crosshair focus -------------------------------------------------------
       this.el.focus.textContent = p.dead ? '' : p.focusLabel;
 
@@ -111,12 +183,23 @@
 
       this.el.deathScreen.classList.toggle('is-visible', p.dead);
 
+      if (this.game.fps) this.el.fps.textContent = this.game.fps + ' fps';
+
       // --- Controls hint ---------------------------------------------------------
       if (this.game.time < HINT_DURATION) {
         this.el.hint.style.opacity = SL.clamp((HINT_DURATION - this.game.time) / 3, 0, 1) * 0.9;
       } else if (this.el.hint.style.opacity !== '0') {
         this.el.hint.style.opacity = 0;
       }
+    }
+
+    /** Tells the player how to aim when pointer lock was refused. */
+    showLookMode(mode) {
+      if (mode !== 'drag') { this.el.lookMode.classList.remove('is-visible'); return; }
+      this.el.lookMode.textContent = 'Drag to look  ·  click to swing  ·  Esc to pause';
+      this.el.lookMode.classList.add('is-visible');
+      clearTimeout(this._lookTimer);
+      this._lookTimer = setTimeout(() => this.el.lookMode.classList.remove('is-visible'), 9000);
     }
 
     showMuted(muted) {

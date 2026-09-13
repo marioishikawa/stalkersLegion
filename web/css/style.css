@@ -348,3 +348,208 @@ kbd {
   .instruments { min-width: 0; }
   .hint { display: none; }
 }
+
+/* ------------------------------------------------------------- Resources */
+
+.resources {
+  display: flex;
+  gap: 18px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hull-line);
+}
+
+.resource { display: flex; align-items: center; gap: 7px; }
+
+.resource__swatch { width: 9px; height: 9px; }
+.resource__swatch--titanium { background: #9fb3c0; }
+.resource__swatch--tooth { background: #e0d7bc; }
+
+.resource__label {
+  font: var(--label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.resource__count {
+  font: var(--readout);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--bone);
+}
+
+/* ---------------------------------------------------------------- Toasts */
+
+.toasts {
+  position: absolute;
+  left: 50%;
+  bottom: 136px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.toast {
+  font: var(--label);
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+  opacity: 1;
+  transition: opacity 600ms ease-out;
+}
+
+.toast.is-fading { opacity: 0; }
+
+/* ------------------------------------------------------------ Fabricator */
+
+.fabricator {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-content: center;
+  padding: clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--abyss) 88%, transparent);
+  pointer-events: auto;
+  overflow-y: auto;
+}
+
+.fabricator.is-visible { display: grid; }
+
+.fabricator__panel {
+  width: min(680px, 100%);
+  border: 1px solid var(--hull-line);
+  background: color-mix(in srgb, var(--hull) 92%, transparent);
+}
+
+.fabricator__head { padding: 20px 22px 14px; border-bottom: 1px solid var(--hull-line); }
+
+.fabricator__title {
+  margin: 0;
+  font: 600 clamp(1.5rem, 4vw, 2rem)/1 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kelp);
+}
+
+.fabricator__hint { margin: 8px 0 0; color: var(--muted); font-size: 0.86rem; max-width: 52ch; }
+
+.recipe-list { display: grid; }
+
+/* Each recipe is a row, not a card - the rule between them is the separation. */
+.recipe {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 16px;
+  padding: 14px 22px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--hull-line) 60%, transparent);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: var(--bone);
+  cursor: pointer;
+  transition: background 140ms ease-out;
+}
+
+.recipe:hover:not(:disabled) { background: color-mix(in srgb, var(--kelp) 12%, transparent); }
+.recipe:focus-visible { outline: 2px solid var(--phosphor); outline-offset: -2px; }
+
+.recipe__name {
+  font: var(--label);
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.recipe__cost {
+  grid-column: 2;
+  grid-row: 1;
+  font: var(--readout);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--phosphor);
+  white-space: nowrap;
+}
+
+.recipe__blurb { grid-column: 1 / -1; color: var(--muted); font-size: 0.85rem; }
+
+.recipe:disabled { cursor: default; }
+
+/* Short on materials: dim it, but keep the goal legible. */
+.recipe.is-locked { opacity: 0.42; }
+.recipe.is-locked .recipe__cost { color: var(--rust); }
+
+.recipe.is-built { opacity: 0.55; }
+.recipe.is-built .recipe__name { color: var(--kelp); }
+.recipe.is-built .recipe__cost { display: none; }
+
+/* The note ("equipped", "needs Reinforced Tank") replaces the cost column -
+   both occupy the same grid cell, so the cost has to go when a note is set. */
+.recipe[data-note]:not([data-note=""]) .recipe__cost { display: none; }
+
+.recipe[data-note]:not([data-note=""])::after {
+  content: attr(data-note);
+  grid-column: 2;
+  grid-row: 1;
+  font: var(--label);
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.fabricator__foot {
+  padding: 12px 22px;
+  border-top: 1px solid var(--hull-line);
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 560px) {
+  .resources { gap: 12px; }
+  .toasts { bottom: 160px; }
+  .recipe { padding: 12px 16px; }
+}
+
+/* ------------------------------------------------- Cursor and look modes */
+
+/*
+ * The cursor is free on the title card, the pause screen and the fabricator,
+ * and nowhere else. With pointer lock it is captured outright; in drag-look it
+ * stays visible as a crosshair so you can see what you are aiming at.
+ */
+body.is-ready #scene { cursor: none; }
+body.is-cursor-free #scene { cursor: default; }
+body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
+
+.look-mode {
+  position: absolute;
+  left: 50%;
+  top: 84px;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border: 1px solid var(--hull-line);
+  background: color-mix(in srgb, var(--abyss) 75%, transparent);
+  font: var(--label);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.look-mode.is-visible { opacity: 1; }
+
+.fps {
+  font: var(--readout);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  opacity: 0.55;
+}

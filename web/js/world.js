@@ -148,13 +148,31 @@
    * Scales every school count at once. Each fish is two draw calls, so this is
    * the dial to turn if the frame rate suffers on a weaker machine.
    */
-  const POPULATION = 0.6;
+  const POPULATION = 0.45;
+
+  /**
+   * School counts are authored per species, but the rings are wildly different
+   * sizes - the Red Coral Reef covers nearly three times the sea floor of the
+   * Safe Shallows. Spawning the same number of schools in both leaves the outer
+   * biomes feeling empty, because you can swim a long way between clusters.
+   * This scales school counts by ring area so the distance between schools stays
+   * roughly constant wherever you are.
+   */
+  function areaFactorOf(biome) {
+    const inner = SL.Biomes.innerRadiusOf(biome);
+    const outer = Math.min(biome.outerRadius, SL.WORLD_RADIUS);
+    const area = Math.PI * (outer * outer - inner * inner);
+    const reference = Math.PI * (52 * 52 - 26 * 26);   // the Kelp Forest
+    return SL.clamp(area / reference, 0.8, 2.0);
+  }
 
   function spawnCreatures(game) {
     for (const biome of SL.Biomes.list) {
+      const density = POPULATION * areaFactorOf(biome);
+
       // --- Fish -------------------------------------------------------------
       for (const species of SL.Species.ofBiome(biome.id)) {
-        const groups = Math.max(1, Math.round(species.groups * POPULATION));
+        const groups = Math.max(1, Math.round(species.groups * density));
         for (let g = 0; g < groups; g++) {
           const point = SL.Biomes.randomPointIn(biome);
           if (!point) continue;

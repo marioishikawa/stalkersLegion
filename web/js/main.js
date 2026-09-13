@@ -5,7 +5,10 @@
   'use strict';
 
   /** Distance past which creatures stop being drawn and think at a lower rate. */
-  const CULL_DISTANCE = 70;
+  const CULL_DISTANCE = 55;
+
+  /** Frame rate below which the renderer drops resolution to keep input snappy. */
+  const TARGET_FPS = 48;
 
   class Game {
     constructor(canvas) {
@@ -17,6 +20,13 @@
       this.fish = [];
       this.stalkers = [];
       this.scrap = [];
+      this.pickups = [];
+
+      // Paused covers the title card, the pause screen and the fabricator. The
+      // world keeps moving so the ocean stays alive behind them, but the diver
+      // is frozen - no air burned, no bites landed.
+      this.paused = true;
+      this.fabricatorOpen = false;
 
       this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -44,6 +54,11 @@
         })
       };
 
+      // 'pointerlock' is the good path. Some embeddings (an iframe without the
+      // pointer-lock permission, for one) refuse it, and without a fallback the
+      // game would simply be unaimable - so 'drag' exists as a second mode.
+      this.lookMode = 'pointerlock';
+
       this.audio = new SL.Audio();
       this.input = {
         forward: false, back: false, left: false, right: false,
@@ -52,6 +67,13 @@
 
       this.scrapTimer = 20;
       this._tmp = new THREE.Vector3();
+
+      // Adaptive resolution. A retina display at devicePixelRatio 2 costs four
+      // times the pixels of 1, which is the usual reason a scene like this feels
+      // sluggish to the mouse.
+      this.pixelRatio = Math.min(window.devicePixelRatio, 1.5);
+      this.renderer.setPixelRatio(this.pixelRatio);
+      this.frameTimes = [];
     }
 
     build() {
@@ -64,6 +86,7 @@
       SL.World.scatterScrap(this);
 
       this.player = new SL.Player(this);
+      SL.Crafting.reset();
       this.hud = new SL.Hud(this);
 
       SL.World.spawnCreatures(this);
@@ -88,13 +111,72 @@
     enter() {
       this.audio.start();
       this.started = true;
-      this.canvas.requestPointerLock();
+      this.paused = false;
+      this.fabricatorOpen = false;
+      this.hud.setFabricatorOpen(false);
+      document.getElementById('pauseScreen').classList.remove('is-visible');
+
+      if (this.lookMode !== 'pointerlock') { this.updateCursor(); return; }
+
+      const lock = this.canvas.requestPointerLock();
+      if (lock && typeof lock.catch === 'function') lock.catch(() => {});
+
+      // If the lock has not engaged shortly after asking, it is not going to -
+      // fall back to drag-look rather than leaving the player unable to aim.
+      clearTimeout(this._lockCheck);
+      this._lockCheck = setTimeout(() => {
+        if (document.pointerLockElement !== this.canvas && this.started && !this.fabricatorOpen) {
+          this.useDragLook();
+        }
+      }, 700);
+
+      this.updateCursor();
+    }
+
+    useDragLook() {
+      if (this.lookMode === 'drag') return;
+      this.lookMode = 'drag';
+      this.paused = false;
+      document.getElementById('pauseScreen').classList.remove('is-visible');
+      document.body.classList.add('is-drag-look');
+      this.hud.showLookMode('drag');
+      this.updateCursor();
+    }
+
+    /** The cursor is only free on the title card, the pause screen and the fabricator. */
+    updateCursor() {
+      const free = this.paused || !this.started;
+      document.body.classList.toggle('is-cursor-free', free);
+    }
+
+    togglePause(paused) {
+      this.setPaused(paused);
+      const show = paused && this.started && !this.player.dead && !this.fabricatorOpen;
+      document.getElementById('pauseScreen').classList.toggle('is-visible', show);
+      this.updateCursor();
+    }
+
+    setPaused(paused) {
+      this.paused = paused;
+      if (paused && document.pointerLockElement === this.canvas) document.exitPointerLock();
+      this.updateCursor();
+    }
+
+    toggleFabricator() {
+      if (!this.started || this.player.dead) return;
+      this.fabricatorOpen = !this.fabricatorOpen;
+      this.hud.setFabricatorOpen(this.fabricatorOpen);
+      this.setPaused(this.fabricatorOpen);
+      this.audio.click();
+      if (!this.fabricatorOpen) this.enter();
     }
 
     update(dt) {
       this.time += dt;
 
-      this.player.update(dt, this.input);
+      // The diver only ticks while actually playing - this is what stops air
+      // draining behind the title card and the pause screen.
+      if (!this.paused) this.player.update(dt, this.input);
 
       const playerPos = this.player.position;
 
@@ -113,6 +195,7 @@
       }
 
       for (let i = this.scrap.length - 1; i >= 0; i--) this.scrap[i].update(dt);
+      for (let i = this.pickups.length - 1; i >= 0; i--) this.pickups[i].update(dt);
 
       this.scrapTimer -= dt;
       if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }
@@ -127,14 +210,37 @@
       const dt = Math.min((now - (this.lastFrame || now)) / 1000, 0.05);
       this.lastFrame = now;
       this.frame = (this.frame || 0) + 1;
+      this.measurePerformance(dt);
 
       if (dt > 0) this.update(dt);
       this.renderer.render(this.scene, this.camera);
     }
 
+    /**
+     * Watches the frame rate and drops resolution once if the machine cannot
+     * hold the target. Resolution is never raised again, so this settles rather
+     * than oscillating.
+     */
+    measurePerformance(dt) {
+      if (dt <= 0) return;
+      this.frameTimes.push(dt);
+      if (this.frameTimes.length < 90) return;
+
+      const average = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+      this.fps = Math.round(1 / average);
+      this.frameTimes.length = 0;
+
+      if (this.fps < TARGET_FPS && this.pixelRatio > 0.75) {
+        this.pixelRatio = this.fps < 30 ? 0.75 : 1;
+        this.renderer.setPixelRatio(this.pixelRatio);
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    }
+
     resize() {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
+      this.renderer.setPixelRatio(this.pixelRatio);
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
   }
@@ -142,6 +248,24 @@
   // ---------------------------------------------------------------------------
   // Bootstrap
   // ---------------------------------------------------------------------------
+
+  /**
+   * Typing the code anywhere during play unlocks the full fabricator and tops
+   * the diver up. Kept to the last few letters pressed so it never interferes
+   * with the movement keys.
+   */
+  const CHEAT_CODE = 'sus';
+
+  function checkCheat(game, key) {
+    game.cheatBuffer = ((game.cheatBuffer || '') + key).slice(-CHEAT_CODE.length);
+    if (game.cheatBuffer !== CHEAT_CODE) return;
+
+    game.cheatBuffer = '';
+    SL.Crafting.unlockAll(game);
+    game.audio.cheat();
+    game.hud.toast('CHEAT — all gear unlocked');
+    game.hud.refreshFabricator();
+  }
 
   function bindInput(game) {
     const KEYS = {
@@ -152,6 +276,7 @@
 
     window.addEventListener('keydown', (e) => {
       if (KEYS[e.code] !== undefined) { game.input[KEYS[e.code]] = true; e.preventDefault(); }
+      if (e.key && e.key.length === 1) checkCheat(game, e.key.toLowerCase());
 
       switch (e.code) {
         case 'KeyE': game.player.interact(); break;
@@ -160,6 +285,16 @@
         case 'KeyM':
           game.audio.setMuted(!game.audio.muted);
           game.hud.showMuted(game.audio.muted);
+          break;
+        case 'Tab':
+          e.preventDefault();
+          game.toggleFabricator();
+          break;
+        case 'Escape':
+          // Esc always pauses and hands the cursor back, in either look mode.
+          // Browsers release pointer lock on Esc themselves, but doing it here
+          // too means pausing never depends on that happening.
+          if (game.started && !game.fabricatorOpen && !game.paused) game.togglePause(true);
           break;
       }
     });
@@ -173,22 +308,79 @@
       for (const key of Object.keys(game.input)) game.input[key] = false;
     });
 
+    // --- Looking around -------------------------------------------------------
+    //
+    // With pointer lock the cursor is captured and every mousemove is a raw
+    // delta. Without it the cursor stays on screen, so looking is done by
+    // dragging - and a click that did not drag is still a knife swing.
+
+    let dragging = false;
+    let dragDistance = 0;
+
+    const isLocked = () => document.pointerLockElement === game.canvas;
+
     document.addEventListener('mousemove', (e) => {
-      if (document.pointerLockElement === game.canvas) {
+      if (game.paused) return;
+
+      if (isLocked()) {
         game.player.look(e.movementX, e.movementY);
+      } else if (dragging && game.lookMode === 'drag') {
+        const dx = e.movementX || 0;
+        const dy = e.movementY || 0;
+        dragDistance += Math.abs(dx) + Math.abs(dy);
+        game.player.look(dx, dy);
       }
     });
 
-    document.addEventListener('mousedown', (e) => {
-      if (document.pointerLockElement === game.canvas && e.button === 0) game.player.swing();
+    game.canvas.addEventListener('mousedown', (e) => {
+      if (!game.started || game.paused) return;
+
+      if (isLocked()) {
+        if (e.button === 0) game.player.swing();
+        return;
+      }
+
+      if (game.lookMode === 'drag') {
+        dragging = true;
+        dragDistance = 0;
+        e.preventDefault();
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!dragging) return;
+      dragging = false;
+      // A press that barely moved was aimed at something, not a look.
+      if (e.button === 0 && dragDistance < 6 && !game.paused) game.player.swing();
+    });
+
+    // Right-drag should not open the context menu mid-look.
+    game.canvas.addEventListener('contextmenu', (e) => {
+      if (game.lookMode === 'drag' && game.started) e.preventDefault();
     });
 
     document.addEventListener('pointerlockchange', () => {
-      const locked = document.pointerLockElement === game.canvas;
-      const paused = !locked && game.started && !game.player.dead;
+      const locked = isLocked();
       document.body.classList.toggle('is-paused', !locked && game.started);
-      document.getElementById('pauseScreen').classList.toggle('is-visible', paused);
-      if (!locked) for (const key of Object.keys(game.input)) game.input[key] = false;
+
+      if (locked) {
+        clearTimeout(game._lockCheck);
+        game.lookMode = 'pointerlock';
+        document.body.classList.remove('is-drag-look');
+        game.paused = false;
+        document.getElementById('pauseScreen').classList.remove('is-visible');
+        game.updateCursor();
+        return;
+      }
+
+      for (const key of Object.keys(game.input)) game.input[key] = false;
+
+      // Losing the lock means Esc, or the window lost focus. Either way: pause,
+      // free the cursor, and wait for a click. Drag-look never pauses this way,
+      // because it never held the cursor in the first place.
+      if (game.lookMode === 'pointerlock' && game.started && !game.fabricatorOpen) {
+        game.togglePause(true);
+      }
     });
 
     window.addEventListener('resize', () => game.resize());

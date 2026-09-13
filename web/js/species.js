@@ -104,6 +104,16 @@
                sideFin: 0.12, eyeSize: 0.07, stripes: 6, radialSegments: 8 }
     }),
 
+    fish('puffer', 'Cinder Puffer', 'coral', 'bulb', {
+      // Spiky, ash-dark, with an ember underside. Drifts rather than swims.
+      backColor: C(0.28, 0.12, 0.10), bellyColor: C(0.95, 0.42, 0.12), finColor: C(0.55, 0.22, 0.12),
+      glow: 0.2, maxHealth: 26, cruiseSpeed: 0.9, sprintSpeed: 2.2, turnRate: 1.3,
+      schoolSize: 3, groups: 5, wagRate: 3.5,
+      shape: { length: 0.38, height: 0.36, width: 0.34, bellyPosition: 0.40, noseSharpness: 0.06,
+               crossSection: 2.1, tailHeight: 0.18, tailSweep: 0.14, tailFork: 0,
+               dorsalFin: 0.06, sideFin: 0.13, eyeSize: 0.07, backSpikes: 6 }
+    }),
+
     // ------------------------------------------------------------ Boulder Field
     fish('gulper', 'Stone Gulper', 'boulders', 'bulb', {
       // Heavy bottom-feeder with a huge round head.
@@ -113,6 +123,16 @@
       shape: { length: 0.72, height: 0.30, width: 0.26, bellyPosition: 0.28, noseSharpness: 0.08,
                crossSection: 2.4, tailHeight: 0.24, tailFork: 0.20, dorsalFin: 0.12, sideFin: 0.18,
                eyeSize: 0.045, backSpikes: 4, spineSegments: 16 }
+    }),
+
+    fish('skate', 'Rift Skate', 'boulders', 'disc', {
+      // Wide and flat rather than tall - a ray gliding over the rubble.
+      backColor: C(0.26, 0.24, 0.28), bellyColor: C(0.78, 0.76, 0.70), finColor: C(0.34, 0.32, 0.34),
+      maxHealth: 34, cruiseSpeed: 1.3, sprintSpeed: 3.2, turnRate: 1.5,
+      schoolSize: 2, groups: 7, altitude: 1.2, wagRate: 2.4,
+      shape: { length: 0.66, height: 0.055, width: 0.44, bellyPosition: 0.38, noseSharpness: 0.5,
+               crossSection: 1.7, tailHeight: 0.07, tailSweep: 0.34, tailFork: 0,
+               dorsalFin: 0, ventralFin: 0, sideFin: 0, eyeSize: 0.028, spineSegments: 16 }
     }),
 
     // -------------------------------------------------------------- Deep Trench
@@ -141,7 +161,10 @@
       backColor: C(0.22, 0.26, 0.20), bellyColor: C(0.62, 0.60, 0.46), finColor: C(0.30, 0.34, 0.24),
       eyeColor: C(0.95, 0.85, 0.15),
       maxHealth: 130, cruiseSpeed: 2.2, sprintSpeed: 6.2, turnRate: 1.9,
-      senseRadius: 30, biteDamage: 22, biteInterval: 1.8,
+      // A stalker that bites every 1.8s for 22 kills a full-health diver in
+      // four passes with no way to answer. It now hits for less, far less
+      // often, and breaks off after every bite (see the 'veerOff' state).
+      senseRadius: 30, biteDamage: 13, biteInterval: 3.4,
       schoolSize: 1, groups: 0, altitude: 4.5, wagRate: 2.6,
       shape: { length: 2.6, height: 0.115, width: 0.085, bellyPosition: 0.18, noseSharpness: 0.25,
                crossSection: 2.3, tailHeight: 0.20, tailSweep: 0.22, tailFork: 0.25,

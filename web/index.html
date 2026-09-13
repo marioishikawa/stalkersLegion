@@ -50,14 +50,31 @@
           <span class="gauge__fill gauge__fill--air" id="airFill"></span>
         </span>
       </div>
+
+      <div class="resources">
+        <span class="resource">
+          <span class="resource__swatch resource__swatch--titanium"></span>
+          <span class="resource__label">Titanium</span>
+          <span class="resource__count" id="titaniumCount">0</span>
+        </span>
+        <span class="resource">
+          <span class="resource__swatch resource__swatch--tooth"></span>
+          <span class="resource__label">Teeth</span>
+          <span class="resource__count" id="toothCount">0</span>
+        </span>
+      </div>
     </div>
 
     <div class="depth">
       <span class="depth__biome" id="biomeName">Safe Shallows</span>
       <span class="depth__value" id="depthValue">0.0</span>
       <span class="depth__unit">metres down</span>
+      <span class="fps" id="fps"></span>
     </div>
   </div>
+
+  <div class="look-mode" id="lookMode"></div>
+  <div class="toasts" id="toasts"></div>
 
   <div class="carry-note" id="carryNote">Carrying scrap metal &nbsp;·&nbsp; [E] throw it</div>
   <div class="mute-note" id="muteNote">sound off</div>
@@ -65,6 +82,7 @@
   <div class="hint" id="hint">
     <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> swim &nbsp; <kbd>Space</kbd>/<kbd>Ctrl</kbd> rise &amp; sink &nbsp; <kbd>Shift</kbd> sprint</div>
     <div><kbd>Click</kbd> knife &nbsp; <kbd>E</kbd> pick up / throw scrap &nbsp; <kbd>F</kbd> light &nbsp; <kbd>M</kbd> sound</div>
+    <div><kbd>Tab</kbd> fabricator &nbsp; — &nbsp; knife scrap for titanium, let stalkers chew it for teeth</div>
     <div>Air refills at the surface. Scrap metal draws stalkers — use it.</div>
   </div>
 </div>
@@ -80,10 +98,23 @@
   <p class="screen__meta">Mouse to look &nbsp;·&nbsp; Esc to release the cursor</p>
 </div>
 
+<div class="fabricator" id="fabricator">
+  <div class="fabricator__panel">
+    <header class="fabricator__head">
+      <h2 class="fabricator__title">Fabricator</h2>
+      <p class="fabricator__hint">Titanium comes from cutting scrap apart. Teeth come from stalkers chewing it.</p>
+    </header>
+    <div class="recipe-list" id="recipeList"></div>
+    <footer class="fabricator__foot"><kbd>Tab</kbd> to close</footer>
+  </div>
+</div>
+
 <div class="screen" id="pauseScreen">
   <h1 class="screen__title">Paused</h1>
   <div class="screen__rule"></div>
-  <button class="screen__cta" type="button">Back to the water</button>
+  <p class="screen__sub">The cursor is yours while you are paused.</p>
+  <button class="screen__cta" type="button">Resume dive</button>
+  <p class="screen__meta">Esc pauses &nbsp;·&nbsp; Tab opens the fabricator</p>
 </div>
 
 <div class="screen" id="deathScreen">
@@ -107,6 +138,8 @@
 <script src="js/bodies.js"></script>
 <script src="js/flora.js"></script>
 <script src="js/scrap.js"></script>
+<script src="js/items.js"></script>
+<script src="js/crafting.js"></script>
 <script src="js/creatures.js"></script>
 <script src="js/player.js"></script>
 <script src="js/audio.js"></script>

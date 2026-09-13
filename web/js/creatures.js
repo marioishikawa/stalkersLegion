@@ -335,6 +335,7 @@
     huntFish: 'hunting',
     feed: 'feeding',
     attack: 'attacking you',
+    veerOff: 'circling back',
     retreat: 'retreating'
   };
 
@@ -402,7 +403,11 @@
       }
     }
 
-    onDeath() { if (this.carriedScrap) this.releaseScrap(new THREE.Vector3()); }
+    onDeath() {
+      if (this.carriedScrap) this.releaseScrap(new THREE.Vector3());
+      SL.Pickup.burst(this.game, 'tooth', this.position, SL.randInt(3, 5));
+      SL.Pickup.burst(this.game, 'titanium', this.position, 1);
+    }
 
     grabScrap(scrap) {
       if (!scrap || scrap.isHeld) return;
@@ -427,7 +432,7 @@
       // 1. An active threat outranks everything.
       if (this.aggro > 0 && this.threat && !this.threat.dead) {
         if (this.threat.position.distanceTo(p) < sense * 1.5) {
-          if (this.state !== 'retreat') this.enterState('attack');
+          if (this.state !== 'retreat' && this.state !== 'veerOff') this.enterState('attack');
           return;
         }
         this.aggro = 0;
@@ -436,7 +441,8 @@
 
       // 2. Busy states run to completion.
       if (this.state === 'chewScrap' || this.state === 'carryScrap'
-        || this.state === 'feed' || this.state === 'retreat') return;
+        || this.state === 'feed' || this.state === 'retreat'
+        || this.state === 'veerOff') return;
 
       // 3. The player, if close.
       const player = this.game.player;
@@ -534,6 +540,12 @@
             this.scrapBites++;
             this.game.audio.metalBite(this.game.distanceToPlayer(p));
 
+            // Stalkers shed teeth on metal. This is the reliable way to farm
+            // them: bait one onto a plate and let it work.
+            if (Math.random() < 0.4) {
+              SL.Pickup.burst(this.game, 'tooth', scrap.position, 1);
+            }
+
             _look.subVectors(scrap.position, p).normalize();
             if (scrap.bite(SCRAP_BITE_DAMAGE, _look)) {
               this.targetScrap = null;
@@ -630,14 +642,25 @@
             this.game.audio.bite(0);
             threat.hurt(S.biteDamage, this);
             this.velocity.addScaledVector(_tmp.subVectors(threat.position, p).normalize(), 2);
+
+            // Break off and circle back rather than chewing continuously. This
+            // is what gives the player room to fight back or swim for it.
+            this.enterState('veerOff');
+            return this.steerTo(p.clone().addScaledVector(
+              _tmp.subVectors(p, threat.position).normalize(), 10), S.sprintSpeed);
           }
 
-          if (distance < this.biteReach) {
-            // Veer off after biting instead of grinding into the player.
-            _look.subVectors(threat.position, p).normalize().multiplyScalar(6).add(threat.position);
-            return this.steerTo(_look, S.sprintSpeed);
-          }
           return this.steerTo(threat.position, S.sprintSpeed);
+        }
+
+        case 'veerOff': {
+          // Swim clear for a few seconds, then decide again.
+          this.jawOpen = SL.damp(this.jawOpen, 0.15, 3, dt);
+          if (this.stateTimer > 4) {
+            this.enterState(this.threat && !this.threat.dead ? 'attack' : 'patrol');
+          }
+          const away = this.threat ? this.threat.position : this.patrolTarget;
+          return _tmp.subVectors(p, away).normalize().multiplyScalar(S.cruiseSpeed * 1.3);
         }
 
         case 'retreat':

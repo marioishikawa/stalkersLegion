@@ -48,7 +48,7 @@
       outerRadius: 92, floorDepth: 27, roughness: 4.2,
       floorColor: new THREE.Color(0.62, 0.26, 0.22),
       waterColor: new THREE.Color(0.14, 0.18, 0.32),
-      fogDensity: 0.042,
+      fogDensity: 0.034,
       scrapCount: 4, stalkerCount: 1,
       flora: ['coralFan', 'coralTube', 'coralTube'], floraPatches: 20
     },
@@ -57,7 +57,7 @@
       outerRadius: 106, floorDepth: 34, roughness: 5.2,
       floorColor: new THREE.Color(0.30, 0.31, 0.33),
       waterColor: new THREE.Color(0.06, 0.11, 0.20),
-      fogDensity: 0.050,
+      fogDensity: 0.042,
       scrapCount: 4, stalkerCount: 2,
       flora: ['boulder', 'boulder', 'glowPod'], floraPatches: 16
     },

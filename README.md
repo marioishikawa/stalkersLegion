@@ -58,10 +58,16 @@ no server and no build step. The only external dependency is Three.js from a CDN
 | Mouse | Look |
 | **Left click** | Swing the survival knife |
 | `E` | Pick up scrap metal / throw the piece you are holding |
+| `Tab` | Open the fabricator |
 | `F` | Flashlight |
 | `M` | Mute |
 | `R` | Respawn, once you are dead |
-| `Esc` | Release the cursor |
+| `Esc` | Pause, and hand the cursor back |
+
+The cursor is captured while you are diving and free on the title card, the
+pause screen and the fabricator — nowhere else. If the browser refuses pointer
+lock (some embeddings do), the game falls back to drag-to-look automatically and
+tells you so: drag to aim, a click that did not drag still swings the knife.
 
 ## How it plays
 
@@ -86,8 +92,31 @@ crossing the kelp forest and dying in it.
 
 **Stalkers hunt.** Left alone they patrol, run fish down and kill them outright,
 then feed for a couple of seconds. Get within about 13 metres and you become the
-more interesting target: 22 damage a bite, a hard knockback, and you drop
-whatever you were carrying.
+more interesting target: 13 damage a bite, a hard knockback, and you drop
+whatever you were carrying. After every bite a stalker breaks off and circles
+back rather than chewing continuously, which is what gives you room to fight or
+swim for it — expect to lose about a quarter of your health over fifteen seconds
+of unbroken contact, not all of it.
+
+**Then you build your way out of that.** Cutting a scrap pile apart with the
+knife leaves **titanium**; a stalker chewing one sheds **teeth**. Swim into them
+to collect, then press `Tab`:
+
+| Item | Cost | Effect |
+|---|---|---|
+| Reinforced Fins | 3 titanium | Swim 30% faster |
+| Reinforced Tank | 5 titanium | Air 90s → 150s |
+| Serrated Blade | 4 titanium, 2 teeth | Knife 28 → 52, swings faster |
+| Plated Dive Suit | 6 titanium, 3 teeth | Take 40% less damage |
+| High-Pressure Tank | 9 titanium, 4 teeth | Air 150s → 260s |
+| Tooth-Edged Blade | 8 titanium, 6 teeth | Knife 52 → 84, longer reach |
+
+Every recipe either lets you stay down longer or survive what is down there, so
+each one extends how far out you can push. Upgrades survive death.
+
+That closes the loop: bait a stalker onto a plate so it sheds teeth, knife the
+plate for titanium, and spend both on the gear that lets you reach the next
+biome out.
 
 ## The ocean
 
@@ -178,6 +207,8 @@ python3 web/tools/build-artifact.py
   rippled surface plane, not a water shader.
 * **Health regenerates slowly** (2.5/s after 18 seconds without damage). With no
   medkits, the alternative was a one-way trip.
+* **There is a cheat code.** Type `sus` at any point while diving to unlock every
+  fabricator recipe and top up your materials.
 * **The Unreal build has never been compiled.** It was written without an engine
   available; expect to shake out compile errors on a first build. See
   `unreal/` and the toolchain notes below.

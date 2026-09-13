@@ -228,12 +228,21 @@
     tailMesh.computeNormals();
     if (!jawMesh.isEmpty) jawMesh.computeNormals();
 
-    // The loft is built nose-at-origin; recentre so the object pivots mid-body.
-    const recentre = new THREE.Matrix4().makeTranslation(0, 0, -length * 0.5);
+    // The loft grows nose-at-origin toward +Z, but Object3D.lookAt() points an
+    // object's +Z at its target - so a body used as built swims tail-first.
+    // Turn it end for end and recentre, which puts the nose at +Z (forward) and
+    // the tail root at -Z, with the object pivoting mid-body.
+    //
+    // The tail and jaw are separate objects positioned at the pivots below, and
+    // both are authored along this corrected axis already: the tail fin sweeps
+    // back toward -Z and the jaw runs forward toward +Z.
+    const recentre = new THREE.Matrix4().makeRotationY(Math.PI);
+    recentre.premultiply(new THREE.Matrix4().makeTranslation(0, 0, length * 0.5));
+
     const centred = new MeshData();
     centred.append(body, recentre);
-    tailPivot.z -= length * 0.5;
-    if (jawPivot) jawPivot.z -= length * 0.5;
+    tailPivot.applyMatrix4(recentre);
+    if (jawPivot) jawPivot.applyMatrix4(recentre);
 
     return {
       body: centred.toGeometry(),
