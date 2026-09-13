@@ -117,7 +117,7 @@
       backColor: C(0.24, 0.28, 0.34), bellyColor: C(0.92, 0.93, 0.90), finColor: C(0.30, 0.34, 0.40),
       maxHealth: 60, cruiseSpeed: 2.6, sprintSpeed: 6.0, turnRate: 2.2,
       senseRadius: 16, schoolSize: 4, groups: 4, altitude: 6, wagRate: 4.5,
-      breathSeconds: 70,
+      breathSeconds: 70, voice: 'whistle', callInterval: [7, 18],
       shape: { length: 1.9, height: 0.17, width: 0.13, bellyPosition: 0.34, noseSharpness: 0.55,
                tailHeight: 0.17, tailSweep: 0.20, tailFork: 0.65, dorsalFin: 0.13,
                sideFin: 0.15, eyeSize: 0.018, spineSegments: 18 }
@@ -128,7 +128,7 @@
       backColor: C(0.44, 0.40, 0.34), bellyColor: C(0.88, 0.85, 0.76), finColor: C(0.36, 0.33, 0.28),
       maxHealth: 70, cruiseSpeed: 1.9, sprintSpeed: 5.2, turnRate: 1.8,
       senseRadius: 14, schoolSize: 2, groups: 4, altitude: 2.5, wagRate: 3,
-      breathSeconds: 95,
+      breathSeconds: 95, voice: 'blow',
       shape: { length: 1.5, height: 0.20, width: 0.18, bellyPosition: 0.32, noseSharpness: 0.2,
                crossSection: 2.2, tailHeight: 0.13, tailSweep: 0.16, tailFork: 0.4,
                dorsalFin: 0, sideFin: 0.20, eyeSize: 0.035, spineSegments: 16 }
@@ -343,6 +343,45 @@
                jawLength: 0.20, backSpikes: 12, spineSegments: 24, radialSegments: 11 }
     }),
 
+    // ---------------------------------------------------- The bonded stalker
+    fish('petstalker', 'Bonded Stalker', 'kelp', 'eel', {
+      // Never spawns on its own - awarded for finishing the databank.
+      diet: 'carnivore', groups: 0,
+      note: 'Follows at your shoulder and goes after whatever comes for you. ' +
+            'Paler than its kin, and it will not bite the hand that catalogued it.',
+      backColor: C(0.46, 0.52, 0.40), bellyColor: C(0.88, 0.90, 0.76), finColor: C(0.60, 0.66, 0.44),
+      eyeColor: C(0.35, 0.90, 0.95),
+      glow: 0.25,
+      maxHealth: 160, cruiseSpeed: 3.0, sprintSpeed: 7.4, turnRate: 2.6,
+      senseRadius: 20, biteDamage: 26, biteInterval: 1.6,
+      schoolSize: 1, altitude: 4, wagRate: 3.4,
+      shape: { length: 2.4, height: 0.115, width: 0.085, bellyPosition: 0.18,
+               noseSharpness: 0.25, crossSection: 2.3,
+               tailHeight: 0.20, tailSweep: 0.22, tailFork: 0.25,
+               dorsalFin: 0.09, ventralFin: 0.05, sideFin: 0.10,
+               eyeSize: 0.026, eyeRing: true,
+               jawLength: 0.17, backSpikes: 7, spineSegments: 20, radialSegments: 10 }
+    }),
+
+    // --------------------------------------------------- The Red Puff Leviathan
+    fish('redpuff', 'Red Puff Leviathan', 'coral', 'bulb', {
+      leviathan: true, markerColor: '#e0452c',
+      diet: 'carnivore',
+      note: 'Grazes the reef and wants no trouble. Corner it and it swells, ' +
+            'throws up a cage of thorned vines, and waits for you to leave.',
+      backColor: C(0.72, 0.12, 0.10), bellyColor: C(0.98, 0.86, 0.62), finColor: C(0.92, 0.38, 0.16),
+      eyeColor: C(0.10, 0.06, 0.04), glow: 0.3,
+      maxHealth: 520, cruiseSpeed: 1.3, sprintSpeed: 3.4, turnRate: 0.9,
+      senseRadius: 26, biteDamage: 16, biteInterval: 3.8,
+      schoolSize: 1, groups: 0, altitude: 5, wagRate: 1.8,
+      shape: { length: 6.0, height: 0.34, width: 0.32, bellyPosition: 0.36,
+               noseSharpness: 0.06, crossSection: 2.1,
+               tailHeight: 0.16, tailSweep: 0.14, tailFork: 0.1,
+               dorsalFin: 0.07, ventralFin: 0.05, sideFin: 0.14,
+               eyeSize: 0.038, eyePosition: 0.16, eyeRing: true, mouthLine: 0.008,
+               backSpikes: 14, spineSegments: 20, radialSegments: 12 }
+    }),
+
     // ------------------------------------------------------------- The Whale
     fish('whale', 'Glasswhale Leviathan', 'abyss', 'bulb', {
       note: "Eats stalkers whole. Has no concept of a diver as prey, and never harms one.",
@@ -375,6 +414,8 @@
     stalker: byId.stalker,
     kingStalker: byId.kingstalker,
     whale: byId.whale,
+    redPuff: byId.redpuff,
+    petStalker: byId.petstalker,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(

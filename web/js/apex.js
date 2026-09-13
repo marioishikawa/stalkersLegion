@@ -405,3 +405,153 @@
   SL.KingStalker = KingStalker;
   SL.Whale = Whale;
 })(window.SL);
+
+/**
+ * The Red Puff Leviathan.
+ *
+ * The third leviathan, and the only one that never hunts anything. It grazes
+ * the reef and would rather be left alone. Provoke it and it does not chase:
+ * it swells to twice its size, throws a cage of thorned vines up around
+ * whatever provoked it, and holds position until the trouble goes away.
+ *
+ * Being caged is the threat. The vines are solid, they wither on their own, and
+ * a knife cuts through one faster than waiting does.
+ */
+(function (SL) {
+  'use strict';
+
+  const _tmp = new THREE.Vector3();
+
+  const LABELS = {
+    graze: 'grazing the reef',
+    puffed: 'swollen and cornered',
+    settle: 'deflating'
+  };
+
+  class RedPuff extends SL.Creature {
+    constructor(game, species, x, y, z) {
+      super(game, species, x, y, z);
+      this.territoryRadius = 34;
+      this.state = 'graze';
+      this.stateTimer = 0;
+      this.biteCooldown = 0;
+      this.cageCooldown = 0;
+      this.threat = null;
+      this.aggro = 0;
+      this.puff = 0;                       // 0 slack, 1 fully inflated
+      this.grazeTarget = new THREE.Vector3(x, y, z);
+    }
+
+    get stateLabel() { return LABELS[this.state] || ''; }
+    get biteReach() { return this.bodyLength * 0.5 + 2; }
+
+    enterState(state) {
+      if (this.state === state) return;
+      this.state = state;
+      this.stateTimer = 0;
+    }
+
+    /** Purely defensive: it only ever reacts to being hit. */
+    provoke(threat) {
+      if (this.dead || !threat) return;
+      this.threat = threat;
+      this.aggro = 16;
+
+      if (this.state !== 'puffed') {
+        this.enterState('puffed');
+        this.game.hud.toast('The Red Puff swells');
+      }
+
+      // Throw the cage, but not every single time it is touched.
+      if (this.cageCooldown <= 0) {
+        this.cageCooldown = 9;
+        // Sixteen stalks on a three-metre ring puts roughly 1.2 m between
+        // their centres and 0.3 m between their edges - comfortably narrower
+        // than the diver, so the ring holds instead of being squeezed through.
+        SL.Vine.cage(this.game, threat.position, 3.0, 16);
+        this.game.audio.crystal();
+      }
+    }
+
+    onHurt(damage, source) { this.provoke(source); }
+
+    onDeath() {
+      SL.Pickup.burst(this.game, 'quartz', this.position, 8);
+      SL.Pickup.burst(this.game, 'titanium', this.position, 5);
+      SL.Pickup.burst(this.game, 'diamond', this.position, 2);
+    }
+
+    /** Inflation is a scale on the body, so it reads at any distance. */
+    animate(dt) {
+      super.animate(dt);
+      const scale = 1 + this.puff * 0.85;
+      this.bodyMesh.scale.setScalar(scale);
+      if (this.jawMesh) this.jawMesh.scale.setScalar(scale);
+    }
+
+    desiredVelocity(dt) {
+      const S = this.species;
+      this.stateTimer += dt;
+      this.aggro = Math.max(0, this.aggro - dt);
+      this.biteCooldown = Math.max(0, this.biteCooldown - dt);
+      this.cageCooldown = Math.max(0, this.cageCooldown - dt);
+
+      switch (this.state) {
+        case 'puffed': {
+          this.puff = SL.damp(this.puff, 1, 3, dt);
+          this.jawOpen = SL.damp(this.jawOpen, 0.25, 2, dt);
+
+          const threat = this.threat;
+          if (!threat || threat.dead || this.aggro <= 0) {
+            this.enterState('settle');
+            return _tmp.set(0, 0, 0);
+          }
+
+          const distance = threat.position.distanceTo(this.position);
+
+          // It holds its ground rather than pursuing. Get close enough to be
+          // inside those spines and that is your own fault.
+          if (distance < this.biteReach && this.biteCooldown <= 0) {
+            this.biteCooldown = S.biteInterval;
+            this.game.audio.bite(0);
+            threat.hurt(S.biteDamage, this);
+          }
+
+          // Drift slowly away from whatever is bothering it.
+          if (distance < this.bodyLength) {
+            return _tmp.subVectors(this.position, threat.position).normalize()
+              .multiplyScalar(S.cruiseSpeed * 0.6);
+          }
+          return _tmp.set(0, 0, 0);
+        }
+
+        case 'settle': {
+          this.puff = SL.damp(this.puff, 0, 1.2, dt);
+          this.jawOpen = SL.damp(this.jawOpen, 0.05, 1.5, dt);
+          if (this.stateTimer > 6) { this.threat = null; this.enterState('graze'); }
+          return _tmp.set(0, 0, 0);
+        }
+
+        case 'graze':
+        default: {
+          this.puff = SL.damp(this.puff, 0, 1.5, dt);
+          this.jawOpen = SL.damp(this.jawOpen, 0.1 + 0.1 * Math.sin(this.game.time * 0.7), 1, dt);
+
+          if (this.grazeTarget.distanceToSquared(this.position) < 16 || this.stateTimer > 20) {
+            this.stateTimer = 0;
+            const angle = SL.random() * Math.PI * 2;
+            const radius = SL.randRange(8, this.territoryRadius);
+            const x = this.territory.x + Math.cos(angle) * radius;
+            const z = this.territory.z + Math.sin(angle) * radius;
+            this.grazeTarget.set(x, SL.Biomes.floorHeightAt(x, z) + SL.randRange(3, 8), z);
+          }
+
+          return _tmp.subVectors(this.grazeTarget, this.position).normalize()
+            .multiplyScalar(S.cruiseSpeed * 0.7);
+        }
+      }
+    }
+  }
+
+  SL.RedPuff = RedPuff;
+})(window.SL);

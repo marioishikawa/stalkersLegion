@@ -25,6 +25,7 @@
   const _c1 = new THREE.Vector3();
   const _c2 = new THREE.Vector3();
   const _normal = new THREE.Vector3();
+  const _up = new THREE.Vector3();
 
   // Base knife stats live on the player rather than as constants, because the
   // fabricator upgrades them in place.
@@ -54,6 +55,17 @@
 
     mesh.computeNormals();
     return mesh.toGeometry();
+  }
+
+  /** Shortest distance in the horizontal plane from a point to a travelled path. */
+  function pathDistance2D(ax, az, bx, bz, px, pz) {
+    const dx = bx - ax;
+    const dz = bz - az;
+    const lengthSq = dx * dx + dz * dz;
+    const t = lengthSq > 1e-9
+      ? SL.clamp(((px - ax) * dx + (pz - az) * dz) / lengthSq, 0, 1)
+      : 0;
+    return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
   }
 
   /** Shortest distance from a point to a segment. */
@@ -307,9 +319,18 @@
       // them could be hurt at all.
       for (const c of this.game.kings) if (!c.dead) considerCreature(c);
       for (const c of this.game.whales) if (!c.dead) considerCreature(c);
+      for (const c of this.game.puffers) if (!c.dead) considerCreature(c);
 
       for (const s of this.game.scrap) if (!s.dead && !s.isHeld) considerPoint(s);
       for (const c of this.game.crystals) if (!c.dead) considerPoint(c);
+
+      // A vine is a standing stalk, so it is measured along its own height.
+      for (const v of this.game.vines) {
+        if (v.dead) continue;
+        _bodyA.copy(v.position);
+        _bodyB.copy(v.position).add(_up.set(0, v.standingHeight, 0));
+        take(v, segmentDistance(swingStart, swingEnd, _bodyA, _bodyB), 0.3);
+      }
 
       if (!best) { this.game.audio.swingMiss(); return; }
 
@@ -321,6 +342,9 @@
         // Anything that can be provoked turns on whoever stabbed it. The whale
         // has no such response, and is meant not to.
         if (typeof best.provoke === 'function' && !best.dead) best.provoke(this);
+      } else if (best instanceof SL.Vine) {
+        const cut = best.bite(this.knifeDamage);
+        this.game.hud.showHitMarker(cut ? 'Vine cut' : 'Vine', cut);
       } else if (best instanceof SL.Crystal) {
         const broken = best.bite(this.knifeDamage);
         this.game.hud.showHitMarker(broken ? 'Crystal broken' : 'Crystal', broken);
@@ -358,6 +382,7 @@
       for (const c of this.game.stalkers) if (!c.dead) consider(c);
       for (const c of this.game.kings) if (!c.dead) consider(c);
       for (const c of this.game.whales) if (!c.dead) consider(c);
+      for (const c of this.game.puffers) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 
@@ -511,6 +536,7 @@
       for (const c of this.game.stalkers) if (!c.dead) consider(c.species.name, c.position, 22);
       for (const c of this.game.kings) if (!c.dead) consider(c.species.name, c.position, 40);
       for (const c of this.game.whales) if (!c.dead) consider(c.species.name, c.position, 60);
+      for (const c of this.game.puffers) if (!c.dead) consider(c.species.name, c.position, 34);
       for (const c of this.game.crystals) {
         if (!c.dead) consider('Crystal   [knife] for quartz', c.position, 12);
       }
@@ -633,6 +659,92 @@
       for (const c of this.game.stalkers) resolve(c);
       for (const c of this.game.kings) resolve(c);
       for (const c of this.game.whales) resolve(c);
+      for (const c of this.game.puffers) resolve(c);
+
+      this.pushOutOfVines();
+    }
+
+    /**
+     * Vines are immovable standing stalks, so they get their own resolution: a
+     * horizontal push out of a vertical cylinder, only while the diver is
+     * actually within the vine's height. This is what makes the cage a cage.
+     */
+    /**
+     * Vines are immovable standing stalks, and the cage only works if you
+     * cannot ooze between two of them.
+     *
+     * Resolving overlap after the fact is not enough: pushing clear of one
+     * stalk shoves the diver towards its neighbour, and a few passes of that
+     * walks them straight out through a gap narrower than they are. So the
+     * *movement* is tested instead - if the path taken this frame passes within
+     * a stalk, the diver is put back where they started. Overlap resolution is
+     * still there for the case that matters most, a cage thrown up around
+     * someone already standing there.
+     */
+    pushOutOfVines() {
+      const DIVER_RADIUS = 0.5;
+      const vines = this.game.vines;
+
+      if (!vines.length) { this._prevXZ = null; return; }
+
+      const x = this.position.x;
+      const z = this.position.z;
+      const prev = this._prevXZ;
+
+      if (prev && !this.overlapsVineAt(prev.x, prev.z, DIVER_RADIUS)) {
+        for (const vine of vines) {
+          if (vine.dead || !this.withinVineHeight(vine)) continue;
+
+          const minimum = vine.radius + DIVER_RADIUS;
+          if (pathDistance2D(prev.x, prev.z, x, z, vine.position.x, vine.position.z) >= minimum) continue;
+
+          // Blocked: stay where you were, and stop swimming into it.
+          this.position.x = prev.x;
+          this.position.z = prev.z;
+
+          _normal.set(prev.x - vine.position.x, 0, prev.z - vine.position.z).normalize();
+          const closing = this.velocity.dot(_normal);
+          if (closing < 0) this.velocity.addScaledVector(_normal, -closing);
+          break;
+        }
+      }
+
+      // Still inside one? Then it grew around us - push clear.
+      for (let pass = 0; pass < 3; pass++) this.resolveVinePass(DIVER_RADIUS);
+
+      this._prevXZ = { x: this.position.x, z: this.position.z };
+    }
+
+    overlapsVineAt(x, z, DIVER_RADIUS) {
+      for (const vine of this.game.vines) {
+        if (vine.dead || !this.withinVineHeight(vine)) continue;
+        if (Math.hypot(x - vine.position.x, z - vine.position.z) < vine.radius + DIVER_RADIUS) return true;
+      }
+      return false;
+    }
+
+    withinVineHeight(vine) {
+      const top = vine.position.y + vine.standingHeight;
+      return this.position.y >= vine.position.y - 0.6 && this.position.y <= top + 0.4;
+    }
+
+    resolveVinePass(DIVER_RADIUS) {
+      for (const vine of this.game.vines) {
+        if (vine.dead || !this.withinVineHeight(vine)) continue;
+
+        const dx = this.position.x - vine.position.x;
+        const dz = this.position.z - vine.position.z;
+        const distance = Math.hypot(dx, dz);
+        const minimum = vine.radius + DIVER_RADIUS;
+        if (distance > minimum || distance < 1e-4) {
+          if (distance < 1e-4) this.position.x += minimum;
+          continue;
+        }
+
+        const push = (minimum - distance) / distance;
+        this.position.x += dx * push;
+        this.position.z += dz * push;
+      }
     }
 
     clampToWorld() {

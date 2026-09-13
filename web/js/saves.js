@@ -164,6 +164,11 @@
         yaw: +p.yaw.toFixed(3), pitch: +p.pitch.toFixed(3),
         health: +p.health.toFixed(1), oxygen: +p.oxygen.toFixed(1)
       };
+      // What has been catalogued, and whether the bond has been earned, belong
+      // to the world just as much as the gear does.
+      world.scanned = Object.assign({}, SL.Index.scanned);
+      world.pet = game.pets.length > 0 || game.petRespawn > 0;
+
       world.crafting = {
         inventory: Object.assign({}, SL.Crafting.inventory),
         stacks: Object.assign({}, SL.Crafting.stacks),
@@ -180,6 +185,10 @@
     restore(world, game) {
       const p = game.player;
       game.worldTime = world.playtime || 0;
+
+      SL.Index.reset();
+      if (world.scanned) Object.assign(SL.Index.scanned, world.scanned);
+      if (world.pet && !game.pets.length) SL.Pet.spawn(game);
 
       SL.Crafting.reset();
       if (world.crafting) {

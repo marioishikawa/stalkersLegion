@@ -242,7 +242,10 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Lanternjaw** — bioluminescent eel, often the only thing visible in the trench.
 * **Abyss Ribbon** — 1.2 m violet streamer that drifts in the dark.
 * **Stingray** — 1.1 m of wing, hugging the plateau grass.
-* **Reef Porpoise / Sand Seal** — **air breathers**. They carry a lungful and,
+* **Reef Porpoise / Sand Seal** — **air breathers**. The porpoise whistles as it
+  works — a swept sine with vibrato over a burst of echolocation clicks, carried
+  on its own open audio path, because the water filter that muffles everything
+  else would swallow a whistle whole. They carry a lungful and,
   when it runs low, break off whatever they were doing and climb for the
   surface to blow. It outranks even fleeing, which is why you meet them on the
   shelf where the trip up is short.
@@ -257,6 +260,14 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Stalker Leviathan** — 8.4 m and 900 HP, the king. It sits on a pile of
   scrap its subjects drag out to it, and **will not touch you unless you touch
   it first**. Then it hits for 34.
+* **Red Puff Leviathan** — 6 m, 520 HP, grazing the reef on a seamount. It
+  hunts nothing and starts nothing. Attack it and it swells to nearly twice its
+  size and throws a cage of thorned red vines up around *you* — sixteen stalks
+  on a three-metre ring, spaced closer together than you are wide, so the ring
+  genuinely holds. They wither after 26 seconds, or two knife strikes cuts one.
+* **Bonded Stalker** — catalogue every fish in the databank and one of them
+  bonds to you. It keeps station off your shoulder, goes after anything hunting
+  you, and cannot hurt you whatever you do. Killed, it returns 10 seconds later.
 * **Glasswhale Leviathan** — 15 m, 2,600 HP, with a broad baleen mouth that
   opens when it feeds and small dark eyes set behind pale rings. 15 m, and the only thing that eats stalkers. It
   swallows them whole and has **no interest in a diver at all** — it cannot hurt

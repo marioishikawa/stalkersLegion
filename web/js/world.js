@@ -237,6 +237,30 @@
       }
     }
 
+    // The Red Puff keeps to the reef on a seamount top, which is where it
+    // grazes - so it is placed from the coral biome's own ground rather than a
+    // feature of its own.
+    // Seamount tops come within a couple of metres of the surface, and a six
+    // metre animal cannot live in two metres of water - so the reef point is
+    // chosen for depth, falling back to the deepest of the tries.
+    let reef = null;
+    let reefDepth = 0;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const candidate = SL.Biomes.randomPointIn(SL.Biomes.byId.coral);
+      if (!candidate) break;
+
+      const depth = -SL.Biomes.floorHeightAt(candidate.x, candidate.z);
+      if (depth > reefDepth) { reefDepth = depth; reef = candidate; }
+      if (depth > 16) break;
+    }
+
+    if (reef) {
+      const y = SL.Biomes.floorHeightAt(reef.x, reef.z) + Math.min(6, reefDepth * 0.45);
+      const puffer = new SL.RedPuff(game, SL.Species.redPuff, reef.x, y, reef.z);
+      puffer.territory.set(reef.x, y, reef.z);
+      game.puffers.push(puffer);
+    }
+
     const ground = SL.Biomes.whaleGround;
     if (ground) {
       const y = SL.Biomes.floorHeightAt(ground.x, ground.z) + 26;

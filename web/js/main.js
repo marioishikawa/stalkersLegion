@@ -24,7 +24,11 @@
       this.crystals = [];
       this.kings = [];
       this.whales = [];
+      this.puffers = [];
+      this.pets = [];
+      this.petRespawn = 0;
       this.beacons = [];
+      this.vines = [];
 
       // Paused covers the title card, the pause screen and the fabricator. The
       // world keeps moving so the ocean stays alive behind them, but the diver
@@ -108,7 +112,11 @@
       this.crystals.length = 0;
       this.kings.length = 0;
       this.whales.length = 0;
+      this.puffers.length = 0;
+      this.pets.length = 0;
+      this.petRespawn = 0;
       this.beacons.length = 0;
+      this.vines.length = 0;
 
       if (this.worldGroup) {
         this.worldGroup.traverse((node) => {
@@ -316,11 +324,20 @@
         whale.object.visible = whale.position.distanceToSquared(playerPos) < 16 * CULL_DISTANCE * CULL_DISTANCE;
         whale.update(dt);
       }
+      for (const puffer of this.puffers) {
+        puffer.object.visible = puffer.position.distanceToSquared(playerPos) < 6 * CULL_DISTANCE * CULL_DISTANCE;
+        puffer.update(dt);
+      }
+
+      // The pet is always beside you, so it is never culled.
+      for (const pet of this.pets) pet.update(dt);
+      SL.Pet.update(this, dt);
 
       for (let i = this.scrap.length - 1; i >= 0; i--) this.scrap[i].update(dt);
       for (let i = this.pickups.length - 1; i >= 0; i--) this.pickups[i].update(dt);
       for (let i = this.crystals.length - 1; i >= 0; i--) this.crystals[i].update(dt);
       for (const beacon of this.beacons) beacon.update(dt);
+      for (let i = this.vines.length - 1; i >= 0; i--) this.vines[i].update(dt);
 
       this.scrapTimer -= dt;
       if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }

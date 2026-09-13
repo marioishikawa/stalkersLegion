@@ -123,6 +123,9 @@
     record(id) {
       if (this.scanned[id]) return false;
       this.scanned[id] = Date.now();
+
+      // Finishing the fish is what earns the bonded stalker.
+      if (this.game && SL.Pet) SL.Pet.checkUnlock(this.game);
       return true;
     },
 

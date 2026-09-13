@@ -36,6 +36,16 @@
       this.water.Q.value = 0.7;
 
       this.water.connect(this.master);
+
+      // Whistles carry underwater in a way that a thud does not, and the
+      // ordinary water filter at 900 Hz would swallow one whole. Voices get
+      // their own, far more open path.
+      this.voice = this.ctx.createBiquadFilter();
+      this.voice.type = 'lowpass';
+      this.voice.frequency.value = 5200;
+      this.voice.Q.value = 0.5;
+      this.voice.connect(this.master);
+
       this.master.connect(this.ctx.destination);
 
       this.buildNoiseBuffer();
@@ -178,10 +188,74 @@
 
     pickUp() { this.tone(420, 'triangle', 0.15, 0.005, 0.1); }
 
-    /** A mammal blowing at the surface. */
-    blow() {
-      this.noise(0.22, 0.01, 0.35, 620, 'bandpass');
-      this.tone(180, 'sine', 0.10, 0.02, 0.3);
+    /**
+     * A porpoise whistle: a sine swept up and back down, with a little vibrato
+     * on top and a burst of echolocation clicks in front of it. Routed through
+     * the open voice path so it reads as an animal calling rather than as the
+     * muffled thump everything else gets.
+     */
+    dolphinWhistle(distance) {
+      if (!this.ready || this.muted) return;
+      const g = this.gainFor(distance);
+      if (g <= 0.02) return;
+
+      const now = this.ctx.currentTime;
+      const duration = SL.randRange(0.34, 0.52);
+      const low = SL.randRange(900, 1250);
+      const high = low * SL.randRange(2.1, 2.9);
+
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(low, now);
+      osc.frequency.exponentialRampToValueAtTime(high, now + duration * 0.45);
+      osc.frequency.exponentialRampToValueAtTime(low * 1.35, now + duration);
+
+      // Vibrato, which is most of what makes a whistle sound alive.
+      const vibrato = this.ctx.createOscillator();
+      vibrato.frequency.value = SL.randRange(16, 26);
+      const vibratoGain = this.ctx.createGain();
+      vibratoGain.gain.value = high * 0.035;
+      vibrato.connect(vibratoGain);
+      vibratoGain.connect(osc.frequency);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.14 * g, now + 0.05);
+      gain.gain.setValueAtTime(0.14 * g, now + duration * 0.7);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(this.voice);
+
+      osc.start(now);
+      vibrato.start(now);
+      osc.stop(now + duration + 0.05);
+      vibrato.stop(now + duration + 0.05);
+
+      // A short click train ahead of the whistle.
+      const clicks = 5 + Math.floor(SL.random() * 4);
+      for (let i = 0; i < clicks; i++) {
+        const at = now + i * SL.randRange(0.012, 0.03);
+        const click = this.ctx.createOscillator();
+        click.type = 'square';
+        click.frequency.value = SL.randRange(2200, 3400);
+        const clickGain = this.ctx.createGain();
+        clickGain.gain.setValueAtTime(0.05 * g, at);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.02);
+        click.connect(clickGain);
+        clickGain.connect(this.voice);
+        click.start(at);
+        click.stop(at + 0.03);
+      }
+    }
+
+    /** A seal breaking the surface: a wet exhale, then a breath drawn in. */
+    blow(distance) {
+      const g = this.gainFor(distance || 0);
+      if (g <= 0.02) return;
+      this.noise(0.20 * g, 0.008, 0.28, 900, 'bandpass');
+      this.tone(150, 'sine', 0.09 * g, 0.02, 0.22);
+      setTimeout(() => this.noise(0.10 * g, 0.12, 0.30, 480, 'lowpass'), 260);
     }
 
     /** The scanner working, and the chirp when it completes. */

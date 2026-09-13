@@ -183,7 +183,8 @@
     destroy() {
       if (this.object.parent) this.object.parent.remove(this.object);
 
-      for (const list of [this.game.fish, this.game.stalkers, this.game.kings, this.game.whales]) {
+      for (const list of [this.game.fish, this.game.stalkers, this.game.kings,
+        this.game.whales, this.game.puffers, this.game.pets]) {
         const i = list.indexOf(this);
         if (i >= 0) { list.splice(i, 1); return; }
       }
@@ -203,6 +204,11 @@
       this.isMammal = species.diet === 'mammal';
       this.breath = species.breathSeconds
         ? species.breathSeconds * SL.randRange(0.35, 1)
+        : 0;
+
+      // Porpoises call to each other while they work, not only at the surface.
+      this.callTimer = species.callInterval
+        ? SL.randRange(species.callInterval[0], species.callInterval[1])
         : 0;
 
       this.state = 'cruise';
@@ -294,7 +300,17 @@
           this.breath = this.species.breathSeconds;
           this.state = 'cruise';
           this.surfacedAt = this.game.time;
-          if (this.game.distanceToPlayer(p) < 30) this.game.audio.blow();
+          this.game.audio.blow(this.game.distanceToPlayer(p));
+        }
+
+        // Idle calling, for the ones that have a voice for it.
+        if (this.species.voice === 'whistle' && this.callTimer > 0) {
+          this.callTimer -= dt;
+          if (this.callTimer <= 0) {
+            const [low, high] = this.species.callInterval;
+            this.callTimer = SL.randRange(low, high);
+            this.game.audio.dolphinWhistle(this.game.distanceToPlayer(p));
+          }
         }
 
         // Start climbing with enough air left to actually get there.
