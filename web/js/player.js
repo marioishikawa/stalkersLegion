@@ -65,6 +65,7 @@
       this.knifeDamage = 28;
       this.knifeReach = 2.2;
       this.damageResist = 0;
+      this.visionBonus = 0;
       this.dead = false;
       this.timeSinceDamage = 999;
 
@@ -122,6 +123,7 @@
       this.knifeDamage = 28;
       this.knifeReach = 2.2;
       this.damageResist = 0;
+      this.visionBonus = 0;
       this.swimSpeed = 4.2;
       this.swingDuration = 0.48;
       if (this.carriedScrap) { this.carriedScrap = null; }
@@ -208,6 +210,7 @@
       for (const c of this.game.fish) if (!c.dead) consider(c, c.position);
       for (const c of this.game.stalkers) if (!c.dead) consider(c, c.position);
       for (const s of this.game.scrap) if (!s.dead && !s.isHeld) consider(s, s.position);
+      for (const c of this.game.crystals) if (!c.dead) consider(c, c.position);
 
       if (!best) { this.game.audio.swingMiss(); return; }
 
@@ -217,6 +220,9 @@
         this.game.hud.showHitMarker(best.species.name, best.dead);
         // A stabbed stalker turns on you rather than shrugging it off.
         if (best instanceof SL.Stalker && !best.dead) best.provoke(this);
+      } else if (best instanceof SL.Crystal) {
+        const broken = best.bite(this.knifeDamage);
+        this.game.hud.showHitMarker(broken ? 'Crystal broken' : 'Crystal', broken);
       } else {
         best.bite(this.knifeDamage, _forward);
         this.game.audio.metalBite(0);
@@ -243,6 +249,19 @@
         this.carriedScrap = nearby;
         this.game.audio.pickUp();
       }
+    }
+
+    /** Spends a medkit, if one is held and it would do anything. */
+    useMedkit() {
+      if (this.dead || this.health >= this.maxHealth) return;
+      if (!SL.Crafting.consume('medkit')) {
+        this.game.hud.toast('No medkits — build one at the fabricator');
+        return;
+      }
+
+      this.health = Math.min(this.maxHealth, this.health + 55);
+      this.game.audio.craft();
+      this.game.hud.toast('Medkit used');
     }
 
     toggleFlashlight() {
@@ -284,6 +303,9 @@
 
       for (const c of this.game.fish) if (!c.dead) consider(c.species.name, c.position, 14);
       for (const c of this.game.stalkers) if (!c.dead) consider(c.species.name, c.position, 22);
+      for (const c of this.game.crystals) {
+        if (!c.dead) consider('Crystal   [knife] for quartz', c.position, 12);
+      }
       for (const s of this.game.scrap) {
         if (s.dead || s.isHeld) continue;
         const label = s.position.distanceTo(this.position) < 3.2 ? 'Scrap Metal   [E] pick up' : 'Scrap Metal';

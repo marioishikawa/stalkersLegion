@@ -53,17 +53,62 @@
       cost: { titanium: 8, tooth: 6 },
       requires: 'blade2',
       apply(player) { player.knifeDamage = 84; player.knifeReach = 2.9; }
+    },
+
+    // --- Consumables. These stack and are spent, not equipped. ---------------
+    {
+      id: 'medkit',
+      name: 'Medkit',
+      blurb: 'Heals 55 on the spot. Press H to use one. Build as many as you like.',
+      cost: { titanium: 1, quartz: 2 },
+      consumable: true,
+      stack: 'medkit'
+    },
+
+    // --- Crystal-biome tier ---------------------------------------------------
+    {
+      id: 'visor',
+      name: 'Quartz Visor',
+      blurb: 'Cuts the murk. You see roughly twice as far in every biome.',
+      cost: { quartz: 5, gold: 2 },
+      apply(player) { player.visionBonus = 0.5; }
+    },
+    {
+      id: 'rebreather',
+      name: 'Gold Rebreather',
+      blurb: 'Air 260s → 420s. Enough to reach the far water and come home.',
+      cost: { gold: 5, quartz: 4, titanium: 6 },
+      requires: 'tank3',
+      apply(player) { player.maxOxygen = 420; player.oxygen = 420; }
+    },
+    {
+      id: 'prismsuit',
+      name: 'Prism Suit',
+      blurb: 'Take 65% less damage. Survivable even where the king lives.',
+      cost: { diamond: 3, titanium: 8, quartz: 4 },
+      requires: 'suit',
+      apply(player) { player.damageResist = 0.65; }
+    },
+    {
+      id: 'blade4',
+      name: 'Diamond Blade',
+      blurb: 'Knife 84 → 140 damage. The only edge that troubles a leviathan.',
+      cost: { diamond: 4, titanium: 10, tooth: 8 },
+      requires: 'blade3',
+      apply(player) { player.knifeDamage = 140; player.knifeReach = 3.2; }
     }
   ];
 
   const Crafting = {
     recipes: RECIPES,
-    inventory: { titanium: 0, tooth: 0 },
+    inventory: { titanium: 0, tooth: 0, quartz: 0, gold: 0, diamond: 0 },
+    /** Consumables held, keyed by recipe stack name. */
+    stacks: { medkit: 0 },
     built: {},
 
     reset() {
-      this.inventory.titanium = 0;
-      this.inventory.tooth = 0;
+      for (const key of Object.keys(this.inventory)) this.inventory[key] = 0;
+      for (const key of Object.keys(this.stacks)) this.stacks[key] = 0;
       this.built = {};
     },
 
@@ -73,7 +118,8 @@
 
     /** Why a recipe is unavailable, or null if it can be built now. */
     blockedReason(recipe) {
-      if (this.built[recipe.id]) return 'built';
+      // Consumables can always be built again, so they never read as "built".
+      if (!recipe.consumable && this.built[recipe.id]) return 'built';
       if (recipe.requires && !this.built[recipe.requires]) {
         const prerequisite = RECIPES.find((r) => r.id === recipe.requires);
         return 'needs ' + (prerequisite ? prerequisite.name : recipe.requires);
@@ -87,13 +133,14 @@
     /** Cheat: grant every recipe at once, plus a working stock of materials. */
     unlockAll(game) {
       for (const recipe of RECIPES) {
-        if (!this.built[recipe.id]) {
+        if (recipe.consumable) {
+          this.stacks[recipe.stack] = (this.stacks[recipe.stack] || 0) + 9;
+        } else if (!this.built[recipe.id]) {
           this.built[recipe.id] = true;
           recipe.apply(game.player);
         }
       }
-      this.inventory.titanium += 99;
-      this.inventory.tooth += 99;
+      for (const key of Object.keys(this.inventory)) this.inventory[key] += 99;
 
       game.player.health = game.player.maxHealth;
       game.player.oxygen = game.player.maxOxygen;
@@ -103,6 +150,14 @@
       if (this.blockedReason(recipe) !== null) return false;
 
       for (const type of Object.keys(recipe.cost)) this.inventory[type] -= recipe.cost[type];
+
+      if (recipe.consumable) {
+        this.stacks[recipe.stack] = (this.stacks[recipe.stack] || 0) + 1;
+        game.audio.craft();
+        game.hud.toast(recipe.name + ' x' + this.stacks[recipe.stack]);
+        return true;
+      }
+
       this.built[recipe.id] = true;
       recipe.apply(game.player);
 
@@ -110,6 +165,13 @@
       game.hud.toast(recipe.name + ' equipped');
       return true;
     }
+  };
+
+  /** Spends one consumable of a kind. Returns false if none are held. */
+  Crafting.consume = function (stack) {
+    if (!this.stacks[stack]) return false;
+    this.stacks[stack]--;
+    return true;
   };
 
   SL.Crafting = Crafting;

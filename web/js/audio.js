@@ -159,6 +159,13 @@
       this.noise(0.10 * g, 0.005, 0.20, 2600, 'highpass');
     }
 
+    /** A bright ringing chip, quite unlike metal. */
+    crystal() {
+      this.tone(1180 * SL.randRange(0.94, 1.06), 'sine', 0.14, 0.003, 0.34);
+      this.tone(1760, 'sine', 0.06, 0.003, 0.2);
+      this.noise(0.08, 0.003, 0.08, 3200, 'highpass');
+    }
+
     playerHurt() {
       this.tone(70, 'sawtooth', 0.35, 0.01, 0.45);
       this.noise(0.2, 0.005, 0.3, 300);

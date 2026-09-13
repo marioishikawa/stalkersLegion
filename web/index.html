@@ -51,16 +51,30 @@
         </span>
       </div>
 
-      <div class="resources">
-        <span class="resource">
+      <div class="resources" id="resources">
+        <span class="resource" data-type="titanium">
           <span class="resource__swatch resource__swatch--titanium"></span>
-          <span class="resource__label">Titanium</span>
           <span class="resource__count" id="titaniumCount">0</span>
         </span>
-        <span class="resource">
+        <span class="resource" data-type="tooth">
           <span class="resource__swatch resource__swatch--tooth"></span>
-          <span class="resource__label">Teeth</span>
           <span class="resource__count" id="toothCount">0</span>
+        </span>
+        <span class="resource" data-type="quartz">
+          <span class="resource__swatch resource__swatch--quartz"></span>
+          <span class="resource__count" id="quartzCount">0</span>
+        </span>
+        <span class="resource" data-type="gold">
+          <span class="resource__swatch resource__swatch--gold"></span>
+          <span class="resource__count" id="goldCount">0</span>
+        </span>
+        <span class="resource" data-type="diamond">
+          <span class="resource__swatch resource__swatch--diamond"></span>
+          <span class="resource__count" id="diamondCount">0</span>
+        </span>
+        <span class="resource resource--kit" data-type="medkit">
+          <span class="resource__label">Medkits</span>
+          <span class="resource__count" id="medkitCount">0</span>
         </span>
       </div>
     </div>
@@ -82,7 +96,7 @@
 
   <div class="hint" id="hint">
     <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> swim &nbsp; <kbd>Space</kbd>/<kbd>Ctrl</kbd> rise &amp; sink &nbsp; <kbd>Shift</kbd> sprint</div>
-    <div><kbd>Click</kbd> knife &nbsp; <kbd>E</kbd> pick up / throw scrap &nbsp; <kbd>F</kbd> light &nbsp; <kbd>M</kbd> sound</div>
+    <div><kbd>Click</kbd> knife &nbsp; <kbd>E</kbd> pick up / throw scrap &nbsp; <kbd>H</kbd> medkit &nbsp; <kbd>F</kbd> light &nbsp; <kbd>M</kbd> sound</div>
     <div><kbd>Tab</kbd> fabricator &nbsp; — &nbsp; knife scrap for titanium, let stalkers chew it for teeth</div>
     <div>Air refills at the surface. Scrap metal draws stalkers — use it.</div>
   </div>
@@ -162,6 +176,8 @@
 <script src="js/saves.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/creatures.js"></script>
+<script src="js/apex.js"></script>
+<script src="js/nodes.js"></script>
 <script src="js/player.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/hud.js"></script>

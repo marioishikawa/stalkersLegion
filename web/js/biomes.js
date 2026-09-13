@@ -64,13 +64,47 @@
       flora: ['boulder', 'boulder', 'glowPod'], floraPatches: 16
     },
     {
+      // Pink crystal country. The fish here are metal, and the crystals
+      // themselves can be cut for quartz.
+      id: 'crystal', name: 'Crystal Caverns',
+      outerRadius: 126, floorDepth: 40, roughness: 6,
+      floorColor: new THREE.Color(0.34, 0.20, 0.30),
+      waterColor: new THREE.Color(0.16, 0.06, 0.18),
+      fogDensity: 0.038,
+      scrapCount: 3, stalkerCount: 1,
+      flora: ['crystal', 'crystal', 'boulder'], floraPatches: 22,
+      crystalNodes: 26
+    },
+    {
       id: 'trench', name: 'Deep Trench',
-      outerRadius: 1000, floorDepth: 48, roughness: 7,
+      outerRadius: 148, floorDepth: 56, roughness: 7,
       floorColor: new THREE.Color(0.12, 0.12, 0.15),
       waterColor: new THREE.Color(0.012, 0.035, 0.075),
       fogDensity: 0.075,
       scrapCount: 3, stalkerCount: 0,
-      flora: ['glowPod', 'boulder'], floraPatches: 12
+      flora: ['glowPod', 'boulder'], floraPatches: 14
+    },
+    {
+      // The hoard. Stalkers haul scrap out here and pile it at the king's feet.
+      id: 'kings', name: "King's Domain",
+      outerRadius: 168, floorDepth: 64, roughness: 8,
+      floorColor: new THREE.Color(0.20, 0.17, 0.12),
+      waterColor: new THREE.Color(0.05, 0.04, 0.03),
+      fogDensity: 0.055,
+      scrapCount: 8, stalkerCount: 3,
+      flora: ['boulder', 'glowPod', 'crystal'], floraPatches: 14,
+      kingCount: 1
+    },
+    {
+      // Open water at the edge of the map, and the one thing bigger than a king.
+      id: 'whale', name: 'Whale Reach',
+      outerRadius: 1000, floorDepth: 74, roughness: 5,
+      floorColor: new THREE.Color(0.10, 0.14, 0.18),
+      waterColor: new THREE.Color(0.02, 0.07, 0.12),
+      fogDensity: 0.030,
+      scrapCount: 2, stalkerCount: 0,
+      flora: ['glowPod', 'boulder'], floraPatches: 10,
+      whaleCount: 1
     }
   ];
 
@@ -119,9 +153,9 @@
     let y = -depth + dunes * roughness + detail * roughness * 0.28;
 
     // Carve a canyon through the trench so the deep has real structure.
-    if (r > 92) {
-      const t = SL.clamp((r - 92) / 26, 0, 1);
-      y -= t * t * 14;
+    if (r > 126 && r < 150) {
+      const t = SL.clamp((r - 126) / 24, 0, 1);
+      y -= Math.sin(t * Math.PI) * 16;
     }
 
     // Never let the floor break the surface.

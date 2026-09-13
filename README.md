@@ -77,6 +77,7 @@ worlds in memory for the session and says so on the menu.
 | **Left click** | Swing the survival knife |
 | `E` | Pick up scrap metal / throw the piece you are holding |
 | `Tab` | Open the fabricator |
+| `H` | Use a medkit |
 | `F` | Flashlight |
 | `M` | Mute |
 | `R` | Respawn, once you are dead |
@@ -129,6 +130,17 @@ to collect, then press `Tab`:
 | Plated Dive Suit | 6 titanium, 3 teeth | Take 40% less damage |
 | High-Pressure Tank | 9 titanium, 4 teeth | Air 150s → 260s |
 | Tooth-Edged Blade | 8 titanium, 6 teeth | Knife 52 → 84, longer reach |
+| **Medkit** | 1 titanium, 2 quartz | Heals 55. Stacks — build as many as you like, press `H` |
+| Quartz Visor | 5 quartz, 2 gold | Roughly doubles how far you can see |
+| Gold Rebreather | 5 gold, 4 quartz, 6 titanium | Air 260s → 420s |
+| Prism Suit | 3 diamond, 8 titanium, 4 quartz | Take 65% less damage |
+| Diamond Blade | 4 diamond, 10 titanium, 8 teeth | Knife 84 → 140 |
+
+Five materials in all. **Titanium** from cutting scrap, **teeth** from stalkers
+chewing it, and **quartz, gold and diamond** from the Crystal Caverns — the
+crystals themselves give quartz, and the metal fish give what they are cast in.
+The resource strip only shows a material once you have collected some, so it
+starts as two counters and fills out as the ocean gives things up.
 
 Every recipe either lets you stay down longer or survive what is down there, so
 each one extends how far out you can push. Upgrades survive death.
@@ -150,7 +162,10 @@ and darker.
 | **Grassy Plateau** | 52–74 m | 21 m | Spadefin, Grass Nibbler. Open sea grass, a couple of stalkers. |
 | **Red Coral Reef** | 74–92 m | 27 m | Emberfin, Coral Boxfish. Coral fans and tubes. |
 | **Boulder Field** | 92–106 m | 34 m | Stone Gulper. Rocks and glow pods, deep gloom. |
-| **Deep Trench** | 106 m + | 48 m + | Lanternjaw, Abyss Ribbon. Near-total darkness — bring the flashlight. |
+| **Crystal Caverns** | 106–126 m | 40 m | Pink crystal country. The fish here are **made of metal** — Goldfin, Prism Diamondfish, Silverscale — and the crystals cut for quartz. |
+| **Deep Trench** | 126–148 m | 56 m | Lanternjaw, Abyss Ribbon. Near-total darkness — bring the flashlight. |
+| **King's Domain** | 148–168 m | 64 m | The **Stalker Leviathan** and its hoard. Crownfin. |
+| **Whale Reach** | 168 m + | 74 m | Open water and the **Glasswhale**. Blue Drifters. |
 
 Fog colour and density track the biome you are in, fading between them and
 darkening with depth. The audio does the same: everything runs through a lowpass
@@ -174,7 +189,25 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Stone Gulper** — heavy grey bottom-feeder with spines down its back.
 * **Lanternjaw** — bioluminescent eel, often the only thing visible in the trench.
 * **Abyss Ribbon** — 1.2 m violet streamer that drifts in the dark.
+* **Stingray** — 1.1 m of wing, hugging the plateau grass.
+* **Goldfin / Prism Diamondfish / Silverscale** — cast in gold, diamond and
+  silver. Kill them and they leave what they are made of.
+* **Crownfin** — bronze and armoured, living in the hoard's shadow.
+* **Blue Drifter** — open-water ribbon out where the whale swims.
 * **Stalker** — 2.6 m predator with a hinged, toothed jaw and a yellow eye.
+* **Stalker Leviathan** — 8.4 m and 900 HP, the king. It sits on a pile of
+  scrap its subjects drag out to it, and **will not touch you unless you touch
+  it first**. Then it hits for 34.
+* **Glasswhale** — 15 m, 2,600 HP, and the only thing that eats stalkers. It
+  swallows them whole and has **no interest in a diver at all** — it cannot hurt
+  you, at any range, ever.
+
+### The standoff
+
+When the whale drifts into the king's water they clash: nine seconds of circling
+and real damage, then both break off and stay clear of each other for a while.
+Neither ever wins — health is floored at a third for both — so if you find them
+fighting, it is a thing happening in the ocean rather than a fight you are in.
 
 None of them have skeletons. The body yaws gently and the tail wags a beat
 behind it, which costs almost nothing and reads as swimming.

@@ -278,8 +278,10 @@ kbd {
   position: fixed;
   inset: 0;
   display: none;
-  place-content: center;
+  align-content: safe center;
+  justify-content: center;
   justify-items: center;
+  overflow-y: auto;
   text-align: center;
   padding: clamp(16px, 5vw, 40px);
   background:
@@ -409,7 +411,8 @@ kbd {
   position: fixed;
   inset: 0;
   display: none;
-  place-content: center;
+  align-content: safe center;
+  justify-content: center;
   padding: clamp(16px, 4vw, 40px);
   background: color-mix(in srgb, var(--abyss) 88%, transparent);
   pointer-events: auto;
@@ -675,3 +678,16 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
   .menu__new { flex-direction: column; align-items: stretch; }
   .menu__actions { flex-direction: column; width: 100%; }
 }
+
+/* --------------------------------------------- The growing resource strip */
+
+/* A material you have never collected is not shown at all, so the strip starts
+   as two counters and fills out as the ocean gives things up. */
+.resource { display: none; }
+.resource.is-known { display: flex; }
+
+.resource__swatch--quartz { background: #f28cc4; }
+.resource__swatch--gold { background: #f2c230; }
+.resource__swatch--diamond { background: #d3f0fa; }
+
+.resource--kit .resource__count { color: var(--kelp); }

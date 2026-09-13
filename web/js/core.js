@@ -11,7 +11,7 @@ window.SL = window.SL || {};
   'use strict';
 
   SL.WATER_LEVEL = 0;      // y of the sea surface
-  SL.WORLD_RADIUS = 120;   // metres from the origin to the edge of the map
+  SL.WORLD_RADIUS = 190;   // metres from the origin to the edge of the map
 
   // --- Math -----------------------------------------------------------------
 

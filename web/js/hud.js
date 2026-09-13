@@ -18,7 +18,8 @@
       for (const id of ['healthFill', 'healthValue', 'airFill', 'airValue', 'depthValue',
         'biomeName', 'focus', 'warning', 'warningText', 'hitMarker', 'damageFlash',
         'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
-        'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName']) {
+        'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName',
+        'quartzCount', 'goldCount', 'diamondCount', 'medkitCount', 'resources']) {
         this.el[id] = document.getElementById(id);
       }
 
@@ -39,7 +40,9 @@
         row.className = 'recipe';
 
         const cost = Object.entries(recipe.cost)
-          .map(([type, n]) => n + ' ' + SL.Pickup.TYPES[type].label.replace('Stalker ', ''))
+          .map(([type, n]) => n + ' ' + (SL.Pickup.TYPES[type]
+            ? SL.Pickup.TYPES[type].label.replace('Stalker ', '')
+            : type))
           .join('  ·  ');
 
         row.innerHTML =
@@ -75,8 +78,21 @@
     }
 
     updateResources() {
-      this.el.titaniumCount.textContent = SL.Crafting.inventory.titanium;
-      this.el.toothCount.textContent = SL.Crafting.inventory.tooth;
+      const inventory = SL.Crafting.inventory;
+      this.el.titaniumCount.textContent = inventory.titanium;
+      this.el.toothCount.textContent = inventory.tooth;
+      this.el.quartzCount.textContent = inventory.quartz;
+      this.el.goldCount.textContent = inventory.gold;
+      this.el.diamondCount.textContent = inventory.diamond;
+      this.el.medkitCount.textContent = SL.Crafting.stacks.medkit;
+
+      // A resource you have never seen stays hidden, so the strip starts small
+      // and grows as the ocean gives things up.
+      for (const node of this.el.resources.children) {
+        const type = node.dataset.type;
+        const held = type === 'medkit' ? SL.Crafting.stacks.medkit : inventory[type];
+        node.classList.toggle('is-known', held > 0 || type === 'titanium' || type === 'tooth');
+      }
     }
 
     setFabricatorOpen(open) {

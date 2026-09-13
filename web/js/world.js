@@ -10,9 +10,11 @@
 
   /** The sea floor, as tiles sampled from the analytic height field. */
   function buildTerrain(game) {
-    const TILES = 6;
-    const CELLS = 30;
-    const CELL_SIZE = 1.6;
+    // 7 x 7 tiles of 32 cells at 1.8 m covers roughly 400 m across, which holds
+    // the full 190 m world radius with margin.
+    const TILES = 7;
+    const CELLS = 32;
+    const CELL_SIZE = 1.8;
     const tileSize = CELLS * CELL_SIZE;
     const half = tileSize * TILES * 0.5;
 
@@ -133,6 +135,17 @@
     return total;
   }
 
+  /** Cuttable crystal clusters - the quartz source. */
+  function scatterCrystals(game) {
+    for (const biome of SL.Biomes.list) {
+      for (let i = 0; i < (biome.crystalNodes || 0); i++) {
+        const point = SL.Biomes.randomPointIn(biome);
+        if (!point) continue;
+        game.crystals.push(new SL.Crystal(game, point.x, point.z, (SL.random() * 1e9) | 0));
+      }
+    }
+  }
+
   function scatterScrap(game) {
     for (const biome of SL.Biomes.list) {
       for (let i = 0; i < biome.scrapCount; i++) {
@@ -205,6 +218,38 @@
         }
       }
 
+      // --- The King, and his hoard --------------------------------------------
+      for (let i = 0; i < (biome.kingCount || 0); i++) {
+        const point = SL.Biomes.randomPointIn(biome);
+        if (!point) continue;
+
+        const y = SL.Biomes.floorHeightAt(point.x, point.z) + 9;
+        const king = new SL.KingStalker(game, SL.Species.kingStalker, point.x, y, point.z);
+        king.territory.set(point.x, y, point.z);
+        game.kings.push(king);
+
+        // He already sits on a pile; his subjects keep adding to it.
+        for (let j = 0; j < 9; j++) {
+          const angle = SL.random() * Math.PI * 2;
+          const radius = SL.randRange(1.5, 7);
+          game.scrap.push(new SL.Scrap(game,
+            point.x + Math.cos(angle) * radius,
+            point.z + Math.sin(angle) * radius,
+            (SL.random() * 1e9) | 0));
+        }
+      }
+
+      // --- The whale -----------------------------------------------------------
+      for (let i = 0; i < (biome.whaleCount || 0); i++) {
+        const point = SL.Biomes.randomPointIn(biome);
+        if (!point) continue;
+
+        const y = SL.Biomes.floorHeightAt(point.x, point.z) + 24;
+        const whale = new SL.Whale(game, SL.Species.whale, point.x, y, point.z);
+        whale.territory.set(point.x, y, point.z);
+        game.whales.push(whale);
+      }
+
       // --- Stalkers -----------------------------------------------------------
       for (let i = 0; i < biome.stalkerCount; i++) {
         const point = SL.Biomes.randomPointIn(biome);
@@ -247,16 +292,20 @@
 
     // Above the surface the haze lifts; deeper water is darker water.
     const submerged = SL.clamp((SL.WATER_LEVEL - p.y) / 4, 0, 1);
-    const depthFade = SL.clamp(1 - (SL.WATER_LEVEL - p.y) / 60, 0.12, 1);
+    const depthFade = SL.clamp(1 - (SL.WATER_LEVEL - p.y) / 90, 0.12, 1);
+
+    // The Quartz Visor cuts the murk everywhere.
+    const clarity = 1 - (game.player.visionBonus || 0);
 
     _fogTarget.copy(biome.waterColor).multiplyScalar(depthFade);
 
     game.scene.fog.color.lerp(_fogTarget, 1 - Math.exp(-1.2 * dt));
-    game.scene.fog.density = SL.damp(game.scene.fog.density, biome.fogDensity * submerged, 1.2, dt);
+    game.scene.fog.density = SL.damp(game.scene.fog.density, biome.fogDensity * submerged * clarity, 1.2, dt);
     game.scene.background = game.scene.fog.color;
 
     game.audio.setDepth(game.player.depth);
   }
 
-  SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap, spawnCreatures, replenishScrap, updateAmbience };
+  SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap,
+    scatterCrystals, spawnCreatures, replenishScrap, updateAmbience };
 })(window.SL);

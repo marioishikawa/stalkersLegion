@@ -29,6 +29,45 @@
         return mesh.toGeometry();
       }
     },
+    quartz: {
+      label: 'Quartz',
+      build() {
+        // A stubby pink prism.
+        const mesh = new MeshData();
+        const pink = new THREE.Color(0.95, 0.55, 0.78);
+        const pale = new THREE.Color(1.0, 0.82, 0.92);
+        Geo.cone(mesh, 0, -0.06, 0, 0.07, 0.20, 6, pink, pale);
+        mesh.computeNormals();
+        return mesh.toGeometry();
+      }
+    },
+    gold: {
+      label: 'Gold',
+      build() {
+        const mesh = new MeshData();
+        const gold = new THREE.Color(1.0, 0.76, 0.18);
+        const deep = new THREE.Color(0.72, 0.48, 0.06);
+        Geo.box(mesh, 0, 0, 0, 0.08, 0.045, 0.12, gold);
+        Geo.box(mesh, 0, 0.045, 0, 0.05, 0.012, 0.085, deep);
+        mesh.computeNormals();
+        return mesh.toGeometry();
+      }
+    },
+    diamond: {
+      label: 'Diamond',
+      build() {
+        // Two cones base to base - a cut stone.
+        const mesh = new MeshData();
+        const ice = new THREE.Color(0.82, 0.96, 1.0);
+        const bright = new THREE.Color(1.0, 1.0, 1.0);
+        Geo.cone(mesh, 0, 0, 0, 0.08, 0.14, 6, ice, bright);
+        const lower = new MeshData();
+        Geo.cone(lower, 0, 0, 0, 0.08, 0.09, 6, ice, bright);
+        mesh.append(lower, new THREE.Matrix4().makeRotationX(Math.PI));
+        mesh.computeNormals();
+        return mesh.toGeometry();
+      }
+    },
     tooth: {
       label: 'Stalker Tooth',
       build() {

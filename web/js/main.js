@@ -21,6 +21,9 @@
       this.stalkers = [];
       this.scrap = [];
       this.pickups = [];
+      this.crystals = [];
+      this.kings = [];
+      this.whales = [];
 
       // Paused covers the title card, the pause screen and the fabricator. The
       // world keeps moving so the ocean stays alive behind them, but the diver
@@ -100,6 +103,9 @@
       this.stalkers.length = 0;
       this.scrap.length = 0;
       this.pickups.length = 0;
+      this.crystals.length = 0;
+      this.kings.length = 0;
+      this.whales.length = 0;
 
       if (this.worldGroup) {
         this.worldGroup.traverse((node) => {
@@ -126,6 +132,7 @@
       SL.World.buildWaterSurface(this);
       const plants = SL.World.scatterFlora(this);
       SL.World.scatterScrap(this);
+      SL.World.scatterCrystals(this);
 
       // The player and HUD survive world changes; only the ocean is rebuilt.
       if (!this.player) this.player = new SL.Player(this);
@@ -278,8 +285,20 @@
         stalker.update(dt);
       }
 
+      // The apexes are visible from much further off, being the size they are,
+      // and they keep running their standoff whether or not anyone is watching.
+      for (const king of this.kings) {
+        king.object.visible = king.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
+        king.update(dt);
+      }
+      for (const whale of this.whales) {
+        whale.object.visible = whale.position.distanceToSquared(playerPos) < 16 * CULL_DISTANCE * CULL_DISTANCE;
+        whale.update(dt);
+      }
+
       for (let i = this.scrap.length - 1; i >= 0; i--) this.scrap[i].update(dt);
       for (let i = this.pickups.length - 1; i >= 0; i--) this.pickups[i].update(dt);
+      for (let i = this.crystals.length - 1; i >= 0; i--) this.crystals[i].update(dt);
 
       this.scrapTimer -= dt;
       if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }
@@ -374,6 +393,7 @@
       switch (e.code) {
         case 'KeyE': game.player.interact(); break;
         case 'KeyF': game.player.toggleFlashlight(); break;
+        case 'KeyH': game.player.useMedkit(); break;
         case 'KeyR': if (game.player.dead) game.player.respawn(); break;
         case 'KeyM':
           game.audio.setMuted(!game.audio.muted);

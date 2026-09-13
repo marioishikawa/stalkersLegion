@@ -181,9 +181,11 @@
 
     destroy() {
       if (this.object.parent) this.object.parent.remove(this.object);
-      const list = this instanceof SL.Stalker ? this.game.stalkers : this.game.fish;
-      const i = list.indexOf(this);
-      if (i >= 0) list.splice(i, 1);
+
+      for (const list of [this.game.fish, this.game.stalkers, this.game.kings, this.game.whales]) {
+        const i = list.indexOf(this);
+        if (i >= 0) { list.splice(i, 1); return; }
+      }
     }
   }
 
@@ -217,6 +219,17 @@
 
     onHurt(damage, source) {
       if (source) this.startle(source.position || source, 6);
+    }
+
+    onDeath(killer) {
+      // Crystal-biome fish are made of the thing you are there to collect.
+      const drops = this.species.drops;
+      if (!drops || killer !== this.game.player) return;
+
+      for (const type of Object.keys(drops)) {
+        const [low, high] = drops[type];
+        SL.Pickup.burst(this.game, type, this.position, SL.randInt(low, high));
+      }
     }
 
     /** Cheap periodic threat scan; full-rate scanning is wasted on prey. */
@@ -374,12 +387,21 @@
       this.stateTimer = 0;
 
       if (state === 'carryScrap') {
-        // Pick somewhere else in the territory to dump the piece.
-        const angle = Math.random() * Math.PI * 2;
-        const dist = SL.randRange(this.territoryRadius * 0.4, this.territoryRadius);
-        const x = this.territory.x + Math.cos(angle) * dist;
-        const z = this.territory.z + Math.sin(angle) * dist;
-        this.carryDestination.set(x, SL.Biomes.floorHeightAt(x, z) + 2.6, z);
+        // Scrap belongs to the king. A stalker that has a king to serve hauls
+        // the piece out to the hoard; one with no king dumps it nearby.
+        const king = this.game.kings.find((k) => !k.dead);
+        this.tribute = !!king;
+
+        if (king) {
+          this.carryDestination.copy(king.hoard);
+          this.carryDestination.y += 2;
+        } else {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = SL.randRange(this.territoryRadius * 0.4, this.territoryRadius);
+          const x = this.territory.x + Math.cos(angle) * dist;
+          const z = this.territory.z + Math.sin(angle) * dist;
+          this.carryDestination.set(x, SL.Biomes.floorHeightAt(x, z) + 2.6, z);
+        }
       }
     }
 
@@ -570,14 +592,23 @@
           }
 
           this.jawOpen = 0.35;
-          if (this.carryDestination.distanceToSquared(p) < 25 || this.stateTimer > 22) {
+
+          // A tribute run crosses most of the map, so it is given the time.
+          const arrived = this.carryDestination.distanceToSquared(p) < (this.tribute ? 64 : 25);
+          if (arrived || this.stateTimer > (this.tribute ? 150 : 22)) {
             // Drop it and lose interest for a while.
             _look.copy(this.velocity).normalize().multiplyScalar(1.2).add(_tmp.set(0, -0.6, 0));
+            const delivered = this.tribute && arrived;
             this.releaseScrap(_look.clone());
+            this.tribute = false;
+
+            if (delivered && this.game.distanceToPlayer(p) < 60) {
+              this.game.hud.toast('A stalker adds to the hoard');
+            }
             this.enterState('patrol');
             return this.steerTo(this.patrolTarget, S.cruiseSpeed);
           }
-          return this.steerTo(this.carryDestination, S.cruiseSpeed * 1.1);
+          return this.steerTo(this.carryDestination, S.cruiseSpeed * (this.tribute ? 1.35 : 1.1));
         }
 
         case 'huntFish': {

@@ -87,6 +87,16 @@
                crossSection: 2.6, tailFork: 0.45, dorsalFin: 0.20, sideFin: 0.14, eyeSize: 0.06 }
     }),
 
+    fish('stingray', 'Stingray', 'plateau', 'disc', {
+      // Broad wings, a whip tail, and it hugs the grass. Harmless.
+      backColor: C(0.36, 0.30, 0.22), bellyColor: C(0.90, 0.86, 0.76), finColor: C(0.44, 0.37, 0.27),
+      maxHealth: 40, cruiseSpeed: 1.5, sprintSpeed: 3.4, turnRate: 1.3,
+      schoolSize: 2, groups: 5, altitude: 1.4, wagRate: 1.8,
+      shape: { length: 1.1, height: 0.05, width: 0.62, bellyPosition: 0.36, noseSharpness: 0.55,
+               crossSection: 1.6, tailHeight: 0.04, tailSweep: 0.62, tailFork: 0,
+               dorsalFin: 0, ventralFin: 0, sideFin: 0, eyeSize: 0.024, spineSegments: 18 }
+    }),
+
     // ----------------------------------------------------------- Red Coral Reef
     fish('emberfin', 'Emberfin', 'coral', 'diamond', {
       // Hot-coloured reef fish with a deep forked tail.
@@ -135,6 +145,39 @@
                dorsalFin: 0, ventralFin: 0, sideFin: 0, eyeSize: 0.028, spineSegments: 16 }
     }),
 
+    // ---------------------------------------------------------- Crystal Caverns
+    fish('goldfin', 'Goldfin', 'crystal', 'diamond', {
+      // Cast in soft gold. Slow, heavy, and worth cutting open.
+      backColor: C(0.95, 0.72, 0.12), bellyColor: C(1.0, 0.90, 0.52), finColor: C(0.78, 0.52, 0.06),
+      eyeColor: C(0.15, 0.10, 0.02), glow: 0.25,
+      maxHealth: 38, cruiseSpeed: 1.1, sprintSpeed: 2.6, turnRate: 1.3,
+      schoolSize: 4, groups: 5, altitude: 3, wagRate: 3.2,
+      drops: { gold: [1, 2] },
+      shape: { length: 0.44, height: 0.34, width: 0.16, bellyPosition: 0.36, noseSharpness: 0.4,
+               crossSection: 2.8, tailHeight: 0.30, tailSweep: 0.22, tailFork: 0.5,
+               dorsalFin: 0.16, sideFin: 0.12, eyeSize: 0.05, stripes: 2 }
+    }),
+    fish('diamondfish', 'Prism Diamondfish', 'crystal', 'boxy', {
+      // Faceted and near-colourless; it catches what little light reaches here.
+      backColor: C(0.78, 0.92, 0.98), bellyColor: C(0.95, 0.99, 1.0), finColor: C(0.62, 0.86, 0.96),
+      eyeColor: C(0.20, 0.35, 0.45), glow: 0.7,
+      maxHealth: 52, cruiseSpeed: 0.9, sprintSpeed: 2.2, turnRate: 1.1,
+      schoolSize: 2, groups: 5, altitude: 4, wagRate: 2.6,
+      drops: { diamond: [1, 1], quartz: [1, 2] },
+      shape: { length: 0.36, height: 0.30, width: 0.26, bellyPosition: 0.45, noseSharpness: 0.6,
+               crossSection: 6, tailHeight: 0.20, tailSweep: 0.16, tailFork: 0.2,
+               dorsalFin: 0.12, sideFin: 0.10, eyeSize: 0.05, backSpikes: 3, radialSegments: 7 }
+    }),
+    fish('silverscale', 'Silverscale', 'crystal', 'torpedo', {
+      // Quick, bright and common - the biome's small change.
+      backColor: C(0.80, 0.84, 0.88), bellyColor: C(0.96, 0.98, 1.0), finColor: C(0.60, 0.68, 0.76),
+      glow: 0.3, maxHealth: 20, cruiseSpeed: 2.0, sprintSpeed: 4.6, turnRate: 2.6,
+      schoolSize: 7, groups: 6, altitude: 5, wagRate: 6.5,
+      drops: { titanium: [1, 1] },
+      shape: { length: 0.30, height: 0.24, width: 0.12, noseSharpness: 0.7, tailFork: 0.6,
+               dorsalFin: 0.14, sideFin: 0.10, eyeSize: 0.05, stripes: 3 }
+    }),
+
     // -------------------------------------------------------------- Deep Trench
     fish('lanternjaw', 'Lanternjaw', 'trench', 'eel', {
       // Bioluminescent eel. Often the only thing you can see down there.
@@ -155,6 +198,28 @@
                sideFin: 0, eyeSize: 0.022, spineSegments: 24 }
     }),
 
+    // ------------------------------------------------------------ King's Domain
+    fish('crownfin', 'Crownfin', 'kings', 'diamond', {
+      // Lives in the hoard's shadow. Bronze, armoured, unbothered by stalkers.
+      backColor: C(0.42, 0.28, 0.10), bellyColor: C(0.82, 0.70, 0.44), finColor: C(0.62, 0.44, 0.16),
+      glow: 0.15, maxHealth: 40, cruiseSpeed: 1.4, sprintSpeed: 3.4,
+      schoolSize: 4, groups: 5, altitude: 4, wagRate: 4,
+      shape: { length: 0.5, height: 0.36, width: 0.14, bellyPosition: 0.34, noseSharpness: 0.5,
+               tailHeight: 0.34, tailFork: 0.6, dorsalFin: 0.26, ventralFin: 0.12,
+               sideFin: 0.12, eyeSize: 0.045, backSpikes: 3, stripes: 4 }
+    }),
+
+    // -------------------------------------------------------------- Whale Reach
+    fish('bluedrifter', 'Blue Drifter', 'whale', 'ribbon', {
+      // Open-water plankton feeder, drifting in loose ribbons near the whale.
+      backColor: C(0.14, 0.32, 0.58), bellyColor: C(0.70, 0.88, 0.98), finColor: C(0.24, 0.48, 0.78),
+      glow: 0.25, maxHealth: 24, cruiseSpeed: 1.2, sprintSpeed: 2.8, turnRate: 1.2,
+      schoolSize: 6, groups: 6, altitude: 12, wagRate: 2.4,
+      shape: { length: 0.8, height: 0.20, width: 0.05, bellyPosition: 0.28, noseSharpness: 0.45,
+               tailHeight: 0.16, tailSweep: 0.3, tailFork: 0.15, dorsalFin: 0.14,
+               ventralFin: 0.10, sideFin: 0.06, eyeSize: 0.03, spineSegments: 18 }
+    }),
+
     // ------------------------------------------------------------- The predator
     fish('stalker', 'Stalker', 'kelp', 'eel', {
       diet: 'carnivore',
@@ -170,6 +235,39 @@
                crossSection: 2.3, tailHeight: 0.20, tailSweep: 0.22, tailFork: 0.25,
                dorsalFin: 0.09, ventralFin: 0.05, sideFin: 0.10, eyeSize: 0.022,
                jawLength: 0.17, backSpikes: 7, spineSegments: 20, radialSegments: 10 }
+    }),
+
+    // ------------------------------------------------------- The Stalker King
+    fish('kingstalker', 'Stalker Leviathan', 'kings', 'eel', {
+      // Three times a stalker in every dimension, sitting on a hoard of scrap
+      // its subjects drag out to it. It will not start a fight with the diver -
+      // but it finishes one.
+      diet: 'carnivore',
+      backColor: C(0.16, 0.19, 0.15), bellyColor: C(0.52, 0.48, 0.34), finColor: C(0.34, 0.30, 0.14),
+      eyeColor: C(1.0, 0.55, 0.05), glow: 0.2,
+      maxHealth: 900, cruiseSpeed: 2.4, sprintSpeed: 7.0, turnRate: 1.0,
+      senseRadius: 46, biteDamage: 34, biteInterval: 4.2,
+      schoolSize: 1, groups: 0, altitude: 8, wagRate: 1.4,
+      shape: { length: 8.4, height: 0.125, width: 0.10, bellyPosition: 0.20, noseSharpness: 0.22,
+               crossSection: 2.4, tailHeight: 0.26, tailSweep: 0.30, tailFork: 0.3,
+               dorsalFin: 0.13, ventralFin: 0.07, sideFin: 0.13, eyeSize: 0.018,
+               jawLength: 0.20, backSpikes: 12, spineSegments: 24, radialSegments: 11 }
+    }),
+
+    // ------------------------------------------------------------- The Whale
+    fish('whale', 'Glasswhale', 'whale', 'bulb', {
+      // The only thing out here that eats stalkers. It has no interest in
+      // anything as small as a diver and will never harm one.
+      diet: 'whale',
+      backColor: C(0.16, 0.30, 0.46), bellyColor: C(0.72, 0.86, 0.92), finColor: C(0.22, 0.42, 0.58),
+      eyeColor: C(0.06, 0.10, 0.14), glow: 0.18,
+      maxHealth: 2600, cruiseSpeed: 1.8, sprintSpeed: 4.4, turnRate: 0.5,
+      senseRadius: 60, biteDamage: 0, biteInterval: 5,
+      schoolSize: 1, groups: 0, altitude: 16, wagRate: 0.8,
+      shape: { length: 15, height: 0.19, width: 0.17, bellyPosition: 0.30, noseSharpness: 0.10,
+               crossSection: 2.2, tailHeight: 0.26, tailSweep: 0.24, tailFork: 0.55,
+               dorsalFin: 0.07, ventralFin: 0.04, sideFin: 0.16, eyeSize: 0.012,
+               spineSegments: 26, radialSegments: 12 }
     })
   ];
 
@@ -180,6 +278,11 @@
     list: SPECIES,
     byId,
     stalker: byId.stalker,
-    ofBiome: (biomeId) => SPECIES.filter((s) => s.biome === biomeId && s.diet !== 'carnivore')
+    kingStalker: byId.kingstalker,
+    whale: byId.whale,
+    // Only ordinary prey spawns from the biome roster; the predators and the
+    // whale are placed individually by the world builder.
+    ofBiome: (biomeId) => SPECIES.filter(
+      (s) => s.biome === biomeId && s.diet !== 'carnivore' && s.diet !== 'whale')
   };
 })(window.SL);

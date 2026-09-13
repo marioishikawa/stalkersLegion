@@ -165,6 +165,29 @@
     Geo.sphere(glowMesh, 0, height, 0, podRadius, 9, podColor);
   }
 
+  /** A low cluster of pink crystal shards. Decoration; the cuttable ones are
+   *  Crystal entities placed separately by the world builder. */
+  function crystal(mesh, glowMesh, seed, scale) {
+    const shards = 3 + Math.floor(hash(seed, 1, 29) * 4);
+    for (let i = 0; i < shards; i++) {
+      const angle = hash(seed, i, 29) * Math.PI * 2;
+      const dist = hash(seed, i + 5, 29) * 0.6 * scale;
+      const height = SL.lerp(0.4, 1.6, hash(seed, i + 10, 29)) * scale;
+      const radius = SL.lerp(0.07, 0.20, hash(seed, i + 15, 29)) * scale;
+
+      const base = new THREE.Color(0.55, 0.14, 0.38);
+      const tip = new THREE.Color(1.0, 0.60, 0.85).lerp(new THREE.Color(0.80, 0.66, 1.0), hash(seed, i + 20, 29));
+
+      const shard = new MeshData();
+      Geo.cone(shard, 0, 0, 0, radius, height, 6, base, tip);
+      const lean = (hash(seed, i + 25, 29) - 0.5) * 0.8;
+      glowMesh.append(shard, new THREE.Matrix4().compose(
+        V(Math.cos(angle) * dist, 0, Math.sin(angle) * dist),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(lean, angle, lean * 0.5)),
+        V(1, 1, 1)));
+    }
+  }
+
   const BUILDERS = { kelp, seagrass, coralFan, coralTube, boulder, glowPod };
 
   /**
@@ -183,6 +206,7 @@
       const localGlow = new MeshData();
 
       if (it.type === 'glowPod') glowPod(local, localGlow, it.seed, it.scale);
+      else if (it.type === 'crystal') crystal(local, localGlow, it.seed, it.scale);
       else BUILDERS[it.type](local, it.seed, it.scale);
 
       quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), it.yaw);
