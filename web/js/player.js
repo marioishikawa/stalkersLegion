@@ -58,6 +58,49 @@
   }
 
   /**
+   * The hacked candle: a wax stub in the off hand, and the flame it should not
+   * physically be able to hold underwater.
+   *
+   * Two meshes, because they want different materials - the wax is lit like
+   * everything else, the flame is unlit so it stays bright in water that is
+   * eating every other colour.
+   */
+  function buildCandleWax() {
+    const mesh = new MeshData();
+    const wax = new THREE.Color(0.90, 0.86, 0.72);
+    const drip = new THREE.Color(0.78, 0.73, 0.58);
+    const wick = new THREE.Color(0.10, 0.09, 0.08);
+
+    Geo.box(mesh, 0, 0, 0, 0.022, 0.022, 0.075, wax);
+    Geo.box(mesh, 0, 0, 0.072, 0.026, 0.026, 0.008, drip);
+    Geo.box(mesh, 0, 0, 0.088, 0.004, 0.004, 0.012, wick);
+
+    mesh.computeNormals();
+    return mesh.toGeometry();
+  }
+
+  function buildCandleFlame() {
+    const mesh = new MeshData();
+    const base = new THREE.Color(1.0, 0.72, 0.22);
+    const tip = new THREE.Color(1.0, 0.95, 0.72);
+
+    // The cone helper points up +Y, and the candle stands along +Z, so the
+    // flame is built lying down and the group turns it upright.
+    Geo.cone(mesh, 0, 0, 0, 0.020, 0.062, 7, base, tip);
+    Geo.sphere(mesh, 0, 0.012, 0, 0.017, 7, base);
+
+    mesh.computeNormals();
+    return mesh.toGeometry();
+  }
+
+  /** How far the candle throws, and how far the flame pushes the murk back. */
+  const CANDLE_RANGE = 34;
+  const CANDLE_POWER = 2.4;
+
+  /** The one biome it burns in. */
+  const CANDLE_BIOME = 'trench';
+
+  /**
    * The swing, written as three poses rather than one arc number.
    *
    * The hand is the camera turned around, so in these numbers +z is straight
@@ -200,6 +243,34 @@
       this.knife.position.copy(this.knifeRest);
       this.knife.rotation.fromArray(KNIFE_REST.rot);
       this.hand.add(this.knife);
+
+      // --- The hacked candle, in the off hand --------------------------------
+      //
+      // It is carried the moment the hack is on, but it only ever catches in
+      // the Deep Trench - which is the whole point of it. Everywhere else you
+      // are holding an unlit stub.
+      this.candleHack = false;
+      this.candleLit = false;
+      this.candleGlow = 0;
+
+      this.candle = new THREE.Group();
+      this.candle.position.set(0.32, -0.30, 0.60);
+      this.candle.rotation.set(-0.16, 0.34, -0.10);
+      this.candle.visible = false;
+      this.hand.add(this.candle);
+
+      this.candleWax = new THREE.Mesh(buildCandleWax(), game.materials.surface);
+      this.candle.add(this.candleWax);
+
+      // Upright out of the wick, which points along the stub's +Z.
+      this.candleFlame = new THREE.Mesh(buildCandleFlame(), game.materials.glow);
+      this.candleFlame.position.set(0, 0, 0.096);
+      this.candleFlame.rotation.x = Math.PI / 2;
+      this.candle.add(this.candleFlame);
+
+      this.candleLight = new THREE.PointLight(0xffb257, 0, CANDLE_RANGE, 1.5);
+      this.candleLight.position.set(0, 0, 0.12);
+      this.candle.add(this.candleLight);
 
       this.carryPoint = new THREE.Object3D();
       this.carryPoint.position.set(0.34, -0.30, 0.75);
@@ -471,6 +542,48 @@
     // intensity instead blows the sea floor out to white.
     get lightPower() { return this.lanternBuilt ? 2.9 : 2.6; }
 
+    /**
+     * Turns the hacked candle on or off. Returns what to tell the diver, since
+     * the only thing that calls this is a cheat code.
+     */
+    toggleCandle() {
+      this.candleHack = !this.candleHack;
+      this.candle.visible = this.candleHack;
+      if (!this.candleHack) {
+        this.candleLit = false;
+        this.candleGlow = 0;
+        this.candleLight.intensity = 0;
+      }
+      return this.candleHack;
+    }
+
+    /**
+     * The flame only catches in the Deep Trench, and gutters out on the way
+     * over the lip of it. Everything else it does follows from candleGlow, so
+     * the light, the flame and the fog all fade together rather than snapping.
+     */
+    updateCandle(dt) {
+      if (!this.candleHack) return;
+
+      const biome = this.biome;
+      this.candleLit = !this.dead
+        && !!biome && biome.id === CANDLE_BIOME
+        && this.depth > 0.6;
+
+      this.candleGlow = SL.damp(this.candleGlow, this.candleLit ? 1 : 0, 2.4, dt);
+
+      // Two detuned sines, which reads as a flame rather than as a sine.
+      const t = this.game.time;
+      const flicker = 1 + Math.sin(t * 11.3) * 0.09 + Math.sin(t * 23.7) * 0.05;
+
+      this.candleLight.intensity = this.candleGlow * CANDLE_POWER * flicker;
+      this.candleFlame.visible = this.candleGlow > 0.02;
+      this.candleFlame.scale.set(
+        this.candleGlow * (0.9 + flicker * 0.12),
+        this.candleGlow * flicker,
+        this.candleGlow * (0.9 + flicker * 0.12));
+    }
+
     toggleFlashlight() {
       this.flashlightOn = !this.flashlightOn;
       this.flashlight.intensity = this.flashlightOn ? this.lightPower : 0;
@@ -638,6 +751,7 @@
       if (this.focusTimer <= 0) { this.focusTimer = 0.12; this.updateFocus(); }
 
       this.updateKnife(dt);
+      this.updateCandle(dt);
     }
 
     /**

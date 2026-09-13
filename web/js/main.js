@@ -31,6 +31,7 @@
       this.petRespawn = 0;
       this.beacons = [];
       this.vines = [];
+      this.bubbles = [];
 
       // Paused covers the title card, the pause screen and the fabricator. The
       // world keeps moving so the ocean stays alive behind them, but the diver
@@ -121,6 +122,7 @@
       this.petRespawn = 0;
       this.beacons.length = 0;
       this.vines.length = 0;
+      this.bubbles.length = 0;
 
       if (this.worldGroup) {
         this.worldGroup.traverse((node) => {
@@ -359,6 +361,7 @@
       for (let i = this.crystals.length - 1; i >= 0; i--) this.crystals[i].update(dt);
       for (const beacon of this.beacons) beacon.update(dt);
       for (let i = this.vines.length - 1; i >= 0; i--) this.vines[i].update(dt);
+      for (let i = this.bubbles.length - 1; i >= 0; i--) this.bubbles[i].update(dt);
 
       this.scrapTimer -= dt;
       if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }
@@ -429,22 +432,29 @@
     // Everything unlocked, stocked, and nothing can touch you.
     sus(game) {
       SL.Crafting.unlockAll(game);
-      game.hud.toast('CHEAT — all gear, infinite health and air');
+      game.hud.toast('CHEAT — all gear, infinite health and air, and fast');
       game.hud.refreshFabricator();
     },
     // Put the two leviathans on each other and pull up a seat.
     sandwich(game) {
       SL.forceClash(game);
     },
+    // A candle that burns underwater, in exactly one place.
+    candle(game) {
+      const on = game.player.toggleCandle();
+      game.hud.toast(on
+        ? 'CHEAT — hacked candle lit. It only burns in the Deep Trench'
+        : 'CHEAT — candle out');
+    },
     // The stalker you would otherwise have to fill the databank for.
     tame(game) {
       if (game.pets.length) {
-        game.hud.toast('CHEAT \u2014 your stalker is already with you');
+        game.hud.toast('CHEAT — your stalker is already with you');
         return;
       }
       game.petRespawn = 0;
       SL.Pet.spawn(game);
-      game.hud.toast('CHEAT \u2014 a stalker has bonded to you');
+      game.hud.toast('CHEAT — a stalker has bonded to you');
     }
   };
 

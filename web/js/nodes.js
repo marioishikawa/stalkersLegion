@@ -322,5 +322,89 @@
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Bubbles
+  // ---------------------------------------------------------------------------
+  //
+  // Small rising spheres, shared one geometry between all of them and capped
+  // hard, because the thing that spawns them is a fish that never stops.
+
+  const BUBBLE_LIMIT = 140;
+  const BUBBLE_LIFE = 5.5;
+
+  let bubbleGeometry = null;
+
+  function bubbleShape() {
+    if (bubbleGeometry) return bubbleGeometry;
+
+    const mesh = new SL.MeshData();
+    SL.Geo.sphere(mesh, 0, 0, 0, 1, 7, new THREE.Color(0.72, 0.92, 0.98));
+    mesh.computeNormals();
+
+    bubbleGeometry = mesh.toGeometry();
+    // Shared between worlds, so teardown must leave it alone.
+    bubbleGeometry.userData.shared = true;
+    return bubbleGeometry;
+  }
+
+  class Bubble {
+    constructor(game, x, y, z, radius) {
+      this.game = game;
+      this.dead = false;
+      this.life = 0;
+      this.radius = radius;
+
+      // Each one wobbles on its own phase, so a puff does not rise as a column.
+      this.phase = SL.random() * Math.PI * 2;
+      this.drift = SL.randRange(0.18, 0.42);
+      this.rise = SL.randRange(0.7, 1.25);
+
+      this.object = new THREE.Mesh(bubbleShape(), game.materials.water);
+      this.object.position.set(x, y, z);
+      this.object.scale.setScalar(radius);
+      game.addToWorld(this.object);
+    }
+
+    destroy() {
+      this.dead = true;
+      if (this.object.parent) this.object.parent.remove(this.object);
+      const i = this.game.bubbles.indexOf(this);
+      if (i >= 0) this.game.bubbles.splice(i, 1);
+    }
+
+    update(dt) {
+      this.life += dt;
+      const p = this.object.position;
+
+      // Bubbles accelerate as they rise and swell as the pressure drops.
+      this.rise = Math.min(this.rise + dt * 0.35, 2.4);
+      p.y += this.rise * dt;
+      p.x += Math.sin(this.game.time * 2.6 + this.phase) * this.drift * dt;
+      p.z += Math.cos(this.game.time * 2.1 + this.phase) * this.drift * dt;
+
+      this.object.scale.setScalar(this.radius * (1 + this.life * 0.16));
+
+      if (this.life > BUBBLE_LIFE || p.y > SL.WATER_LEVEL - 0.15) this.destroy();
+    }
+  }
+
+  SL.Bubbles = {
+    /** A burst of bubbles out of a point. Silently does nothing once capped. */
+    puff(game, position, count, spread, radius) {
+      spread = spread || 0.12;
+      radius = radius || 0.035;
+
+      for (let i = 0; i < count; i++) {
+        if (game.bubbles.length >= BUBBLE_LIMIT) return;
+        game.bubbles.push(new Bubble(game,
+          position.x + SL.randRange(-spread, spread),
+          position.y + SL.randRange(-spread * 0.5, spread),
+          position.z + SL.randRange(-spread, spread),
+          radius * SL.randRange(0.6, 1.5)));
+      }
+    }
+  };
+
+  SL.Bubble = Bubble;
   SL.Vine = Vine;
 })(window.SL);

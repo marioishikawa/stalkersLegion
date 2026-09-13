@@ -191,6 +191,11 @@
       game.player.invulnerable = true;
       game.player.health = game.player.maxHealth;
       game.player.oxygen = game.player.maxOxygen;
+
+      // And fast, because the map is 800 m across and the point of this is to
+      // go and look at it. Double cruise, and a sprint that covers ground.
+      game.player.swimSpeed = 9.4;
+      game.player.sprintMultiplier = 2.4;
     },
 
     craft(recipe, game) {

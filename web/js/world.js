@@ -194,24 +194,30 @@
   /**
    * Scales every school count at once. Each fish is two draw calls, so this is
    * the dial to turn if the frame rate suffers on a weaker machine.
+   *
+   * This is a density, not a headcount: the number of schools it produces is
+   * multiplied by how much sea floor a biome covers. Widening the map to 800 m
+   * across therefore multiplied the area without touching this, and left the
+   * ocean feeling empty - roughly seven fish inside the fifty-five metres you
+   * can actually see. Tripled, that is around twenty, which is the density the
+   * smaller map used to have.
+   *
+   * The cost of raising it is bounded: everything past CULL_DISTANCE is neither
+   * drawn nor stepped at full rate, so what this really sets is how many fish
+   * are near you, not how many exist.
    */
-  const POPULATION = 0.45;
+  const POPULATION = 1.35;
 
   /**
-   * School counts are authored per species, but the rings are wildly different
-   * sizes - the Red Coral Reef covers nearly three times the sea floor of the
-   * Safe Shallows. Spawning the same number of schools in both leaves the outer
-   * biomes feeling empty, because you can swim a long way between clusters.
-   * This scales school counts by ring area so the distance between schools stays
-   * roughly constant wherever you are.
-   */
-  /**
-   * Biomes no longer occupy tidy rings - a seamount reef may be a tenth the
-   * size of the abyssal plain - so populations are expressed as a density and
+   * Biomes do not occupy tidy rings - a seamount reef may be a tenth the size
+   * of the abyssal plain - so populations are expressed as a density and
    * multiplied by how much sea floor the biome actually covers in this world.
+   *
+   * The ceiling exists so the one enormous biome does not swallow the whole
+   * budget; the floor so a small one still gets a few schools.
    */
   function areaFactorOf(biome) {
-    return SL.clamp(SL.Biomes.areaShareOf(biome) * 9, 0.35, 3.2);
+    return SL.clamp(SL.Biomes.areaShareOf(biome) * 9, 0.5, 4.5);
   }
 
   /**
@@ -379,6 +385,9 @@
 
   const _fogTarget = new THREE.Color();
 
+  /** The colour the hacked candle drags the trench water toward. */
+  const _candleWater = new THREE.Color(0.10, 0.062, 0.030);
+
   function updateAmbience(game, dt) {
     const p = game.player.position;
     const biome = SL.Biomes.biomeAt(p.x, p.z);
@@ -388,9 +397,20 @@
     const depthFade = SL.clamp(1 - (SL.WATER_LEVEL - p.y) / 90, 0.12, 1);
 
     // The Quartz Visor cuts the murk everywhere.
-    const clarity = 1 - (game.player.visionBonus || 0);
+    let clarity = 1 - (game.player.visionBonus || 0);
+
+    // The hacked candle cuts it in one place only. The trench is by far the
+    // thickest water in the game (0.070 against the shallows' 0.012), so
+    // halving it there is the difference between two metres of visibility and
+    // actually seeing the canyon you are in.
+    const candle = game.player.candleGlow || 0;
+    clarity *= 1 - candle * 0.55;
 
     _fogTarget.copy(biome.waterColor).multiplyScalar(depthFade);
+
+    // Warm the water it lights, so the trench reads as candlelit rather than
+    // as the same black with less of it.
+    if (candle > 0.01) _fogTarget.lerp(_candleWater, candle * 0.5);
 
     game.scene.fog.color.lerp(_fogTarget, 1 - Math.exp(-1.2 * dt));
     game.scene.fog.density = SL.damp(game.scene.fog.density, biome.fogDensity * submerged * clarity, 1.2, dt);

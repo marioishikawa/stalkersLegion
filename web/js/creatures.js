@@ -212,6 +212,12 @@
         ? SL.randRange(species.callInterval[0], species.callInterval[1])
         : 0;
 
+      // Some fish blow bubbles as they go. Staggered so a school does not puff
+      // in unison.
+      this.bubbleTimer = species.bubbleInterval
+        ? SL.randRange(0, species.bubbleInterval[1])
+        : 0;
+
       this.state = 'cruise';
       this.leader = null;
       this.slot = new THREE.Vector3();
@@ -287,6 +293,28 @@
       this.senseTimer -= dt;
       if (this.senseTimer <= 0) { this.senseTimer = SL.randRange(0.3, 0.6); this.sense(); }
       this.stateTimer += dt;
+
+      // --- Bubbles ------------------------------------------------------------
+      //
+      // Only worth spending on when someone is there to see them, so they are
+      // skipped entirely past the fog.
+      if (this.species.bubbleInterval && !this.dead) {
+        this.bubbleTimer -= dt;
+        if (this.bubbleTimer <= 0) {
+          const [low, high] = this.species.bubbleInterval;
+          // Startled fish blow far harder - it is what the bubbles are for.
+          const panicking = this.fleeTimer > 0;
+          this.bubbleTimer = panicking ? SL.randRange(low * 0.25, low * 0.5)
+            : SL.randRange(low, high);
+
+          if (this.game.distanceToPlayer(p) < 42) {
+            // Out of the mouth, which is the nose end of a nose-forward body.
+            _look.set(0, 0, this.bodyLength * 0.46).applyQuaternion(this.object.quaternion).add(p);
+            SL.Bubbles.puff(this.game, _look, panicking ? SL.randInt(4, 7) : SL.randInt(1, 3),
+              this.bodyLength * 0.16, this.bodyLength * 0.09);
+          }
+        }
+      }
 
       // --- Breathing ----------------------------------------------------------
       //

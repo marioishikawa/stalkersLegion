@@ -159,6 +159,23 @@
     }),
 
     // ----------------------------------------------------------- Red Coral Reef
+    fish('bubbleclown', 'Bubble Clown', 'coral', 'disc', {
+      note: 'Orange and banded, and it shoots bubbles. Nobody has worked out ' +
+            'how. Startle one and it empties itself in a panic and bolts.',
+      backColor: C(0.98, 0.44, 0.10), bellyColor: C(1.0, 0.96, 0.92), finColor: C(0.12, 0.11, 0.14),
+      eyeColor: C(0.06, 0.05, 0.08), glow: 0.15,
+      maxHealth: 16, cruiseSpeed: 1.5, sprintSpeed: 4.6, turnRate: 3.4,
+      schoolSize: 5, groups: 6, altitude: 2.2, wagRate: 8,
+
+      // The whole point of it: a puff every few seconds, far more when scared.
+      bubbleInterval: [2.2, 5.0],
+
+      shape: { length: 0.30, height: 0.34, width: 0.13, bellyPosition: 0.42,
+               noseSharpness: 0.30, crossSection: 2.4, tailHeight: 0.26,
+               tailSweep: 0.20, tailFork: 0.25, dorsalFin: 0.22, ventralFin: 0.16,
+               sideFin: 0.17, eyeSize: 0.075, eyeRing: true, stripes: 3,
+               spineSegments: 14 }
+    }),
     fish('emberfin', 'Emberfin', 'coral', 'diamond', {
       note: "Hot-coloured reef fish with a deeply forked tail.",
       // Hot-coloured reef fish with a deep forked tail.
@@ -200,6 +217,17 @@
                eyeSize: 0.045, backSpikes: 4, spineSegments: 16 }
     }),
 
+    fish('cobblejaw', 'Cobblejaw', 'boulders', 'boxy', {
+      note: 'Squat and armoured, the colour of the rubble it grazes. Sits ' +
+            'still often enough that you find them by moving, not by looking.',
+      backColor: C(0.40, 0.38, 0.34), bellyColor: C(0.72, 0.70, 0.62), finColor: C(0.52, 0.46, 0.36),
+      maxHealth: 40, cruiseSpeed: 1.0, sprintSpeed: 2.9, turnRate: 1.6,
+      schoolSize: 4, groups: 8, altitude: 1.6, wagRate: 3.2,
+      shape: { length: 0.44, height: 0.34, width: 0.32, bellyPosition: 0.44,
+               noseSharpness: 0.18, crossSection: 5.5, tailHeight: 0.20,
+               tailSweep: 0.16, tailFork: 0.1, dorsalFin: 0.10, ventralFin: 0.06,
+               sideFin: 0.16, eyeSize: 0.055, backSpikes: 5, spineSegments: 12 }
+    }),
     fish('skate', 'Rift Skate', 'boulders', 'disc', {
       note: "Wide and flat, gliding low over the rubble.",
       // Wide and flat rather than tall - a ray gliding over the rubble.
@@ -270,6 +298,17 @@
                tailHeight: 0.16, tailFork: 0, dorsalFin: 0.07, ventralFin: 0.05, sideFin: 0.05,
                eyeSize: 0.03, spineSegments: 22, radialSegments: 8 }
     }),
+    fish('trenchdart', 'Trench Dart', 'trench', 'arrow', {
+      note: 'Mirror-sided and very fast, in schools that turn as one. The ' +
+            'flash of a school turning is often the only light down here.',
+      backColor: C(0.52, 0.58, 0.66), bellyColor: C(0.88, 0.92, 0.98), finColor: C(0.40, 0.50, 0.62),
+      glow: 0.45, maxHealth: 12, cruiseSpeed: 2.0, sprintSpeed: 6.4, turnRate: 3.8,
+      schoolSize: 9, groups: 8, altitude: 5, wagRate: 10,
+      shape: { length: 0.30, height: 0.17, width: 0.09, bellyPosition: 0.40,
+               noseSharpness: 0.92, tailHeight: 0.26, tailSweep: 0.28, tailFork: 0.65,
+               dorsalFin: 0.14, ventralFin: 0.08, sideFin: 0.10, eyeSize: 0.06,
+               spineSegments: 14 }
+    }),
     fish('ribbon', 'Abyss Ribbon', 'trench', 'ribbon', {
       note: "A metre of violet streamer, drifting in the dark.",
       // Long violet streamer that drifts in the dark.
@@ -294,6 +333,30 @@
     }),
 
     // -------------------------------------------------------------- Whale Reach
+    fish('snowfleck', 'Snowfleck', 'abyss', 'shrimp', {
+      note: 'Feeds on the marine snow falling through the open water. Swarms ' +
+            'of them hang in the dark like dust in a sunbeam, minus the sunbeam.',
+      backColor: C(0.78, 0.80, 0.86), bellyColor: C(0.94, 0.96, 1.0), finColor: C(0.62, 0.68, 0.80),
+      eyeColor: C(0.10, 0.10, 0.14), glow: 0.75,
+      maxHealth: 4, cruiseSpeed: 0.7, sprintSpeed: 2.6, turnRate: 4.2,
+      senseRadius: 7, schoolSize: 18, groups: 9, altitude: 14, wagRate: 13,
+      shape: { length: 0.07, height: 0.22, width: 0.16, bellyPosition: 0.34,
+               noseSharpness: 0.3, tailHeight: 0.24, tailSweep: 0.16, tailFork: 0.3,
+               dorsalFin: 0, sideFin: 0, eyeSize: 0.10, antennae: 1.4, legPairs: 3,
+               spineSegments: 10, radialSegments: 8 }
+    }),
+    fish('ghostbell', 'Ghost Bell', 'abyss', 'bulb', {
+      note: 'A slow pale bell that pulses rather than swims. It has no eyes ' +
+            'worth the name and does not appear to notice anything at all.',
+      backColor: C(0.62, 0.70, 0.78), bellyColor: C(0.88, 0.94, 0.98), finColor: C(0.50, 0.62, 0.76),
+      eyeColor: C(0.30, 0.38, 0.48), glow: 0.85,
+      maxHealth: 20, cruiseSpeed: 0.55, sprintSpeed: 1.6, turnRate: 0.9,
+      senseRadius: 9, schoolSize: 2, groups: 8, altitude: 18, wagRate: 1.1,
+      shape: { length: 0.52, height: 0.66, width: 0.60, bellyPosition: 0.50,
+               noseSharpness: 0.05, crossSection: 3.0, tailHeight: 0.44,
+               tailSweep: 0.42, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.02, spineSegments: 16, radialSegments: 12 }
+    }),
     fish('bluedrifter', 'Blue Drifter', 'abyss', 'ribbon', {
       note: "Open-water plankton feeder, drifting in loose ribbons.",
       // Open-water plankton feeder, drifting in loose ribbons near the whale.
@@ -355,6 +418,17 @@
     }),
 
     // The leviathan's servants: small, quick, and after your pockets.
+    fish('weaverfish', 'Weaverfish', 'farkelp', 'diamond', {
+      note: 'Hangs between the fronds of the far forest with its fins spread, ' +
+            'and is almost impossible to pick out until it moves.',
+      backColor: C(0.30, 0.44, 0.20), bellyColor: C(0.86, 0.88, 0.62), finColor: C(0.44, 0.58, 0.24),
+      maxHealth: 20, cruiseSpeed: 1.1, sprintSpeed: 3.6, turnRate: 2.6,
+      schoolSize: 4, groups: 7, altitude: 4, wagRate: 5,
+      shape: { length: 0.34, height: 0.46, width: 0.08, bellyPosition: 0.48,
+               noseSharpness: 0.40, crossSection: 1.8, tailHeight: 0.30,
+               tailSweep: 0.26, tailFork: 0.2, dorsalFin: 0.30, ventralFin: 0.26,
+               sideFin: 0.12, eyeSize: 0.055, spineSegments: 14 }
+    }),
     fish('kelper', 'Kelper', 'farkelp', 'arrow', {
       diet: 'carnivore', groups: 0,
       note: "Called up by the leviathan to rob you. Takes one loose item and runs " +
