@@ -7,6 +7,10 @@
   /** Distance past which creatures stop being drawn and think at a lower rate. */
   const CULL_DISTANCE = 55;
 
+  /** The three fish update tiers: full rate, quarter rate, sixteenth rate. */
+  const NEAR_DISTANCE_SQ = CULL_DISTANCE * CULL_DISTANCE;
+  const MID_DISTANCE_SQ = (CULL_DISTANCE * 2.6) * (CULL_DISTANCE * 2.6);
+
   /** Frame rate below which the renderer drops resolution to keep input snappy. */
   const TARGET_FPS = 48;
 
@@ -350,12 +354,33 @@
 
       const playerPos = this.player.position;
 
-      // Creatures past the fog are neither drawn nor stepped at full rate.
+      // Creatures past the fog are neither drawn nor stepped at full rate, in
+      // three tiers rather than two.
+      //
+      // Two tiers was fine on a smaller map. The world is now 2,400 m across
+      // and carries most of its fish somewhere you are not, so the outer tier
+      // exists to stop the frame cost growing with the map: the far majority
+      // are stepped once every sixteen frames with a correspondingly longer
+      // step, which is invisible at 140 m and costs a sixteenth of the work.
       for (const fish of this.fish) {
-        const far = fish.position.distanceToSquared(playerPos) > CULL_DISTANCE * CULL_DISTANCE;
-        fish.object.visible = !far;
-        if (far && !fish.dead && (this.frame & 3) !== 0) continue;
-        fish.update(far ? dt * 4 : dt);
+        const d2 = fish.position.distanceToSquared(playerPos);
+        const near = d2 <= NEAR_DISTANCE_SQ;
+        fish.object.visible = near;
+
+        if (near || fish.dead) {
+          fish.update(dt);
+          continue;
+        }
+
+        if (d2 <= MID_DISTANCE_SQ) {
+          if ((this.frame & 3) !== 0) continue;
+          fish.update(dt * 4);
+        } else {
+          if ((this.frame & 15) !== 0) continue;
+          // Capped, because a long step and a fast fish is how something ends
+          // up on the wrong side of a seamount.
+          fish.update(Math.min(dt * 16, 0.4));
+        }
       }
 
       // Stalkers always think - one hunting you from out in the murk is the point.

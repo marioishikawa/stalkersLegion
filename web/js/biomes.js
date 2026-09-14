@@ -152,9 +152,9 @@
     // Eighteen seamounts out past the shelf break, scattered to the rim. The
     // count tracks the map: every time the world doubles, an unbroken abyssal
     // plain is what you get if this does not.
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < 40; i++) {
       const angle = SL.hash(i, 11, SEED) * Math.PI * 2;
-      const radius = SL.lerp(230, 745, SL.hash(i, 22, SEED));
+      const radius = SL.lerp(290, 1130, SL.hash(i, 22, SEED));
       seamounts.push({
         x: Math.cos(angle) * radius,
         z: Math.sin(angle) * radius,
@@ -167,26 +167,26 @@
     // The king sits in a basin gouged out beyond the trench.
     const kingAngle = SL.hash(7, 77, SEED) * Math.PI * 2;
     kingBasin = {
-      x: Math.cos(kingAngle) * 430,
-      z: Math.sin(kingAngle) * 430,
-      radius: 72
+      x: Math.cos(kingAngle) * 560,
+      z: Math.sin(kingAngle) * 560,
+      radius: 84
     };
 
     // The whale works open water on the far side of the map from the king.
     whaleGround = {
-      x: Math.cos(kingAngle + Math.PI) * 400,
-      z: Math.sin(kingAngle + Math.PI) * 400,
-      radius: 100
+      x: Math.cos(kingAngle + Math.PI) * 520,
+      z: Math.sin(kingAngle + Math.PI) * 520,
+      radius: 120
     };
 
     // The far bank: a plateau rising out of the abyss, a long swim from
     // anywhere, carrying the only kelp forest outside the shelf.
     const bankAngle = SL.hash(13, 131, SEED) * Math.PI * 2;
     farBank = {
-      x: Math.cos(bankAngle) * 605,
-      z: Math.sin(bankAngle) * 605,
-      radius: 92,
-      rise: 78
+      x: Math.cos(bankAngle) * 830,
+      z: Math.sin(bankAngle) * 830,
+      radius: 104,
+      rise: 80
     };
 
     // The islet: a seamount that did not stop at the surface. Put on the far
@@ -194,13 +194,19 @@
     // different swims.
     const isletAngle = bankAngle + Math.PI * SL.lerp(0.62, 1.38, SL.hash(17, 171, SEED));
     islet = {
-      x: Math.cos(isletAngle) * 545,
-      z: Math.sin(isletAngle) * 545,
+      x: Math.cos(isletAngle) * 700,
+      z: Math.sin(isletAngle) * 700,
       // The reef flat it stands on, and the peak that comes out of it.
-      flatRadius: 108,
-      flatRise: 82,
-      peakRadius: 26,
-      peakRise: 30
+      //
+      // Grown from a 26 m cone to a 48 m one with a broader shoulder, so there
+      // is actually somewhere up there to put something - a cone that comes to
+      // a point has a summit you cannot stand two animals on.
+      flatRadius: 150,
+      flatRise: 88,
+      peakRadius: 48,
+      peakRise: 34,
+      shoulderRadius: 88,
+      shoulderRise: 16
     };
   }
 
@@ -218,8 +224,13 @@
     const flat = d / islet.flatRadius;
     if (flat < 2.4) rise += islet.flatRise * Math.exp(-flat * flat * 1.2);
 
+    // A shoulder between the reef flat and the peak, which is what turns a
+    // cone into an island with ground on it.
+    const shoulder = d / islet.shoulderRadius;
+    if (shoulder < 2.6) rise += islet.shoulderRise * Math.exp(-shoulder * shoulder * 1.0);
+
     const peak = d / islet.peakRadius;
-    if (peak < 3) rise += islet.peakRise * Math.exp(-peak * peak * 1.1);
+    if (peak < 3) rise += islet.peakRise * Math.exp(-peak * peak * 0.85);
 
     return rise;
   }
@@ -229,7 +240,7 @@
     if (!islet) return 0;
     const d = Math.hypot(x - islet.x, z - islet.z) / islet.peakRadius;
     if (d > 3) return 0;
-    return islet.peakRise * Math.exp(-d * d * 1.1);
+    return islet.peakRise * Math.exp(-d * d * 0.85);
   }
 
   /** How far the far bank lifts the floor at a point, in metres. */
@@ -268,18 +279,18 @@
 
   /** The underlying continental margin: shelf, shelf break, abyssal slope. */
   function marginProfile(r) {
-    if (r < 260) {
+    if (r < 330) {
       // The shelf, sloping gently away from the shallows. It is wide, because
       // the shelf is where the game is - kelp, scrap and stalkers all live here.
-      return -3.5 - Math.pow(r / 260, 1.7) * 13;
+      return -3.5 - Math.pow(r / 330, 1.7) * 13;
     }
-    if (r < 470) {
+    if (r < 600) {
       // The shelf break: the floor falls away fast.
-      return SL.lerp(-16.5, -66, SL.smoothstep((r - 260) / 210));
+      return SL.lerp(-16.5, -66, SL.smoothstep((r - 330) / 270));
     }
-    // The abyssal slope beyond it, still descending, but slowly - it has a
-    // third of a kilometre to do it in.
-    return -66 - (r - 470) * 0.03;
+    // The abyssal slope beyond it, still descending, but slowly - it has most
+    // of a kilometre to do it in.
+    return -66 - (r - 600) * 0.022;
   }
 
   function floorHeightAt(x, z) {

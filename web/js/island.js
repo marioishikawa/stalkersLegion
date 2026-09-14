@@ -36,7 +36,7 @@
       super(game, SL.Species.walkingcarni, x, y, z);
 
       this.home = new THREE.Vector3(x, y, z);
-      this.rangeRadius = 46;
+      this.rangeRadius = 78;
 
       this.state = 'roam';
       this.stateTimer = 0;

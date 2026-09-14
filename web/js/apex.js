@@ -256,6 +256,34 @@
     provoke() {}
     onHurt() {}
 
+    /** The diver cannot hurt it at all, and the knife should say so. */
+    immuneTo(source) { return source === this.game.player; }
+
+    /**
+     * And nothing the diver does kills one either. The knife simply does not
+     * land on it - it is the one animal in the ocean that is off the table,
+     * and it says so rather than silently soaking the hit.
+     *
+     * A creature is otherwise damaged straight through Creature.hurt, so this
+     * has to override the whole method rather than the hook it calls.
+     */
+    hurt(damage, source) {
+      if (this.dead || damage <= 0) return;
+
+      if (source !== this.game.player) {
+        // The king can still mark it. Their standoff is the one thing that
+        // does, and it is floored at a third of health either way.
+        super.hurt(damage, source);
+        return;
+      }
+
+      // Throttled, because the knife swings faster than anyone wants to read.
+      if (this.game.time - (this.refusedAt || -99) > 2.5) {
+        this.refusedAt = this.game.time;
+        this.game.hud.toast('This is a peaceful leviathan');
+      }
+    }
+
     onDeath() {
       SL.Pickup.burst(this.game, 'titanium', this.position, 10);
       SL.Pickup.burst(this.game, 'quartz', this.position, 6);

@@ -56,7 +56,7 @@
     const FINE = 2.2;
     const COARSE = FINE * 3;          // 6.6 m, so the grids line up
     const FINE_TILES = 12;            // 12 x 12 x 32 x 2.2 m = 845 m across
-    const COARSE_TILES = 8;           // 8 x 8 x 32 x 6.6 m = 1,690 m across
+    const COARSE_TILES = 12;          // 12 x 12 x 32 x 6.6 m = 2,534 m across
 
     const fineTile = CELLS * FINE;
     const fineHalf = fineTile * FINE_TILES * 0.5;
@@ -423,7 +423,7 @@
     let best = -1e9;
     for (let attempt = 0; attempt < 40; attempt++) {
       const angle = SL.random() * Math.PI * 2;
-      const radius = Math.sqrt(SL.random()) * islet.peakRadius * 1.5;
+      const radius = Math.sqrt(SL.random()) * islet.peakRadius * 1.2;
       const x = islet.x + Math.cos(angle) * radius;
       const z = islet.z + Math.sin(angle) * radius;
       const y = SL.Biomes.floorHeightAt(x, z);

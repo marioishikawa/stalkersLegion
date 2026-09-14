@@ -441,6 +441,15 @@
       if (!best) { this.game.audio.swingMiss(); return; }
 
       if (best instanceof SL.Creature) {
+        // Something that cannot be hurt is not a miss and not a hit - the blade
+        // goes nowhere and the marker says which.
+        if (best.immuneTo(this)) {
+          best.hurt(this.knifeDamage, this);
+          this.game.audio.swingMiss();
+          this.game.hud.showHitMarker('Peaceful  ·  ' + best.species.name, false);
+          return;
+        }
+
         best.hurt(this.knifeDamage, this);
         this.game.audio.hit();
         this.game.hud.showHitMarker(best.species.name, best.dead);

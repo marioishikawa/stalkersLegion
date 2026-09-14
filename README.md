@@ -53,7 +53,15 @@ no server and no build step. The only external dependency is Three.js from a CDN
 Two things, and they turn out to be one list:
 
 * **Catalogue every species** — all forty, in the databank.
-* **Kill every leviathan** — all five.
+* **Kill every leviathan** — all four that can be killed.
+
+The Glasswhale is deliberately not on the list. It cannot hurt you and **you
+cannot hurt it** — swing at it and the knife simply does not land, the marker
+reads *Peaceful*, and it tells you so: *This is a peaceful leviathan.* Requiring
+its death would make a world unfinishable, and it is the one animal out there
+that is simply left alone. You still have to catalogue it; you just have to do
+that with the scanner like anybody else. (The King Stalker can still mark it —
+their standoff is the one thing that does.)
 
 **A leviathan you kill is a leviathan you catalogued.** You are not going to
 hold a scanner steady on one for a second and a half and live, and a corpse is
@@ -192,7 +200,7 @@ longer just distance from the middle:
 
 * a shallow **shelf** around the origin, sloping gently — this is where the game
   lives, and it is wide on purpose;
-* a **shelf break** at about 140 m where the floor falls away fast;
+* a **shelf break** at about 330 m where the floor falls away fast;
 * nine **seamounts** that rise back out of the deep, three of them tall enough to
   reach the light — so coral reefs grow in shallow water a long way from home;
 * a **submarine canyon** that wanders across the whole map and bites into the
@@ -201,10 +209,13 @@ longer just distance from the middle:
 * a **far bank**, a plateau rising 78 m out of the abyss near the edge of the
   map, carrying the only kelp forest that is not on the shelf — and the
   leviathan that holds it;
-* **the islet**, a seamount that did not stop at the surface. A sand cone
-  standing twenty-odd metres out of the water on a broad reef flat, on the far
-  side of the map from the far forest. It is the only dry ground in the game,
-  and something lives on it.
+* **the islet**, a seamount that did not stop at the surface. Thirty-odd metres
+  of sand standing out of the water on a broad reef flat, on the far side of the
+  map from the far forest. It is the only dry ground in the game, and something
+  lives on it. Built as a flat, a shoulder and a peak rather than one cone,
+  because a cone that comes to a point has a summit you cannot stand anything
+  on: there are about **82 m of dry radius** up there, with room for more than
+  its current resident.
 
 Biomes then follow from what the floor *is* at a point — its depth, whether it
 sits on a seamount, whether it lies in the canyon — rather than from how far out
@@ -227,18 +238,18 @@ even past 120 m.
 
 Shares move with the seed, since the features are placed from it.
 
-The world is **1,690 m across**. The islet is about 545 m out and the far
-forest about 605 m, which is a serious swim at 4.2 m/s on ninety seconds of
-air — the fabricator exists to close that gap.
+The world is **2,400 m across**. The islet is about 700 m out and the far forest
+about 830 m, which is a serious swim at 4.2 m/s on ninety seconds of air — the
+fabricator exists to close that gap.
 
 ### How the floor is built at that size
 
-One grid fine enough for the shelf, stretched over the whole map, is 630,000
-vertices and stalls the dive. So the sea floor is two grids: **2.2 m cells**
-over the 845 m you actually swim in, and **6.6 m cells** over the abyss you
-cross. Coarse cells are exactly three fine cells wide and the ring starts on a
-fine tile boundary, so the grids share vertices along the seam instead of
-tearing. It builds in about a second and a half on a real machine.
+One grid fine enough for the shelf, stretched over the whole map, is millions of
+vertices and stalls the dive. So the sea floor is two grids: **2.2 m cells** over
+the 845 m you actually swim in, and **6.6 m cells** over the abyss you cross.
+Coarse cells are exactly three fine cells wide and the ring starts on a fine tile
+boundary, so the grids share vertices along the seam instead of tearing. 296,000
+vertices for a 2.4 km map, and a couple of seconds to build.
 
 ### How many fish
 
@@ -251,11 +262,16 @@ diluting it. Biomes that should defy their size say so: the abyssal plain is
 scaled *down* (it is meant to feel like crossing nothing), the trench, the far
 forest, the basin and the islet all scaled *up*.
 
-A world carries roughly 5,400 fish, of which 12–40 are inside the 55 m you can
-see at any moment, and 90–130 over the islet's reef. Everything past the fog is
-neither drawn nor stepped at full rate.
+A world carries roughly 10,000 fish, of which 17–30 are inside the 55 m you can
+see at any moment, and 130-odd over the islet's reef.
 
-Stepping the world costs around **8 ms a frame**, measured by instrumenting the
+Fish are stepped in **three tiers by distance**, not two: full rate inside 55 m,
+quarter rate out to 143 m, and a sixteenth beyond that with a correspondingly
+longer (and capped) step. That is what stops the frame cost growing with the
+map — the last doubling added 87% more fish for 28% more work, because almost
+all of them are somewhere you are not.
+
+Stepping the world costs around **10 ms a frame**, measured by instrumenting the
 real frame loop in a software-rendered headless container — so the number on a
 machine with a GPU is lower, but that is the honest ceiling. Turn `POPULATION`
 in `web/js/world.js` down if a weaker machine struggles; it is one dial and it
@@ -384,7 +400,7 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Bonded Stalker** — catalogue every fish in the databank and one of them
   bonds to you. It keeps station off your shoulder, goes after anything hunting
   you, and cannot hurt you whatever you do. Killed, it returns 10 seconds later.
-* **Glasswhale Leviathan** — 15 m, 2,600 HP, with a broad baleen mouth that
+* **Glasswhale Leviathan** — **unkillable, and harmless.** 15 m, with a broad baleen mouth that
   opens when it feeds and small dark eyes set behind pale rings. 15 m, and the only thing that eats stalkers. It
   swallows them whole and has **no interest in a diver at all** — it cannot hurt
   you, at any range, ever.

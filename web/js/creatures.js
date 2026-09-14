@@ -57,6 +57,9 @@
 
     /** Subclass hook: the velocity this creature wants, in world space. */
     desiredVelocity(dt) { return _tmp.set(0, 0, 0); }
+
+    /** Subclass hook: whether this creature simply cannot be hurt by someone. */
+    immuneTo(source) { return false; }
     onHurt(damage, source) {}
     onDeath(killer) {}
 

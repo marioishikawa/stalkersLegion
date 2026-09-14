@@ -13,8 +13,15 @@
 (function (SL) {
   'use strict';
 
-  /** Everything that has to die. */
-  const LEVIATHANS = ['kingstalker', 'whale', 'redpuff', 'kelperlev', 'glowlev'];
+  /**
+   * Everything that has to die.
+   *
+   * The Glasswhale is deliberately not on it. It cannot hurt you and you cannot
+   * hurt it, so requiring its death would make a world unfinishable - and it is
+   * the one animal out there that is simply left alone. You still have to
+   * catalogue it; you just have to do that with the scanner like anybody else.
+   */
+  const LEVIATHANS = ['kingstalker', 'redpuff', 'kelperlev', 'glowlev'];
 
   const Quest = {
     /** Leviathan species ids killed in this world. */

@@ -556,7 +556,9 @@
 
     // ------------------------------------------------------------- The Whale
     fish('whale', 'Glasswhale Leviathan', 'abyss', 'bulb', {
-      note: "Eats stalkers whole. Has no concept of a diver as prey, and never harms one.",
+      note: "Eats stalkers whole. Has no concept of a diver as prey, never " +
+            "harms one, and cannot be harmed by one - the knife will not land " +
+            "on it. The only animal down here that is simply left alone.",
       leviathan: true, markerColor: '#5fb8e8',
       // The only thing out here that eats stalkers. It has no interest in
       // anything as small as a diver and will never harm one.
