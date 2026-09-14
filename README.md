@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, forty species, five leviathans, one island, and a kelp forest full of
+biomes, forty-one species, six leviathans, one island, and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
@@ -52,8 +52,8 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all forty, in the databank.
-* **Kill every leviathan** — all four that can be killed.
+* **Catalogue every species** — all forty-one, in the databank.
+* **Kill every leviathan** — all five that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
 cannot hurt it** — swing at it and the knife simply does not land, the marker
@@ -385,6 +385,15 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   after each pass — there is always a window to leave in, and a sprint gets you
   out. Thirty damage a bite. The proximity warning that used to watch only
   stalkers now watches this too, on a wider band, because it closes much faster.
+* **Walkingcarni Leviathan** — the same animal three and a half times over:
+  6.5 m, six legs instead of four, 900 HP, 34 a bite, and none of its smaller
+  relative's indifference. The island is its island. It **walks the tideline**
+  rather than the summit, because that is where the fish are and where a diver
+  can actually be, and anything that swims onto the reef flat gets charged
+  without being provoked first. It wades out to about 7 m of water and no
+  further, and it will not leave the island at all — swimming off the flat is
+  the whole of your defence, and it works. Tested: three bites and a dead diver
+  in seventeen seconds if you stay; untouched and at full health if you swim.
 * **Walkingcarni** — lives on the islet, and is the only animal in the game that
   is not swimming. Four legs, a long jaw, and it takes its height from the
   ground rather than integrating against the sea floor like everything else, so

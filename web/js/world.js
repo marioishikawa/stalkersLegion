@@ -412,25 +412,51 @@
     }
   }
 
-  /** The islet's resident, standing on the only dry ground in the world. */
-  function spawnIslander(game) {
-    const islet = SL.Biomes.islet;
-    if (!islet || !SL.Walkingcarni) return;
-
-    // The highest of a handful of tries, so it starts on the island rather
-    // than in the surf around it.
+  /**
+   * The islet's two residents, standing on the only dry ground in the world.
+   *
+   * Both are placed by taking the highest of a handful of tries, so they start
+   * on the island rather than in the surf around it - the leviathan first, and
+   * from a tighter radius, so it gets the summit and the small one gets the
+   * slope.
+   */
+  function highestPointOn(islet, spread, tries) {
     let spot = null;
     let best = -1e9;
-    for (let attempt = 0; attempt < 40; attempt++) {
+    for (let attempt = 0; attempt < tries; attempt++) {
       const angle = SL.random() * Math.PI * 2;
-      const radius = Math.sqrt(SL.random()) * islet.peakRadius * 1.2;
+      const radius = Math.sqrt(SL.random()) * islet.peakRadius * spread;
       const x = islet.x + Math.cos(angle) * radius;
       const z = islet.z + Math.sin(angle) * radius;
       const y = SL.Biomes.floorHeightAt(x, z);
       if (y > best) { best = y; spot = { x, z }; }
     }
+    return spot;
+  }
 
-    if (spot) game.carnis.push(new SL.Walkingcarni(game, spot.x, spot.z));
+  function spawnIslander(game) {
+    const islet = SL.Biomes.islet;
+    if (!islet || !SL.Walkingcarni) return;
+
+    // The big one starts on the beach. It lives at the tideline - that is
+    // where the fish are and where a diver can actually be - so putting it on
+    // the summit just meant a long walk down before anything happened.
+    if (SL.WalkingcarniLeviathan) {
+      let shore = null;
+      for (let attempt = 0; attempt < 60 && !shore; attempt++) {
+        const angle = SL.random() * Math.PI * 2;
+        const radius = SL.randRange(islet.peakRadius, islet.shoulderRadius * 1.4);
+        const x = islet.x + Math.cos(angle) * radius;
+        const z = islet.z + Math.sin(angle) * radius;
+        const y = SL.Biomes.floorHeightAt(x, z);
+        if (y > -1 && y < 6) shore = { x, z };
+      }
+      shore = shore || highestPointOn(islet, 0.9, 30);
+      if (shore) game.carniLevs.push(new SL.WalkingcarniLeviathan(game, shore.x, shore.z));
+    }
+
+    const slope = highestPointOn(islet, 1.4, 30);
+    if (slope) game.carnis.push(new SL.Walkingcarni(game, slope.x, slope.z));
   }
 
   function spawnCreatures(game) {

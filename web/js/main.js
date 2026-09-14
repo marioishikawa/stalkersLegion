@@ -31,6 +31,7 @@
       this.puffers = [];
       this.kelperLevs = [];
       this.glowLevs = [];
+      this.carniLevs = [];
       this.kelpers = [];
       this.pets = [];
       this.petRespawn = 0;
@@ -135,6 +136,7 @@
       this.puffers.length = 0;
       this.kelperLevs.length = 0;
       this.glowLevs.length = 0;
+      this.carniLevs.length = 0;
       this.kelpers.length = 0;
       this.pets.length = 0;
       this.petRespawn = 0;
@@ -157,7 +159,8 @@
 
     /** Every leviathan in the world, in the one list the chart wants. */
     leviathans() {
-      return this.kings.concat(this.whales, this.puffers, this.kelperLevs, this.glowLevs);
+      return this.kings.concat(this.whales, this.puffers, this.kelperLevs,
+        this.glowLevs, this.carniLevs);
     }
 
     /** Generates a world from a seed. The same seed always gives the same ocean. */
@@ -428,6 +431,10 @@
       // than a couple and they are worth seeing from a long way off.
       for (const carni of this.carnis) {
         carni.object.visible = carni.position.distanceToSquared(playerPos) < 6 * CULL_DISTANCE * CULL_DISTANCE;
+        carni.update(dt);
+      }
+      for (const carni of this.carniLevs) {
+        carni.object.visible = carni.position.distanceToSquared(playerPos) < 12 * CULL_DISTANCE * CULL_DISTANCE;
         carni.update(dt);
       }
 

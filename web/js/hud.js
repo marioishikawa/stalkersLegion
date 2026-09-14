@@ -186,7 +186,7 @@
         if (d < closestDistance) { closestDistance = d; closest = stalker; }
       }
 
-      for (const lev of this.game.glowLevs) {
+      for (const lev of this.game.glowLevs.concat(this.game.carniLevs, this.game.kelperLevs)) {
         if (!lev.hunting) continue;
         const d = lev.position.distanceTo(p.position);
         // Given a wider band than a stalker, because it closes far faster.

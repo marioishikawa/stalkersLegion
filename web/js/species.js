@@ -463,6 +463,31 @@
                mouthLine: 0.010, jawLength: 0.14, stripes: 7,
                spineSegments: 26, radialSegments: 12 }
     }),
+    fish('carnilev', 'Walkingcarni Leviathan', 'islet', 'boxy', {
+      leviathan: true, markerColor: '#e2a33c',
+      diet: 'carnivore', groups: 0,
+      note: 'What the Walkingcarni grows into if nothing on the island eats ' +
+            'it. Six and a half metres, six legs, and none of its smaller ' +
+            "relative's indifference: the island is its island, and it comes " +
+            'down the slope at anything that walks up it. It cannot follow ' +
+            'you into deep water. That is the whole of your defence.',
+      backColor: C(0.52, 0.34, 0.15), bellyColor: C(0.88, 0.78, 0.54), finColor: C(0.34, 0.22, 0.10),
+      eyeColor: C(1.0, 0.66, 0.10), glow: 0.25,
+      maxHealth: 900, cruiseSpeed: 2.0, sprintSpeed: 7.4, turnRate: 1.8,
+      senseRadius: 95, biteDamage: 34, biteInterval: 3.0,
+      schoolSize: 1, altitude: 1.4, wagRate: 1.6,
+      drops: { tooth: [8, 12], titanium: [5, 8], gold: [2, 4] },
+
+      // The same animal as the Walkingcarni, three and a half times the length,
+      // and a third pair of legs under the middle to carry it.
+      shape: { length: 6.5, height: 0.22, width: 0.28, bellyPosition: 0.46,
+               noseSharpness: 0.32, crossSection: 4.8, tailHeight: 0.07,
+               tailSweep: 0.60, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.030, eyeRing: true, eyePosition: 0.10,
+               mouthLine: 0.012, jawLength: 0.22, backSpikes: 11,
+               legPairs: 3, legScale: 0.26,
+               spineSegments: 20, radialSegments: 12 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -593,6 +618,7 @@
     kelperLeviathan: byId.kelperlev,
     kelper: byId.kelper,
     walkingcarni: byId.walkingcarni,
+    carniLeviathan: byId.carnilev,
     glowLeviathan: byId.glowlev,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
