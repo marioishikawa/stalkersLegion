@@ -126,6 +126,8 @@
 
       // Finishing the fish is what earns the bonded stalker.
       if (this.game && SL.Pet) SL.Pet.checkUnlock(this.game);
+      // And it may have been the last thing the world was waiting for.
+      if (this.game && SL.Quest) SL.Quest.check(this.game);
       return true;
     },
 
@@ -193,7 +195,9 @@
         body.querySelector('.entry__note').textContent = known ? (species.note || '') : '';
       }
 
-      this.progress.textContent = this.count + ' of ' + this.total + ' catalogued';
+      this.progress.textContent = SL.Quest
+        ? SL.Quest.summary()
+        : this.count + ' of ' + this.total + ' catalogued';
     },
 
     setOpen(open) {

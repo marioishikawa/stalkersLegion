@@ -48,6 +48,25 @@ To run the web build locally, open `web/index.html` directly — it uses classic
 scripts rather than ES modules specifically so that it works from `file://` with
 no server and no build step. The only external dependency is Three.js from a CDN.
 
+## What finishes a world
+
+Two things, and they turn out to be one list:
+
+* **Catalogue every species** — all forty, in the databank.
+* **Kill every leviathan** — all five.
+
+**A leviathan you kill is a leviathan you catalogued.** You are not going to
+hold a scanner steady on one for a second and a half and live, and a corpse is
+a specimen either way, so the kill records the entry.
+
+Finishing does not end anything. The card that comes up offers *Keep diving* or
+*Leave the world*, and the only lasting change is that a finished world **can no
+longer be deleted** — the delete button in the world list is replaced by a
+`complete` mark. A world someone finished is not a world to lose to a stray
+click.
+
+Where you are shows up in two places: the databank header, and the pause screen.
+
 ## Worlds
 
 The game opens on a list of saved worlds rather than a play button, because each
@@ -316,7 +335,11 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   nine seconds while it is chasing, so running only ever buys you distance. It
   gives up once you are 90 m off, and every hit you land stokes it further.
 * **Kelper Leviathan** — 11 m, 780 HP, holding the far bank's kelp forest and
-  never leaving it. It barely fights. Instead it **calls kelpers**: two or three
+  never leaving it. Robbing you is its opening move rather than its whole
+  answer: stay in its water about ten seconds after the kelpers are out and it
+  comes and drives you off the bank itself, for 24 a bite. Swim off the bank and
+  it has to turn back — it will not leave the forest to chase anyone. Its
+  opening move is to **call kelpers**: two or three
   at a time, up to five at once, quick spindly things that weave in, take one
   loose item off you and run for the weeds. They only take what you can make
   again — bait pods, beacons, medkits, repel charges — and never touch built

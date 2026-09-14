@@ -87,6 +87,18 @@
 
         open.addEventListener('click', () => this.enter(world));
 
+        // A world someone finished is not a world to lose to a stray click.
+        if (world.completed) {
+          const done = document.createElement('span');
+          done.className = 'world__done';
+          done.title = 'Finished worlds are kept';
+          done.textContent = 'complete';
+          row.appendChild(open);
+          row.appendChild(done);
+          list.appendChild(row);
+          continue;
+        }
+
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'world__delete';

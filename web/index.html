@@ -134,6 +134,12 @@
       only light on the abyssal plain, and somewhere a long way off there is an
       island with something living on it.
     </p>
+    <p class="screen__sub">
+      <strong>Catalogue every species and kill every leviathan.</strong>
+      A leviathan you kill is a leviathan you catalogued. Finish and the world
+      is yours to keep — you can carry on diving it, and it can never be
+      deleted.
+    </p>
 
     <h2 class="menu__heading">Your worlds</h2>
     <div class="world-list" id="worldList"></div>
@@ -181,12 +187,27 @@
   <h1 class="screen__title">Paused</h1>
   <div class="screen__rule"></div>
   <p class="screen__sub">The cursor is yours while you are paused. Your world saves itself as you play.</p>
+  <p class="screen__objective" id="pauseObjective"></p>
   <div class="menu__actions">
     <button class="screen__cta" type="button" id="resumeButton">Resume dive</button>
     <button class="screen__cta screen__cta--quiet" type="button" id="saveButton">Save now</button>
     <button class="screen__cta screen__cta--quiet" type="button" id="quitButton">Save &amp; leave world</button>
   </div>
   <p class="screen__meta">Esc pauses &nbsp;·&nbsp; Tab opens the fabricator</p>
+</div>
+
+<div class="screen" id="completionScreen">
+  <h1 class="screen__title">World <em>Complete</em></h1>
+  <div class="screen__rule"></div>
+  <p class="screen__sub">
+    Every species is in the databank and every leviathan is dead. There is
+    nothing left down there that you have not seen the inside of.
+  </p>
+  <p class="screen__meta">This world is kept from now on &nbsp;&middot;&nbsp; it can no longer be deleted</p>
+  <div class="menu__actions">
+    <button class="screen__cta" type="button" id="keepDivingButton">Keep diving</button>
+    <button class="screen__cta screen__cta--quiet" type="button" id="leaveCompleteButton">Leave the world</button>
+  </div>
 </div>
 
 <div class="screen" id="deathScreen">
@@ -216,6 +237,7 @@
 <script src="js/menu.js"></script>
 <script src="js/minimap.js"></script>
 <script src="js/index.js"></script>
+<script src="js/quest.js"></script>
 <script src="js/creatures.js"></script>
 <script src="js/apex.js"></script>
 <script src="js/kelpers.js"></script>

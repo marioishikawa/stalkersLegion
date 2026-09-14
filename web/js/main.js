@@ -95,6 +95,7 @@
       // Seconds played in the current world, which is what a save records.
       this.worldTime = 0;
       this.world = null;
+      this.completionOpen = false;
       this.worldGroup = new THREE.Group();
       this.scene.add(this.worldGroup);
 
@@ -247,9 +248,30 @@
     togglePause(paused) {
       this.setPaused(paused);
       const show = paused && this.started && !this.player.dead
-        && !this.fabricatorOpen && !this.indexOpen;
+        && !this.fabricatorOpen && !this.indexOpen && !this.completionOpen;
       document.getElementById('pauseScreen').classList.toggle('is-visible', show);
+      if (show) document.getElementById('pauseObjective').textContent = SL.Quest.summary();
       this.updateCursor();
+    }
+
+    /**
+     * The world is finished. Nothing ends - this is a card you dismiss, and the
+     * only lasting change is that the world can no longer be deleted.
+     */
+    showCompletion() {
+      this.completionOpen = true;
+      this.setPaused(true);
+      document.getElementById('pauseScreen').classList.remove('is-visible');
+      document.getElementById('completionScreen').classList.add('is-visible');
+      this.updateCursor();
+      this.audio.craft();
+    }
+
+    closeCompletion(andLeave) {
+      this.completionOpen = false;
+      document.getElementById('completionScreen').classList.remove('is-visible');
+      if (andLeave) this.quitToMenu();
+      else this.enter();
     }
 
     /** Writes the current run into its world record. Never blocks the game. */
@@ -268,6 +290,8 @@
     /** Generates `world`'s ocean and drops the diver back into it. */
     enterWorld(world) {
       this.world = world;
+      this.completionOpen = false;
+      document.getElementById('completionScreen').classList.remove('is-visible');
       this.build(world.seed);
       SL.Saves.restore(world, this);
       this.hud.refreshFabricator();
@@ -696,6 +720,14 @@
 
     document.getElementById('quitButton').addEventListener('click', () => {
       game.quitToMenu();
+    });
+
+    document.getElementById('keepDivingButton').addEventListener('click', () => {
+      game.closeCompletion(false);
+    });
+
+    document.getElementById('leaveCompleteButton').addEventListener('click', () => {
+      game.closeCompletion(true);
     });
   }
 

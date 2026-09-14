@@ -76,6 +76,8 @@
         this.deathTimer = 0;
         this.jawOpen = 0;
         this.onDeath(source);
+        // A leviathan you killed is a leviathan you catalogued.
+        if (SL.Quest) SL.Quest.recordKill(this.game, this.species, source);
       } else {
         this.onHurt(damage, source);
       }

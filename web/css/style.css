@@ -337,6 +337,20 @@ kbd {
   color: var(--muted);
 }
 
+/* Where you are against the two things that finish a world. */
+.screen__objective {
+  margin: 14px 0 0;
+  font: var(--readout);
+  font-size: 0.84rem;
+  color: var(--phosphor);
+}
+
+#completionScreen .screen__title { color: var(--bone); }
+#completionScreen .screen__title em { font-style: normal; color: var(--kelp); }
+#completionScreen {
+  background: radial-gradient(ellipse at center, rgba(20, 66, 40, 0.5) 0%, var(--abyss) 120%);
+}
+
 #loadError { color: var(--rust); }
 
 @media (prefers-reduced-motion: reduce) {
@@ -619,6 +633,18 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
 
 .world__delete:hover { color: var(--rust); }
 .world__delete[data-confirm="yes"] { color: var(--rust); }
+
+/* Stands where the delete button would be, on a world that has been finished. */
+.world__done {
+  padding: 0 14px;
+  color: var(--kelp);
+  font: var(--label);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  align-self: center;
+}
 
 .menu__empty { margin: 10px 0 0; color: var(--muted); font-size: 0.88rem; }
 .menu__empty[hidden] { display: none; }

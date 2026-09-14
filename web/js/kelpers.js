@@ -9,12 +9,20 @@
  * charges. Built gear is yours, and so are raw materials. Kill the one that
  * robbed you and you get the item straight back; let it reach the forest and it
  * is gone.
+ *
+ * The leviathan itself is not a bystander. Robbing you is its opening move, not
+ * its whole answer: stay in its water once the kelpers are out and it comes and
+ * drives you off the bank itself.
  */
 (function (SL) {
   'use strict';
 
   const _tmp = new THREE.Vector3();
   const _slot = new THREE.Vector3();
+  const _mouth = new THREE.Vector3();
+
+  /** How close its mouth has to get to land a bite. */
+  const MOUTH_REACH = 5;
 
   /** Only the consumables are worth stealing. Upgrades are never touched. */
   const STEALABLE = ['bait', 'beacon', 'medkit', 'repel'];
@@ -138,8 +146,13 @@
   const LEV_LABELS = {
     hold: 'holding the forest',
     calling: 'calling kelpers',
+    driving: 'driving you out',
     angry: 'driving you out'
   };
+
+  /** Inside this, and after this long, it stops delegating and comes itself. */
+  const DRIVE_RANGE = 38;
+  const PATIENCE = 10;
 
   class KelperLeviathan extends SL.Creature {
     constructor(game, x, y, z) {
@@ -153,11 +166,28 @@
       this.biteCooldown = 0;
       this.aggro = 0;
       this.threat = null;
+      // How long the diver has been in its water. It is patient, then it isn't.
+      this.intrusion = 0;
       this.driftTarget = new THREE.Vector3(x, y, z);
     }
 
     get stateLabel() { return LEV_LABELS[this.state] || ''; }
     get biteReach() { return this.bodyLength * 0.4 + 2.5; }
+
+    /** Where its mouth is. Eleven metres of animal does not bite with its middle. */
+    mouthPosition() {
+      return _mouth.set(0, 0, this.bodyLength * 0.45)
+        .applyQuaternion(this.object.quaternion).add(this.position);
+    }
+
+    canBite(target) {
+      return this.mouthPosition().distanceToSquared(target.position) < MOUTH_REACH * MOUTH_REACH;
+    }
+
+    /** Whether it is currently coming for the diver, for the proximity warning. */
+    get hunting() {
+      return !this.dead && (this.state === 'driving' || this.state === 'angry');
+    }
 
     enterState(state) {
       if (this.state === state) return;
@@ -222,28 +252,46 @@
         if (this.state === 'hold') this.enterState('calling');
       }
 
-      if (this.state === 'angry') {
+      // Patience runs while someone is standing in its forest, and only there.
+      if (inForest && playerDistance < DRIVE_RANGE && !player.dead) {
+        this.intrusion += dt;
+      } else {
+        this.intrusion = Math.max(0, this.intrusion - dt * 0.5);
+      }
+
+      // Out of patience: it comes itself. This is the same behaviour as being
+      // provoked, so the two states share everything below.
+      if (this.state === 'hold' && this.intrusion > PATIENCE) {
+        this.threat = player;
+        this.aggro = 20;
+        this.enterState('driving');
+        this.game.hud.toast('The Kelper Leviathan is coming for you');
+      }
+
+      if (this.state === 'angry' || this.state === 'driving') {
         this.jawOpen = SL.damp(this.jawOpen, playerDistance < 14 ? 0.9 : 0.3, 3, dt);
 
         if (!this.threat || this.threat.dead || this.aggro <= 0) {
           this.threat = null;
+          this.intrusion = 0;
           this.enterState('hold');
           return _tmp.set(0, 0, 0);
         }
 
-        // It will not leave the forest to chase anyone.
+        // It will not leave the forest to chase anyone, which is how you get
+        // away from it: swim off the bank and it has to turn back.
         if (this.position.distanceTo(this.territory) > this.territoryRadius) {
           return _tmp.subVectors(this.territory, this.position).normalize()
             .multiplyScalar(S.cruiseSpeed);
         }
 
-        if (playerDistance < this.biteReach && this.biteCooldown <= 0) {
+        if (this.biteCooldown <= 0 && this.canBite(this.threat)) {
           this.biteCooldown = S.biteInterval;
           this.game.audio.bite(0);
           this.threat.hurt(S.biteDamage, this);
         }
 
-        return _tmp.subVectors(this.threat.position, this.position).normalize()
+        return _tmp.subVectors(this.threat.position, this.mouthPosition()).normalize()
           .multiplyScalar(S.sprintSpeed);
       }
 
