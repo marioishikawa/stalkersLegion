@@ -56,7 +56,7 @@
     const FINE = 2.2;
     const COARSE = FINE * 3;          // 6.6 m, so the grids line up
     const FINE_TILES = 12;            // 12 x 12 x 32 x 2.2 m = 845 m across
-    const COARSE_TILES = 12;          // 12 x 12 x 32 x 6.6 m = 2,534 m across
+    const COARSE_TILES = 18;          // 18 x 18 x 32 x 6.6 m = 3,802 m across
 
     const fineTile = CELLS * FINE;
     const fineHalf = fineTile * FINE_TILES * 0.5;
@@ -272,7 +272,16 @@
    */
   function areaFactorOf(biome) {
     const factor = areaOf(biome) / AREA_PER_UNIT;
-    return SL.clamp(factor * (biome.populationBoost || 1), 0.5, 14);
+
+    // The ceiling scales with the map, because it is a share guard rather than
+    // a headcount: it exists so one enormous biome cannot eat the whole frame
+    // budget. Left fixed, it started biting on the big biomes the moment the
+    // world grew - the abyssal plain and the boulder slope both pinned at the
+    // cap, covering twice the ground with the same number of fish, which is
+    // the share-versus-absolute thinning all over again by another route.
+    const ceiling = 14 * Math.pow(SL.WORLD_RADIUS / 1200, 2);
+
+    return SL.clamp(factor * (biome.populationBoost || 1), 0.5, ceiling);
   }
 
   /**

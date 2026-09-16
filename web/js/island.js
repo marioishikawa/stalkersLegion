@@ -37,7 +37,7 @@
       super(game, species || SL.Species.walkingcarni, x, y, z);
 
       this.home = new THREE.Vector3(x, y, z);
-      this.rangeRadius = 78;
+      this.rangeRadius = 103;
 
       this.state = 'roam';
       this.stateTimer = 0;
@@ -341,7 +341,7 @@
       // It patrols the whole island rather than a corner of it, and will go
       // a little further into the surf, because a diver in the shallows is the
       // point - but it is an island animal and it does not leave.
-      this.rangeRadius = 120;
+      this.rangeRadius = 159;
       this.guardTimer = 0;
 
       const islet = SL.Biomes.islet;

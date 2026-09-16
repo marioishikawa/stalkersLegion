@@ -200,8 +200,8 @@ longer just distance from the middle:
 
 * a shallow **shelf** around the origin, sloping gently — this is where the game
   lives, and it is wide on purpose;
-* a **shelf break** at about 330 m where the floor falls away fast;
-* nine **seamounts** that rise back out of the deep, three of them tall enough to
+* a **shelf break** at about 467 m where the floor falls away fast;
+* eighty **seamounts** that rise back out of the deep, a third of them tall enough to
   reach the light — so coral reefs grow in shallow water a long way from home;
 * a **submarine canyon** that wanders across the whole map and bites into the
   shelf, putting the deepest water in the game within 90 m of home;
@@ -214,8 +214,8 @@ longer just distance from the middle:
   map from the far forest. It is the only dry ground in the game, and something
   lives on it. Built as a flat, a shoulder and a peak rather than one cone,
   because a cone that comes to a point has a summit you cannot stand anything
-  on: there are about **82 m of dry radius** up there, with room for more than
-  its current resident.
+  on: there are about **108 m of dry radius** up there, with room for more than
+  its two current residents.
 
 Biomes then follow from what the floor *is* at a point — its depth, whether it
 sits on a seamount, whether it lies in the canyon — rather than from how far out
@@ -238,8 +238,8 @@ even past 120 m.
 
 Shares move with the seed, since the features are placed from it.
 
-The world is **2,400 m across**. The islet is about 700 m out and the far forest
-about 830 m, which is a serious swim at 4.2 m/s on ninety seconds of air — the
+The world is **3,400 m across**. The islet is about 990 m out and the far forest
+about 1,170 m, which is a serious swim at 4.2 m/s on ninety seconds of air — the
 fabricator exists to close that gap.
 
 ### How the floor is built at that size
@@ -248,8 +248,8 @@ One grid fine enough for the shelf, stretched over the whole map, is millions of
 vertices and stalls the dive. So the sea floor is two grids: **2.2 m cells** over
 the 845 m you actually swim in, and **6.6 m cells** over the abyss you cross.
 Coarse cells are exactly three fine cells wide and the ring starts on a fine tile
-boundary, so the grids share vertices along the seam instead of tearing. 296,000
-vertices for a 2.4 km map, and a couple of seconds to build.
+boundary, so the grids share vertices along the seam instead of tearing. 492,000
+vertices for a 3.4 km map, and a couple of seconds to build.
 
 ### How many fish
 
@@ -262,8 +262,15 @@ diluting it. Biomes that should defy their size say so: the abyssal plain is
 scaled *down* (it is meant to feel like crossing nothing), the trench, the far
 forest, the basin and the islet all scaled *up*.
 
-A world carries roughly 10,000 fish, of which 17–30 are inside the 55 m you can
-see at any moment, and 130-odd over the islet's reef.
+A world carries roughly 19,700 fish, of which 15–37 are inside the 55 m you can
+see at any moment, and 140-odd over the islet's reef. The abyssal plain runs
+thinner than that on purpose.
+
+The ceiling on that scaling is a share guard, not a headcount, so it scales with
+the map too. Left fixed it started biting on the big biomes the moment the world
+grew — the abyssal plain and the boulder slope both pinned at the cap, covering
+twice the ground with the same number of fish, which is the share-versus-absolute
+thinning again by another route.
 
 Fish are stepped in **three tiers by distance**, not two: full rate inside 55 m,
 quarter rate out to 143 m, and a sixteenth beyond that with a correspondingly
@@ -271,7 +278,7 @@ longer (and capped) step. That is what stops the frame cost growing with the
 map — the last doubling added 87% more fish for 28% more work, because almost
 all of them are somewhere you are not.
 
-Stepping the world costs around **10 ms a frame**, measured by instrumenting the
+Stepping the world costs around **15 ms a frame**, measured by instrumenting the
 real frame loop in a software-rendered headless container — so the number on a
 machine with a GPU is lower, but that is the honest ceiling. Turn `POPULATION`
 in `web/js/world.js` down if a weaker machine struggles; it is one dial and it
@@ -487,7 +494,7 @@ python3 web/tools/build-artifact.py
 * **There are four cheat codes**, typed at any point while diving:
   * `sus` — every fabricator recipe, 99 of each material, infinite health and
     air, and a 9.4 m/s cruise with a 22.6 m/s sprint, because the map is
-    1,690 m across and the point of this one is going to look at it.
+    3,400 m across and the point of this one is going to look at it.
   * `candle` — a hacked candle in the off hand that **only catches in the Deep
     Trench**. That is the thickest water in the game (0.070 fog against the
     shallows' 0.012); the candle halves it there and warms what it lights, and
