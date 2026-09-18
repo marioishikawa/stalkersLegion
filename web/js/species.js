@@ -71,6 +71,20 @@
                tailHeight: 0.24, tailSweep: 0.30, tailFork: 0.10, dorsalFin: 0.22, ventralFin: 0.16,
                sideFin: 0.08, eyeSize: 0.035, spineSegments: 18 }
     }),
+    fish('stickfish', 'Stick Fish', 'kelp', 'eel', {
+      note: 'A twig with an eye on it. Hangs vertically among the stalks and ' +
+            'barely moves, which works until it has to go somewhere.',
+      backColor: C(0.36, 0.30, 0.16), bellyColor: C(0.62, 0.56, 0.34), finColor: C(0.30, 0.26, 0.14),
+      eyeColor: C(0.10, 0.08, 0.04),
+      maxHealth: 10, cruiseSpeed: 0.7, sprintSpeed: 2.8, turnRate: 1.1,
+      schoolSize: 3, groups: 6, altitude: 3.2,
+      // Barely bends. It is a stick, and it drifts like one.
+      wagRate: 1.1,
+      shape: { length: 0.95, height: 0.035, width: 0.030, bellyPosition: 0.45,
+               noseSharpness: 0.85, crossSection: 1.8, tailHeight: 0.035,
+               tailSweep: 0.10, tailFork: 0, dorsalFin: 0.015, ventralFin: 0,
+               sideFin: 0.02, eyeSize: 0.022, spineSegments: 20, radialSegments: 7 }
+    }),
     fish('darter', 'Kelp Darter', 'kelp', 'arrow', {
       note: "Needle-nosed sprinter. Bolts the instant anything looks at it.",
       // Needle-nosed sprinter. Bolts the instant anything looks at it.
@@ -88,6 +102,19 @@
       schoolSize: 6, groups: 5,
       shape: { length: 0.44, height: 0.52, width: 0.06, bellyPosition: 0.42, noseSharpness: 0.35,
                tailHeight: 0.28, tailFork: 0.30, dorsalFin: 0.26, ventralFin: 0.24, sideFin: 0.13, stripes: 3 }
+    }),
+    fish('platefish', 'Plate Fish', 'plateau', 'disc', {
+      alsoIn: ['islet'],
+      note: 'Round, white and flat enough to serve dinner on. Turns edge-on ' +
+            'when something looks at it and effectively vanishes.',
+      backColor: C(0.90, 0.90, 0.86), bellyColor: C(0.98, 0.98, 0.96), finColor: C(0.68, 0.72, 0.74),
+      eyeColor: C(0.06, 0.06, 0.07),
+      maxHealth: 16, cruiseSpeed: 1.2, sprintSpeed: 3.4, turnRate: 2.8,
+      schoolSize: 5, groups: 6, altitude: 2.6, wagRate: 4.5,
+      shape: { length: 0.44, height: 0.62, width: 0.045, bellyPosition: 0.50,
+               noseSharpness: 0.25, crossSection: 1.5, tailHeight: 0.20,
+               tailSweep: 0.14, tailFork: 0.1, dorsalFin: 0.06, ventralFin: 0.06,
+               sideFin: 0.07, eyeSize: 0.05, eyeRing: true, spineSegments: 16 }
     }),
     fish('nibbler', 'Grass Nibbler', 'plateau', 'diamond', {
       nests: true,
@@ -126,6 +153,20 @@
       shape: { length: 1.9, height: 0.17, width: 0.13, bellyPosition: 0.34, noseSharpness: 0.55,
                tailHeight: 0.17, tailSweep: 0.20, tailFork: 0.65, dorsalFin: 0.13,
                sideFin: 0.15, eyeSize: 0.018, spineSegments: 18 }
+    }),
+    fish('fatfish', 'Fatfish', 'shallows', 'bulb', {
+      alsoIn: ['islet'],
+      note: 'Almost perfectly spherical and entirely unbothered about it. Too ' +
+            'wide to hide anywhere and too slow to run, so it simply does not.',
+      backColor: C(0.86, 0.56, 0.22), bellyColor: C(0.98, 0.90, 0.72), finColor: C(0.72, 0.40, 0.16),
+      eyeColor: C(0.05, 0.04, 0.03),
+      maxHealth: 30, cruiseSpeed: 0.8, sprintSpeed: 1.9, turnRate: 1.4,
+      schoolSize: 3, groups: 5, altitude: 2.4, wagRate: 3.2,
+      shape: { length: 0.42, height: 0.78, width: 0.72, bellyPosition: 0.50,
+               noseSharpness: 0.10, crossSection: 3.4, tailHeight: 0.22,
+               tailSweep: 0.16, tailFork: 0.2, dorsalFin: 0.10, ventralFin: 0.08,
+               sideFin: 0.20, eyeSize: 0.075, eyeRing: true, spineSegments: 16,
+               radialSegments: 12 }
     }),
     fish('seal', 'Sand Seal', 'shallows', 'bulb', {
       diet: 'mammal',
@@ -488,6 +529,26 @@
                legPairs: 3, legScale: 0.26,
                spineSegments: 20, radialSegments: 12 }
     }),
+    fish('craber', 'Craber', 'shallows', 'boxy', {
+      // Walks the floor rather than swimming it, so the school spawner leaves
+      // it alone and the world builder places it by hand.
+      grounded: true, groups: 0,
+      diet: 'scavenger',
+      note: 'Eight legs, two eyes on stalks and no interest in open water. It ' +
+            'potters about the sand of the Safe Shallows and bolts sideways ' +
+            'the moment anything comes near, which is most of what it does.',
+      backColor: C(0.78, 0.34, 0.20), bellyColor: C(0.94, 0.80, 0.62), finColor: C(0.60, 0.22, 0.12),
+      eyeColor: C(0.06, 0.05, 0.05),
+      maxHealth: 18, cruiseSpeed: 1.1, sprintSpeed: 5.6, turnRate: 3.6,
+      senseRadius: 12, schoolSize: 1, altitude: 0.3, wagRate: 2,
+      drops: { titanium: [1, 1] },
+      shape: { length: 0.34, height: 0.26, width: 0.46, bellyPosition: 0.50,
+               noseSharpness: 0.18, crossSection: 4.2, tailHeight: 0.06,
+               tailSweep: 0.10, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.085, eyeRing: true, eyePosition: 0.16,
+               backSpikes: 4, antennae: 0.5, legPairs: 4, legScale: 0.42,
+               spineSegments: 12, radialSegments: 10 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -619,11 +680,12 @@
     kelper: byId.kelper,
     walkingcarni: byId.walkingcarni,
     carniLeviathan: byId.carnilev,
+    craber: byId.craber,
     glowLeviathan: byId.glowlev,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(
       (s) => (s.biome === biomeId || (s.alsoIn && s.alsoIn.indexOf(biomeId) >= 0))
-        && s.diet !== 'carnivore' && s.diet !== 'whale')
+        && s.diet !== 'carnivore' && s.diet !== 'whale' && !s.grounded)
   };
 })(window.SL);

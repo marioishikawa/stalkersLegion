@@ -32,6 +32,7 @@
       this.kelperLevs = [];
       this.glowLevs = [];
       this.carniLevs = [];
+      this.crabers = [];
       this.kelpers = [];
       this.pets = [];
       this.petRespawn = 0;
@@ -137,6 +138,7 @@
       this.kelperLevs.length = 0;
       this.glowLevs.length = 0;
       this.carniLevs.length = 0;
+      this.crabers.length = 0;
       this.kelpers.length = 0;
       this.pets.length = 0;
       this.petRespawn = 0;
@@ -436,6 +438,14 @@
       for (const carni of this.carniLevs) {
         carni.object.visible = carni.position.distanceToSquared(playerPos) < 12 * CULL_DISTANCE * CULL_DISTANCE;
         carni.update(dt);
+      }
+
+      // Crabs are small and low to the floor, so they are culled like fish.
+      for (const crab of this.crabers) {
+        const near = crab.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ;
+        crab.object.visible = near;
+        if (near || crab.dead) crab.update(dt);
+        else if ((this.frame & 3) === 0) crab.update(dt * 4);
       }
 
       // The pet is always beside you, so it is never culled.

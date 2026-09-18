@@ -468,10 +468,34 @@
     if (slope) game.carnis.push(new SL.Walkingcarni(game, slope.x, slope.z));
   }
 
+  /** Crabs, on the sand of the Safe Shallows and nowhere else. */
+  function scatterCrabers(game) {
+    if (!SL.Craber) return;
+
+    const shallows = SL.Biomes.byId.shallows;
+    const count = Math.round(7 * areaFactorOf(shallows));
+
+    for (let i = 0; i < count; i++) {
+      // The index point carries up to half a cell of jitter - about eight
+      // metres on a map this size - which is enough to drop a crab over the
+      // line into the kelp. Checked, because "only the shallows" means it.
+      let point = null;
+      for (let attempt = 0; attempt < 8 && !point; attempt++) {
+        const candidate = SL.Biomes.randomPointIn(shallows);
+        if (!candidate) break;
+        if (SL.Biomes.biomeAt(candidate.x, candidate.z) === shallows) point = candidate;
+      }
+      if (!point) continue;
+
+      game.crabers.push(new SL.Craber(game, point.x, point.z));
+    }
+  }
+
   function spawnCreatures(game) {
     spawnLeviathans(game);
     scatterNests(game);
     spawnIslander(game);
+    scatterCrabers(game);
 
     for (const biome of SL.Biomes.list) {
       const density = POPULATION * areaFactorOf(biome);
@@ -599,5 +623,5 @@
 
   SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap,
     scatterCrystals, spawnCreatures, spawnLeviathans, scatterNests, spawnIslander,
-    replenishScrap, updateAmbience };
+    scatterCrabers, replenishScrap, updateAmbience };
 })(window.SL);

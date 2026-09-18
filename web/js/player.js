@@ -426,6 +426,7 @@
       for (const c of this.game.carnis) if (!c.dead) considerCreature(c);
       for (const c of this.game.glowLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.carniLevs) if (!c.dead) considerCreature(c);
+      for (const c of this.game.crabers) if (!c.dead) considerCreature(c);
 
       for (const s of this.game.scrap) if (!s.dead && !s.isHeld) considerPoint(s);
       for (const c of this.game.crystals) if (!c.dead) considerPoint(c);
@@ -508,6 +509,7 @@
       for (const c of this.game.carnis) if (!c.dead) consider(c);
       for (const c of this.game.glowLevs) if (!c.dead) consider(c);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c);
+      for (const c of this.game.crabers) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 
@@ -711,6 +713,7 @@
       for (const c of this.game.carnis) if (!c.dead) consider(c.species.name, c.position, 30);
       for (const c of this.game.glowLevs) if (!c.dead) consider(c.species.name, c.position, 60);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c.species.name, c.position, 50);
+      for (const c of this.game.crabers) if (!c.dead) consider(c.species.name, c.position, 12);
       for (const n of this.game.nests) {
         consider(n.species.name + ' nest', n.position, 10);
       }
@@ -843,6 +846,7 @@
       for (const c of this.game.carnis) resolve(c);
       for (const c of this.game.glowLevs) resolve(c);
       for (const c of this.game.carniLevs) resolve(c);
+      for (const c of this.game.crabers) resolve(c);
 
       this.pushOutOfVines();
     }

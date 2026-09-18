@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, forty-one species, six leviathans, one island, and a kelp forest full of
+biomes, forty-five species, six leviathans, one island, and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
@@ -52,7 +52,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all forty-one, in the databank.
+* **Catalogue every species** — all forty-five, in the databank.
 * **Kill every leviathan** — all five that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -369,6 +369,19 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   gear or raw materials. Kill the one that robbed you and the item comes
   straight back; let it reach the forest and it is gone. The leviathan itself
   only bites what comes at it, for 24.
+* **Fatfish / Stick Fish / Plate Fish** — three fish that are each mostly one
+  shape. The Fatfish is nearly spherical, too wide to hide and too slow to run,
+  and does not appear to mind. The Stick Fish is a twig with an eye on it: 95 cm
+  long and 3 cm through, hanging among the kelp stalks, and its tail beat is set
+  so low that it drifts rather than wriggles. The Plate Fish is round, white and
+  4 cm thick, and turns edge-on when something looks at it.
+* **Craber** — a crab, so it walks. It takes its height from the sea floor
+  instead of swimming above it, steers in two dimensions, and is carried at
+  ninety degrees to its travel so it goes **sideways**. It lives in the Safe
+  Shallows and nowhere else: every point it picks is checked against the biome
+  first, and one that gets chased over the line walks back. Come within nine
+  metres and it bolts — off at an angle, not in a straight line — then freezes,
+  because a stationary crab is a rock and it knows it.
 * **Bubble Clown** — orange, banded, on the reef, and it shoots bubbles. A puff
   every few seconds normally; startled, it empties itself in a burst and bolts.
   Completely harmless. The bubbles rise, swell as the pressure drops, wobble on
