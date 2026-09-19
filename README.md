@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, forty-seven species, seven leviathans, one island, and a kelp forest full of
+biomes, forty-eight species, seven leviathans, one island, and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
@@ -52,7 +52,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all forty-seven, in the databank.
+* **Catalogue every species** — all forty-eight, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -427,6 +427,12 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   first, and one that gets chased over the line walks back. Come within nine
   metres and it bolts — off at an angle, not in a straight line — then freezes,
   because a stationary crab is a rock and it knows it.
+* **Crober** — the Craber, in blue. Deliberately nothing else: same eight legs,
+  same eyes on stalks, same sideways bolt, same sand. The crab class takes its
+  species as a parameter rather than naming one, so the two of them are one
+  animal with two coats and none of the behaviour is written twice. There are
+  fewer blue ones — three to every seven — which is the whole of what makes
+  turning one up worth anything.
 * **Bubble Clown** — orange, banded, on the reef, and it shoots bubbles. A puff
   every few seconds normally; startled, it empties itself in a burst and bolts.
   Completely harmless. The bubbles rise, swell as the pressure drops, wobble on

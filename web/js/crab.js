@@ -1,5 +1,5 @@
 /**
- * The Craber.
+ * The Craber, and the Crober - which is the Craber in blue.
  *
  * A crab, so it walks. It shares nothing with the fish: it takes its height
  * from the sea floor rather than swimming above it, it steers in two
@@ -26,9 +26,12 @@
   const SPOOK_RANGE = 9;
 
   class Craber extends SL.Creature {
-    constructor(game, x, z) {
+    // The species is a parameter because there are two of these: the Craber
+    // and the Crober, which is the same animal in blue. Nothing else about
+    // them differs, so nothing else about them is written twice.
+    constructor(game, x, z, species) {
       const y = SL.Biomes.floorHeightAt(x, z);
-      super(game, SL.Species.craber, x, y, z);
+      super(game, species || SL.Species.craber, x, y, z);
 
       this.home = new THREE.Vector3(x, y, z);
       this.rangeRadius = 26;

@@ -660,21 +660,32 @@
     if (!SL.Craber) return;
 
     const shallows = SL.Biomes.byId.shallows;
-    const count = Math.round(7 * areaFactorOf(shallows));
+    const sand = areaFactorOf(shallows);
 
-    for (let i = 0; i < count; i++) {
-      // The index point carries up to half a cell of jitter - about eight
-      // metres on a map this size - which is enough to drop a crab over the
-      // line into the kelp. Checked, because "only the shallows" means it.
-      let point = null;
-      for (let attempt = 0; attempt < 8 && !point; attempt++) {
-        const candidate = SL.Biomes.randomPointIn(shallows);
-        if (!candidate) break;
-        if (SL.Biomes.biomeAt(candidate.x, candidate.z) === shallows) point = candidate;
+    // The blue ones are the same crab and there are fewer of them, which is
+    // the whole of what makes turning one up worth anything.
+    const kinds = [
+      { species: SL.Species.craber, count: Math.round(7 * sand) },
+      { species: SL.Species.crober, count: Math.round(3 * sand) }
+    ];
+
+    for (const kind of kinds) {
+      if (!kind.species) continue;
+
+      for (let i = 0; i < kind.count; i++) {
+        // The index point carries up to half a cell of jitter - about eight
+        // metres on a map this size - which is enough to drop a crab over the
+        // line into the kelp. Checked, because "only the shallows" means it.
+        let point = null;
+        for (let attempt = 0; attempt < 8 && !point; attempt++) {
+          const candidate = SL.Biomes.randomPointIn(shallows);
+          if (!candidate) break;
+          if (SL.Biomes.biomeAt(candidate.x, candidate.z) === shallows) point = candidate;
+        }
+        if (!point) continue;
+
+        game.crabers.push(new SL.Craber(game, point.x, point.z, kind.species));
       }
-      if (!point) continue;
-
-      game.crabers.push(new SL.Craber(game, point.x, point.z));
     }
   }
 

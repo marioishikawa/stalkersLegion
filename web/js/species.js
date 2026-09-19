@@ -605,6 +605,26 @@
                backSpikes: 4, antennae: 0.5, legPairs: 4, legScale: 0.42,
                spineSegments: 12, radialSegments: 10 }
     }),
+    fish('crober', 'Crober', 'shallows', 'boxy', {
+      // The same crab in a different coat: everything below the colours is the
+      // Craber's own numbers, because that is what it is.
+      grounded: true, groups: 0,
+      diet: 'scavenger',
+      note: 'The Craber, in blue. Same eight legs, same eyes on stalks, same ' +
+            'sideways bolt for cover - it is simply the blue one, and there ' +
+            'are fewer of them, so finding one on the sand is a small event.',
+      backColor: C(0.18, 0.42, 0.82), bellyColor: C(0.72, 0.86, 0.96), finColor: C(0.12, 0.28, 0.62),
+      eyeColor: C(0.04, 0.05, 0.08),
+      maxHealth: 18, cruiseSpeed: 1.1, sprintSpeed: 5.6, turnRate: 3.6,
+      senseRadius: 12, schoolSize: 1, altitude: 0.3, wagRate: 2,
+      drops: { titanium: [1, 1] },
+      shape: { length: 0.34, height: 0.26, width: 0.46, bellyPosition: 0.50,
+               noseSharpness: 0.18, crossSection: 4.2, tailHeight: 0.06,
+               tailSweep: 0.10, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.085, eyeRing: true, eyePosition: 0.16,
+               backSpikes: 4, antennae: 0.5, legPairs: 4, legScale: 0.42,
+               spineSegments: 12, radialSegments: 10 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -737,6 +757,7 @@
     walkingcarni: byId.walkingcarni,
     carniLeviathan: byId.carnilev,
     craber: byId.craber,
+    crober: byId.crober,
     glowLeviathan: byId.glowlev,
     diamondLeviathan: byId.diamondlev,
     // Only ordinary prey spawns from the biome roster; the predators and the
