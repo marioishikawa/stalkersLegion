@@ -322,6 +322,51 @@
                spineSegments: 33, radialSegments: 8 }
     }),
 
+    // ------------------------------------------------------------ The Vent Field
+    fish('smokerfin', 'Smokerfin', 'vents', 'torpedo', {
+      note: 'Soot-black with a seam of heat down each flank. It holds station ' +
+            'in the shimmer coming off a chimney, which is warm, and which is ' +
+            'where its food is, and it will not be moved off it.',
+      backColor: C(0.13, 0.11, 0.11), bellyColor: C(0.52, 0.30, 0.18), finColor: C(0.86, 0.32, 0.10),
+      eyeColor: C(1.0, 0.72, 0.22), glow: 0.5,
+      maxHealth: 30, cruiseSpeed: 1.4, sprintSpeed: 4.4, turnRate: 2.2,
+      schoolSize: 5, groups: 6, altitude: 6, wagRate: 5.5,
+      drops: { titanium: [1, 2] },
+      shape: { length: 0.48, height: 0.26, width: 0.14, bellyPosition: 0.38,
+               noseSharpness: 0.6, crossSection: 2.2, tailHeight: 0.32,
+               tailSweep: 0.24, tailFork: 0.5, dorsalFin: 0.16, ventralFin: 0.08,
+               sideFin: 0.12, eyeSize: 0.045, eyeRing: true, stripes: 5 }
+    }),
+    fish('ashskate', 'Ash Skate', 'vents', 'disc', {
+      note: 'Grey as the floor it lies on, and usually half buried in it. ' +
+            'The first you know of one is the cloud it leaves behind.',
+      backColor: C(0.28, 0.26, 0.25), bellyColor: C(0.72, 0.68, 0.62), finColor: C(0.36, 0.30, 0.28),
+      eyeColor: C(0.90, 0.58, 0.16),
+      maxHealth: 40, cruiseSpeed: 1.2, sprintSpeed: 3.4, turnRate: 1.5,
+      schoolSize: 2, groups: 5, altitude: 1.4, wagRate: 2.2,
+      shape: { length: 0.72, height: 0.06, width: 0.48, bellyPosition: 0.40,
+               noseSharpness: 0.45, crossSection: 1.6, tailHeight: 0.07,
+               tailSweep: 0.36, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.03, eyePosition: 0.18, eyeHeight: 0.9,
+               spineSegments: 16 }
+    }),
+    fish('ventshrimp', 'Vent Shrimp', 'vents', 'shrimp', {
+      note: 'They swarm the hot water in their thousands and they are blind, ' +
+            'every one of them - there is nothing down here to see. The heat ' +
+            'is what they follow.',
+      backColor: C(0.94, 0.86, 0.80), bellyColor: C(1.0, 0.94, 0.88), finColor: C(0.88, 0.62, 0.48),
+      eyeColor: C(0.62, 0.42, 0.34), glow: 0.4,
+      maxHealth: 6, cruiseSpeed: 1.0, sprintSpeed: 3.4, turnRate: 4.2,
+      senseRadius: 8, schoolSize: 14, groups: 7, altitude: 2.4, wagRate: 11,
+      drops: { titanium: [1, 1] },
+      shape: { length: 0.10, height: 0.20, width: 0.15, bellyPosition: 0.34,
+               noseSharpness: 0.35, tailHeight: 0.24, tailSweep: 0.18,
+               tailFork: 0.3, dorsalFin: 0, sideFin: 0,
+               // Blind: no eye at all, which on a card reads instantly.
+               eyeSize: 0, antennae: 1.4, legPairs: 3,
+               spineSegments: 12, radialSegments: 8 }
+    }),
+
     // ---------------------------------------------------------- Crystal Caverns
     fish('goldfin', 'Goldfin', 'crystal', 'diamond', {
       note: "Cast in soft gold. Slow, heavy, and worth cutting open.",

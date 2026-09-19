@@ -11,7 +11,10 @@ window.SL = window.SL || {};
   'use strict';
 
   SL.WATER_LEVEL = 0;      // y of the sea surface
-  SL.WORLD_RADIUS = 1700;   // metres from the origin to the edge of the map
+  // Metres from the origin to the edge of the map. The terrain grid is a
+  // fixed square reaching 1,900 m along each axis, so this has to stay inside
+  // that - along with the eight metres of slack the diver is allowed past it.
+  SL.WORLD_RADIUS = 1880;
 
   // --- Math -----------------------------------------------------------------
 

@@ -1,8 +1,9 @@
 # Stalkers Legion
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
-surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, forty-eight species, seven leviathans, one island, and a kelp forest full of
+surface with a survival knife and ninety seconds of air. Below you are twelve
+biomes, fifty-one species, seven leviathans, one island, a field of black smokers
+and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
@@ -52,7 +53,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all forty-eight, in the databank.
+* **Catalogue every species** — all fifty-one, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -270,15 +271,36 @@ even past 120 m.
 | **Crystal Caverns** | Mineral-rich deep floor, 38–76 m | ~8% |
 | **Deep Trench** | Inside the canyon | ~4% |
 | **King's Basin** | The gouged basin | ~1% |
-| **Kelper's Reach** | The sunlit crown of the far bank | ~1% |
-| **The Islet** | The island and its reef flat | ~1% |
-| **Abyssal Plain** | Everything below 76 m | ~51% |
+| **Kelper's Reach** | The sunlit crown of the far bank | ~0.1% |
+| **The Vent Field** | The smoker field, about 1,400 m out | ~0.7% |
+| **The Islet** | The island and its reef flat | ~0.8% |
+| **Abyssal Plain** | Everything below 76 m | ~70% |
 
-Shares move with the seed, since the features are placed from it.
+Those are one world's numbers; shares move with the seed, since the features are
+placed from it. The small ones are small on purpose and carry a population
+multiplier to match — a place you make a long swim to should not be emptier than
+the water outside your door.
 
-The world is **3,400 m across**. The islet is about 990 m out and the far forest
-about 1,170 m, which is a serious swim at 4.2 m/s on ninety seconds of air — the
-fabricator exists to close that gap.
+The world is **3,760 m across**. The islet is about 990 m out, the far forest
+about 1,170 m and the vent field about 1,400 m, which are serious swims at
+4.2 m/s on ninety seconds of air — the fabricator exists to close that gap.
+
+### The Vent Field
+
+The newest biome, and the only warm water in the game. A low mound lifts about
+thirty metres out of the abyssal slope a long way offshore, and **sixteen black
+smokers** stand on it — narrow, steep chimneys, the tallest of them thirty-eight
+metres, so the top of one sits fifty metres above the plain around it. It is
+built the way every other landmark is: a rise added into the height field, with
+its own square-reject loop for the chimneys, and a biome test that asks whether
+you are inside the field rather than how deep you are, so a chimney top belongs
+to the vents and not to whatever depth band it happens to reach.
+
+Three species live there and nowhere else — the **Smokerfin**, which holds
+station in the shimmer coming off a chimney and will not be moved off it; the
+**Ash Skate**, grey as the floor and usually half buried in it; and the **Vent
+Shrimp**, which swarms the hot water in thousands and is completely blind, with
+no eye on the model or on its databank card.
 
 ### How the floor is built at that size
 
@@ -287,7 +309,25 @@ vertices and stalls the dive. So the sea floor is two grids: **2.2 m cells** ove
 the 845 m you actually swim in, and **6.6 m cells** over the abyss you cross.
 Coarse cells are exactly three fine cells wide and the ring starts on a fine tile
 boundary, so the grids share vertices along the seam instead of tearing. 492,000
-vertices for a 3.4 km map, and a couple of seconds to build.
+vertices, and a couple of seconds to build.
+
+That grid is a fixed square reaching **1,900 m along each axis**, and it always
+was — so the last expansion cost nothing to build. The map grew from a 1,700 m
+radius to 1,880 m, which is water that already had a sea floor under it. The
+diver is allowed eight metres past the edge and the grid still covers them; go
+further than 1,900 and there would be nothing below you, which is why the world
+radius lives next to that number in a comment.
+
+**Seamounts are bucketed.** `floorHeightAt` is the hottest function in the game
+— every terrain vertex, every fish avoiding the floor, every spawn point and
+every teleport asks it — and it used to ask all eighty-eight seamounts about
+every single query, rejecting almost all of them one square-distance test at a
+time. They are now sorted into a 170 m grid once per world and a query tests
+only the handful whose reach could touch its own cell. Verified identical:
+40,352 sample points, 8,790 of them standing on a mount, worst difference
+**zero**. It is what paid for the expansion — the bigger map with the extra
+biome steps in **15.1 ms** a frame against **14.2 ms** for the old smaller one,
+measured back to back in the same software-rendered container.
 
 ### How many fish
 
@@ -316,8 +356,9 @@ longer (and capped) step. That is what stops the frame cost growing with the
 map — the last doubling added 87% more fish for 28% more work, because almost
 all of them are somewhere you are not.
 
-Stepping the world costs around **15 ms a frame**, measured by instrumenting the
-real frame loop in a software-rendered headless container — so the number on a
+Stepping the world costs around **15 ms a frame** with 21,000 fish in it,
+measured by instrumenting the real frame loop in a software-rendered headless
+container — so the number on a
 machine with a GPU is lower, but that is the honest ceiling. Turn `POPULATION`
 in `web/js/world.js` down if a weaker machine struggles; it is one dial and it
 scales every school at once. (An earlier revision of this file claimed 2.3 ms.
@@ -620,7 +661,7 @@ silent game and nothing on screen to explain it.
 * **There are five cheat codes**, typed at any point while diving:
   * `sus` — every fabricator recipe, 99 of each material, infinite health and
     air, and a 9.4 m/s cruise with a 22.6 m/s sprint, because the map is
-    3,400 m across and the point of this one is going to look at it.
+    3,760 m across and the point of this one is going to look at it.
   * `candle` — a hacked candle in the off hand that **only catches in the Deep
     Trench**. That is the thickest water in the game (0.070 fog against the
     shallows' 0.012); the candle halves it there and warms what it lights, and

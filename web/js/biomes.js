@@ -121,6 +121,25 @@
     },
 
     {
+      // A field of black smokers on the deep floor, a long way out. The only
+      // warm water in the game and the only light down there that is not
+      // something's lure - chimneys standing twenty and thirty metres off a
+      // low mound, with the shimmer coming off the top of them.
+      id: 'vents', name: 'The Vent Field',
+      // Small, hot, and full - the one patch of the deep that is not empty.
+      populationBoost: 2.6,
+      floorColor: new THREE.Color(0.22, 0.16, 0.14),
+      // Warm, and deliberately brighter than the abyss it sits in: the water
+      // here is heated and lit from below, and at sixty metres the depth fade
+      // takes two thirds of whatever this says before you ever see it.
+      waterColor: new THREE.Color(0.26, 0.11, 0.06),
+      fogDensity: 0.040,
+      scrapDensity: 0.2, stalkerDensity: 0,
+      // Heavy on the glow pods, because they are the light down here - the
+      // chimneys themselves are basalt and carry none.
+      flora: ['glowPod', 'glowPod', 'coralTube', 'boulder'], floraDensity: 2.4
+    },
+    {
       // The one piece of ground in the game that is out of the water, and the
       // reef flat around it. A long way out, and absolutely stuffed with fish,
       // because something up there is living off them.
@@ -141,20 +160,56 @@
   // --- Features placed once per world, from the seed -------------------------
 
   let seamounts = [];
+
+  /**
+   * The seamounts, bucketed by where they are.
+   *
+   * floorHeightAt is the hottest function in the game - every terrain vertex,
+   * every fish avoiding the floor, every spawn point and every teleport asks
+   * it - and it used to ask all eighty-eight mounts about every single query,
+   * rejecting almost all of them one square-distance test at a time. They are
+   * now sorted into a coarse grid once per world, and a query only tests the
+   * handful whose reach could touch its own cell. Same arithmetic, same floor,
+   * a fraction of the work.
+   */
+  const MOUNT_CELL = 170;
+  let mountGrid = null;
+
+  function mountKey(cx, cz) { return cx + ',' + cz; }
+
+  function buildMountGrid() {
+    mountGrid = {};
+    for (const mount of seamounts) {
+      const reach = Math.sqrt(mount.reachSq);
+      const minX = Math.floor((mount.x - reach) / MOUNT_CELL);
+      const maxX = Math.floor((mount.x + reach) / MOUNT_CELL);
+      const minZ = Math.floor((mount.z - reach) / MOUNT_CELL);
+      const maxZ = Math.floor((mount.z + reach) / MOUNT_CELL);
+
+      for (let cz = minZ; cz <= maxZ; cz++) {
+        for (let cx = minX; cx <= maxX; cx++) {
+          const key = mountKey(cx, cz);
+          (mountGrid[key] || (mountGrid[key] = [])).push(mount);
+        }
+      }
+    }
+  }
   let kingBasin = null;
   let whaleGround = null;
   let farBank = null;
   let islet = null;
+  let ventField = null;
 
   function placeFeatures() {
     seamounts = [];
+    mountGrid = null;
 
     // Eighteen seamounts out past the shelf break, scattered to the rim. The
     // count tracks the map: every time the world doubles, an unbroken abyssal
     // plain is what you get if this does not.
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 88; i++) {
       const angle = SL.hash(i, 11, SEED) * Math.PI * 2;
-      const radius = SL.lerp(410, 1600, SL.hash(i, 22, SEED));
+      const radius = SL.lerp(410, 1780, SL.hash(i, 22, SEED));
       const width = SL.lerp(34, 62, SL.hash(i, 44, SEED));
       seamounts.push({
         x: Math.cos(angle) * radius,
@@ -213,6 +268,73 @@
       shoulderRadius: 116,
       shoulderRise: 16
     };
+
+    // The vent field: a low mound a long way out with black smokers standing
+    // on it. Given its own bearing rather than being hung off one of the
+    // others, so the three long swims all go somewhere different.
+    const ventAngle = SL.hash(23, 233, SEED) * Math.PI * 2;
+    ventField = {
+      x: Math.cos(ventAngle) * 1395,
+      z: Math.sin(ventAngle) * 1395,
+      radius: 185,
+      rise: 30,
+      chimneys: []
+    };
+
+    // Sixteen chimneys, narrow and steep - the tall ones stand thirty-eight
+    // metres off the mound, which out here is most of the way back to the
+    // depth of the shelf break.
+    for (let i = 0; i < 16; i++) {
+      const spread = Math.sqrt(SL.hash(i, 51, SEED)) * ventField.radius * 0.85;
+      const bearing = SL.hash(i, 52, SEED) * Math.PI * 2;
+      const width = SL.lerp(7, 13, SL.hash(i, 53, SEED));
+      ventField.chimneys.push({
+        x: ventField.x + Math.cos(bearing) * spread,
+        z: ventField.z + Math.sin(bearing) * spread,
+        height: SL.lerp(16, 38, SL.hash(i, 54, SEED)),
+        width,
+        // Square reject, the same trick the seamounts use: the height field
+        // asks every chimney about every vertex.
+        reachSq: (width * 2.6) * (width * 2.6)
+      });
+    }
+  }
+
+  /**
+   * The vent field: a broad low mound with chimneys standing on it.
+   *
+   * The mound is what makes it a place rather than a scattering of spires -
+   * the floor lifts thirty metres out of the abyssal slope before the first
+   * chimney starts, so the field reads as ground you have arrived on.
+   */
+  function ventRise(x, z) {
+    if (!ventField) return 0;
+
+    const dx = x - ventField.x;
+    const dz = z - ventField.z;
+    const d = Math.sqrt(dx * dx + dz * dz) / ventField.radius;
+    if (d > 2.4) return 0;
+
+    let rise = ventField.rise * Math.exp(-d * d * 1.1);
+
+    for (const chimney of ventField.chimneys) {
+      const cx = x - chimney.x;
+      const cz = z - chimney.z;
+      const c2 = cx * cx + cz * cz;
+      if (c2 > chimney.reachSq) continue;
+
+      const cd = Math.sqrt(c2) / chimney.width;
+      rise += chimney.height * Math.exp(-cd * cd * 1.6);
+    }
+
+    return rise;
+  }
+
+  /** How far inside the vent field a point lies, 0 outside to 1 at the middle. */
+  function ventInfluence(x, z) {
+    if (!ventField) return 0;
+    const d = Math.hypot(x - ventField.x, z - ventField.z) / (ventField.radius * 1.3);
+    return d >= 1 ? 0 : 1 - SL.smoothstep(d);
   }
 
   /**
@@ -272,13 +394,19 @@
 
   /** Combined seamount rise at a point, in metres. */
   function seamountRise(x, z) {
+    if (!mountGrid) buildMountGrid();
+
+    const near = mountGrid[mountKey(Math.floor(x / MOUNT_CELL), Math.floor(z / MOUNT_CELL))];
+    if (!near) return 0;
+
     let rise = 0;
-    for (const mount of seamounts) {
+    for (let i = 0; i < near.length; i++) {
+      const mount = near[i];
       const dx = x - mount.x;
       const dz = z - mount.z;
 
-      // Cheap square reject first: almost every mount is out of range of any
-      // given point, and this is the hottest loop in world generation.
+      // The square reject stays: a mount in this cell can still be out of
+      // range of this particular point.
       const d2 = dx * dx + dz * dz;
       if (d2 > mount.reachSq) continue;
 
@@ -313,6 +441,7 @@
     y += seamountRise(x, z);
     y += bankRise(x, z);
     y += isletRise(x, z);
+    y += ventRise(x, z);
 
     // The king's basin is gouged below the surrounding floor.
     if (kingBasin) {
@@ -350,6 +479,14 @@
 
     // The trench is the trench regardless of how deep the floor around it is.
     if (trenchInfluence(x, z) > 0.45 && depth > 34) return byId.trench;
+
+    // The vent field, which is a place rather than a depth band: everything
+    // inside the mound belongs to it, chimney tops included. Its outer skirt
+    // is rubble, the same as a seamount flank or the side of the far bank -
+    // without this the lifted ground around the field lands in the 38-56 m
+    // band and reads as crystal country, which is nowhere near it.
+    if (ventInfluence(x, z) > 0.28) return byId.vents;
+    if (ventRise(x, z) > 4) return byId.boulders;
 
     // The islet and its reef flat, which includes the dry part.
     if (isletRise(x, z) > 14) return depth < 22 ? byId.islet : byId.boulders;
@@ -452,7 +589,8 @@
     get whaleGround() { return whaleGround; },
     get farBank() { return farBank; },
     get islet() { return islet; },
-    bankRise, isletRise, isletHead,
+    get ventField() { return ventField; },
+    bankRise, isletRise, isletHead, ventRise, ventInfluence,
     trenchInfluence, seamountRise
   };
 })(window.SL);
