@@ -401,13 +401,51 @@
    * king in his basin, the whale over its open ground - rather than scattered
    * anywhere their biome happens to reach.
    */
+  /**
+   * Whether this leviathan is still out there, or was killed in a past session.
+   *
+   * A world is a seed and nothing else, so loading one regenerates the entire
+   * ocean - which used to include the leviathan you had already killed. The
+   * kill list is part of the save; it is read off the world record here rather
+   * than from SL.Quest, because the world is built before the save is restored
+   * onto it, so at this point the quest still thinks nothing has died.
+   *
+   */
+  function stillAlive(game, species) {
+    const killed = game.world && game.world.killed;
+    return !(killed && killed[species.id]);
+  }
+
+  /**
+   * Adds a leviathan to the world, unless it was killed in a past session.
+   *
+   * Note that every caller below builds the animal first and hands it over,
+   * even when it is about to be thrown straight away. That looks wasteful and
+   * is deliberate: picking a spot and building a creature both draw from the
+   * seeded stream, and skipping those draws would shift every draw after them
+   * - the nests, the crabs and every school in the ocean would land somewhere
+   * else the session after a kill, and the world would not be the same world.
+   * Building it and dropping it costs one object at world build and keeps the
+   * sea identical.
+   */
+  function keepUnlessKilled(game, list, creature) {
+    if (stillAlive(game, creature.species)) {
+      list.push(creature);
+      return creature;
+    }
+    creature.destroy();
+    return null;
+  }
+
   function spawnLeviathans(game) {
     const basin = SL.Biomes.kingBasin;
     if (basin) {
       const y = SL.Biomes.floorHeightAt(basin.x, basin.z) + 10;
       const king = new SL.KingStalker(game, SL.Species.kingStalker, basin.x, y, basin.z);
       king.territory.set(basin.x, y, basin.z);
-      game.kings.push(king);
+      keepUnlessKilled(game, game.kings, king);
+
+      // The hoard outlives him.
 
       // He already sits on a pile; his subjects keep adding to it.
       for (let j = 0; j < 10; j++) {
@@ -441,7 +479,7 @@
       const y = SL.Biomes.floorHeightAt(reef.x, reef.z) + Math.min(6, reefDepth * 0.45);
       const puffer = new SL.RedPuff(game, SL.Species.redPuff, reef.x, y, reef.z);
       puffer.territory.set(reef.x, y, reef.z);
-      game.puffers.push(puffer);
+      keepUnlessKilled(game, game.puffers, puffer);
     }
 
     // The far forest has a keeper, sat well inside the weeds - so the first
@@ -469,7 +507,7 @@
       const y = Math.min(floor + groveDepth * 0.45, SL.WATER_LEVEL - 6);
       const lev = new SL.KelperLeviathan(game, grove.x, y, grove.z);
       lev.territory.set(grove.x, y, grove.z);
-      game.kelperLevs.push(lev);
+      keepUnlessKilled(game, game.kelperLevs, lev);
     }
 
     // The glow one lives out on the plain, which is otherwise the emptiest
@@ -490,7 +528,29 @@
       const y = Math.min(SL.Biomes.floorHeightAt(plain.x, plain.z) + 24, SL.WATER_LEVEL - 20);
       const glow = new SL.GlowLeviathan(game, SL.Species.glowLeviathan, plain.x, y, plain.z);
       glow.territory.set(plain.x, y, plain.z);
-      game.glowLevs.push(glow);
+      keepUnlessKilled(game, game.glowLevs, glow);
+    }
+
+    // The caverns' own. Placed on the deepest crystal floor out of a handful
+    // of tries, because eleven metres of animal wants headroom over the
+    // formations rather than a shelf to sit on.
+    let cavern = null;
+    let cavernDepth = 0;
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const candidate = SL.Biomes.randomPointIn(SL.Biomes.byId.crystal);
+      if (!candidate) break;
+
+      const depth = -SL.Biomes.floorHeightAt(candidate.x, candidate.z);
+      if (depth > cavernDepth) { cavernDepth = depth; cavern = candidate; }
+      if (depth > 55) break;
+    }
+
+    if (cavern) {
+      const y = Math.min(SL.Biomes.floorHeightAt(cavern.x, cavern.z) + 12, SL.WATER_LEVEL - 12);
+      const diamond = new SL.DiamondLeviathan(game, SL.Species.diamondLeviathan,
+        cavern.x, y, cavern.z);
+      diamond.territory.set(cavern.x, y, cavern.z);
+      keepUnlessKilled(game, game.diamondLevs, diamond);
     }
 
     const ground = SL.Biomes.whaleGround;
@@ -573,7 +633,10 @@
         if (y > -1 && y < 6) shore = { x, z };
       }
       shore = shore || highestPointOn(islet, 0.9, 30);
-      if (shore) game.carniLevs.push(new SL.WalkingcarniLeviathan(game, shore.x, shore.z));
+      if (shore) {
+        keepUnlessKilled(game, game.carniLevs,
+          new SL.WalkingcarniLeviathan(game, shore.x, shore.z));
+      }
     }
 
     // A band of small ones, spread from the summit down to the surf.

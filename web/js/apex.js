@@ -957,5 +957,309 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // The Diamond Fish Leviathan
+  // ---------------------------------------------------------------------------
+  //
+  // The crystal caverns' own, and the one animal in the game whose defining
+  // stat is how much it can take. Everything else down there is a question of
+  // whether you can land the hits before it lands them; this one is a question
+  // of whether you can keep landing them for two solid minutes.
+  //
+  // Three thousand health is only the headline. What actually makes it what it
+  // is:
+  //
+  //  * it heals whenever you stop, so chipping away at it between runs for air
+  //    does nothing at all - the wound is gone by the time you are back;
+  //  * hit it hard enough in a short enough window and it SETS: it stops dead,
+  //    hardens, takes a third of the damage it otherwise would, and grows a
+  //    couple of hundred health back while you stand there. That is the tell,
+  //    and it is deliberately readable - it glitters and stops moving. Keep
+  //    swinging through it and you still make progress, just slowly.
+  //
+  // It is slow and it turns like a barge, which is the counterweight. You can
+  // out-swim it trivially; you simply cannot out-last it by half-measures.
+
+  const DIAMOND_LABELS = {
+    patrol: 'grinding crystal',
+    close: 'coming for you',
+    shrug: 'turning about',
+    set: 'set hard'
+  };
+
+  /** Seconds without a hit before the wounds start closing. */
+  const REGEN_DELAY = 5;
+
+  /** Health a second it grows back, once it is left alone. */
+  const REGEN_RATE = 7;
+
+  /** Damage inside DAMAGE_WINDOW seconds that makes it set. */
+  const SET_THRESHOLD = 300;
+  const DAMAGE_WINDOW = 7;
+
+  /** How long it stays set, what it heals while it is, and what it shrugs off. */
+  const SET_SECONDS = 5;
+  const SET_REGEN = 40;
+  const SET_ARMOUR = 0.65;
+
+  /** So it cannot chain them back to back. */
+  const SET_COOLDOWN = 20;
+
+  /** Past this it gives up and goes back to the crystal. */
+  const DIAMOND_GIVE_UP = 95;
+
+  /** How far from its own ground it will get before it turns round. */
+  const DIAMOND_LEASH = 1.5;
+
+  class DiamondLeviathan extends SL.Creature {
+    constructor(game, species, x, y, z) {
+      super(game, species, x, y, z);
+      this.territoryRadius = 70;
+
+      this.state = 'patrol';
+      this.stateTimer = 0;
+      this.biteCooldown = 0;
+      this.aggro = 0;
+      this.threat = null;
+
+      /** Time since the last hit, and damage taken inside the window. */
+      this.sinceHurt = 99;
+      this.damageWindow = 0;
+      this.windowTimer = 0;
+      this.setCooldown = 0;
+      this.sets = 0;
+
+      this.driftTarget = new THREE.Vector3(x, y, z);
+      this.shine = 0;
+
+      // The glitter. Additive and back-faced, so it lies over the body as
+      // light coming off the facets rather than as a shell around it - and it
+      // is what makes setting hard something you can see from across a cavern
+      // instead of a number you have to infer.
+      this.halo = new THREE.Mesh(this.bodyMesh.geometry, game.materials.halo.clone());
+      this.halo.material.color.setRGB(0.78, 0.93, 1.0);
+      this.halo.scale.setScalar(1.12);
+      this.halo.visible = false;
+      this.object.add(this.halo);
+
+      this.pulse = SL.random() * Math.PI * 2;
+    }
+
+    get stateLabel() { return DIAMOND_LABELS[this.state] || ''; }
+    get biteReach() { return this.bodyLength * 0.45 + 2.5; }
+
+    /** Eleven metres of animal bites with its head, not its middle. */
+    mouthPosition() {
+      return _mouth.set(0, 0, this.bodyLength * 0.45)
+        .applyQuaternion(this.object.quaternion).add(this.position);
+    }
+
+    canBite(target) {
+      const reach = Math.max(2.5, this.bodyLength * 0.28);
+      return this.mouthPosition().distanceToSquared(target.position) < reach * reach;
+    }
+
+    get hunting() {
+      return !this.dead && (this.state === 'close' || this.state === 'shrug');
+    }
+
+    /**
+     * Whether a point is its own country.
+     *
+     * It is the caverns' animal and it stays in the caverns: the crystal runs
+     * right up against the abyssal plain down here, and without this it drifts
+     * off the mineral floor and spends its life over open mud. It is also the
+     * defence against it - lead it to the edge of the crystal and it has to
+     * let you go.
+     */
+    onCrystal(x, z) {
+      return SL.Biomes.biomeAt(x, z) === SL.Biomes.byId.crystal;
+    }
+
+    /** Somewhere else on the crystal to be. */
+    pickDrift() {
+      for (let attempt = 0; attempt < 14; attempt++) {
+        const angle = SL.random() * Math.PI * 2;
+        const radius = SL.randRange(15, this.territoryRadius);
+        const x = this.territory.x + Math.cos(angle) * radius;
+        const z = this.territory.z + Math.sin(angle) * radius;
+        if (!this.onCrystal(x, z)) continue;
+
+        this.driftTarget.set(x,
+          Math.min(SL.Biomes.floorHeightAt(x, z) + SL.randRange(8, 18), SL.WATER_LEVEL - 10), z);
+        return;
+      }
+      this.driftTarget.copy(this.territory);
+    }
+
+    enterState(state) {
+      if (this.state === state) return;
+      this.state = state;
+      this.stateTimer = 0;
+    }
+
+    /**
+     * Damage, and the two things it feeds.
+     *
+     * A set animal shrugs most of a hit off, and every hit resets the clock on
+     * its healing and adds to the running total that decides whether it sets
+     * in the first place. Hitting it harder is what provokes the armour, which
+     * is the trade at the heart of the fight.
+     */
+    hurt(damage, source) {
+      if (this.dead || damage <= 0) return;
+
+      const landed = this.state === 'set' ? damage * (1 - SET_ARMOUR) : damage;
+      this.sinceHurt = 0;
+      this.damageWindow += landed;
+      this.windowTimer = DAMAGE_WINDOW;
+
+      super.hurt(landed, source);
+    }
+
+    provoke(threat) {
+      if (this.dead || !threat) return;
+      this.threat = threat;
+      this.aggro = 26;
+      if (this.state === 'patrol') this.enterState('close');
+    }
+
+    onHurt(damage, source) { this.provoke(source); }
+
+    onDeath() {
+      // It is made of the thing you came down here for.
+      SL.Pickup.burst(this.game, 'diamond', this.position, 14);
+      SL.Pickup.burst(this.game, 'quartz', this.position, 10);
+      SL.Pickup.burst(this.game, 'titanium', this.position, 6);
+      this.game.hud.toast('The Diamond Fish Leviathan breaks');
+    }
+
+    /** The facets catch the light, and blaze while it is set. */
+    animate(dt) {
+      super.animate(dt);
+
+      this.pulse += dt * (this.state === 'set' ? 5.5 : 1.4);
+      const target = this.dead ? 0 : (this.state === 'set' ? 1 : 0.16);
+      this.shine = SL.damp(this.shine, target, this.state === 'set' ? 6 : 2, dt);
+
+      const glint = 1 + Math.sin(this.pulse) * 0.3;
+      this.halo.material.opacity = 0.26 * this.shine * glint;
+      this.halo.scale.setScalar(1.08 + this.shine * 0.16);
+      this.halo.visible = this.halo.material.opacity > 0.015;
+    }
+
+    desiredVelocity(dt) {
+      const S = this.species;
+      const player = this.game.player;
+
+      this.stateTimer += dt;
+      this.aggro = Math.max(0, this.aggro - dt);
+      this.biteCooldown = Math.max(0, this.biteCooldown - dt);
+      this.setCooldown = Math.max(0, this.setCooldown - dt);
+      this.sinceHurt += dt;
+
+      // The damage window is a rolling one: stop hitting it and the total it
+      // is measuring goes away, which is why a set has to be earned in one go.
+      this.windowTimer -= dt;
+      if (this.windowTimer <= 0) { this.damageWindow = 0; this.windowTimer = 0; }
+
+      // --- Health, which is the whole animal ---------------------------------
+      if (this.state === 'set') {
+        this.health = Math.min(S.maxHealth, this.health + SET_REGEN * dt);
+      } else if (this.sinceHurt > REGEN_DELAY && this.health < S.maxHealth) {
+        this.health = Math.min(S.maxHealth, this.health + REGEN_RATE * dt);
+      }
+
+      if (this.state !== 'set' && this.setCooldown <= 0
+        && this.damageWindow >= SET_THRESHOLD) {
+        this.enterState('set');
+        this.damageWindow = 0;
+        this.sets++;
+        this.game.audio.blow(this.game.distanceToPlayer(this.position));
+        this.game.hud.toast('The Diamond Fish sets hard');
+      }
+
+      const playerDistance = player.dead ? Infinity : player.position.distanceTo(this.position);
+
+      // --- Set: it stops, and the wound closes -------------------------------
+      if (this.state === 'set') {
+        this.jawOpen = SL.damp(this.jawOpen, 0, 3, dt);
+        if (this.stateTimer > SET_SECONDS) {
+          this.setCooldown = SET_COOLDOWN;
+          this.enterState(playerDistance < DIAMOND_GIVE_UP ? 'close' : 'patrol');
+        }
+        // Dead still. That is the point of it.
+        return _tmp.set(0, 0, 0);
+      }
+
+      // --- Shrug: the pause after a bite -------------------------------------
+      if (this.state === 'shrug') {
+        this.jawOpen = SL.damp(this.jawOpen, 0.1, 2, dt);
+        if (this.stateTimer > 3) {
+          this.enterState(playerDistance < DIAMOND_GIVE_UP && !player.dead ? 'close' : 'patrol');
+          return _tmp.set(0, 0, 0);
+        }
+        // Swings away rather than sitting on top of you, so there is a window
+        // to break off in - it is slow, and that is your whole advantage.
+        return _tmp.subVectors(this.position, player.position).normalize()
+          .multiplyScalar(S.cruiseSpeed);
+      }
+
+      // --- Closing -----------------------------------------------------------
+      if (this.state === 'close') {
+        const quarry = this.threat && !this.threat.dead && this.aggro > 0 ? this.threat : player;
+        const gap = quarry.dead ? Infinity : quarry.position.distanceTo(this.position);
+
+        this.jawOpen = SL.damp(this.jawOpen, gap < 20 ? 0.85 : 0.3, 3, dt);
+
+        // Too far from the crystal, or the quarry is simply gone.
+        const fromHome = Math.hypot(this.position.x - this.territory.x,
+          this.position.z - this.territory.z);
+        if (gap > DIAMOND_GIVE_UP || quarry.dead
+          || fromHome > this.territoryRadius * DIAMOND_LEASH) {
+          this.threat = null;
+          this.enterState('patrol');
+          this.pickDrift();
+          return _tmp.set(0, 0, 0);
+        }
+
+        if (this.biteCooldown <= 0 && this.canBite(quarry)) {
+          this.biteCooldown = S.biteInterval;
+          this.game.audio.bite(this.game.distanceToPlayer(this.position));
+          quarry.hurt(S.biteDamage, this);
+          this.enterState('shrug');
+          return _tmp.set(0, 0, 0);
+        }
+
+        // Aimed with the mouth, not the middle: driving the pivot at someone
+        // puts the jaw five metres past them and the bite never fires.
+        return _tmp.subVectors(quarry.position, this.mouthPosition()).normalize()
+          .multiplyScalar(S.sprintSpeed);
+      }
+
+      // --- Patrol ------------------------------------------------------------
+      this.jawOpen = SL.damp(this.jawOpen, 0.1, 1, dt);
+
+      if (playerDistance < S.senseRadius && !player.dead) {
+        this.enterState('close');
+        this.game.hud.toast('The Diamond Fish Leviathan has seen you');
+        return _tmp.set(0, 0, 0);
+      }
+
+      // Off its own ground - a chase, or a drift that clipped the edge of the
+      // crystal - so the next thing it does is go back to the middle of it.
+      if (!this.onCrystal(this.position.x, this.position.z)) {
+        this.driftTarget.copy(this.territory);
+      } else if (this.driftTarget.distanceToSquared(this.position) < 144 || this.stateTimer > 50) {
+        this.stateTimer = 0;
+        this.pickDrift();
+      }
+
+      return _tmp.subVectors(this.driftTarget, this.position).normalize()
+        .multiplyScalar(S.cruiseSpeed);
+    }
+  }
+
   SL.GlowLeviathan = GlowLeviathan;
+  SL.DiamondLeviathan = DiamondLeviathan;
 })(window.SL);

@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, forty-six species, six leviathans, one island, and a kelp forest full of
+biomes, forty-seven species, seven leviathans, one island, and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
@@ -52,8 +52,8 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all forty-six, in the databank.
-* **Kill every leviathan** — all five that can be killed.
+* **Catalogue every species** — all forty-seven, in the databank.
+* **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
 cannot hurt it** — swing at it and the knife simply does not land, the marker
@@ -72,6 +72,17 @@ databank and a dead animal sinks: without this, killing the last of something
 you had never scanned left an entry that could never be filled and a world that
 could never be finished. It was not hypothetical — the islet used to hold
 exactly one Walkingcarni.
+
+**A leviathan you killed stays killed.** A world is a seed, so opening one
+regenerates the entire ocean from scratch — which used to hand you back the
+leviathan you killed last session, every time the game updated. The kill list
+is part of the save, and the spawner now reads it. One wrinkle worth knowing,
+because the code looks wasteful on purpose: a dead leviathan is still built and
+then thrown away rather than never built. Picking a spot and constructing a
+creature both draw from the seeded stream, and skipping those draws would shift
+every draw after them — the nests, the crabs and all eighteen thousand fish
+would land somewhere else the session after a kill. Tested: with two leviathans
+dead, the rest of the ocean comes back identical to three decimal places.
 
 Finishing does not end anything. The card that comes up offers *Keep diving* or
 *Leave the world*, and the only lasting change is that a finished world **can no
@@ -469,6 +480,22 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   mesh. Solitary, slow to turn, and no threat to anybody: it has no trick for
   hiding and no speed to run with, so it pours itself between the boulders and
   is gone.
+* **Diamond Fish Leviathan** — the crystal caverns' own, and the one animal in
+  the game whose defining stat is how much it can take. Eleven metres of cut
+  stone: **3,000 health**, against 1,400 for the next biggest thing you can
+  kill. That is only the headline. It **heals 7 a second** whenever you stop
+  hitting it, so chipping away at it between trips for air does literally
+  nothing — the wound is gone before you are back. And land 300 damage inside
+  seven seconds and it **sets**: stops dead, glitters, shrugs off 65% of
+  everything for five seconds and grows 200 health back while you stand there,
+  then goes back to work with a twenty-second cooldown. Keep swinging through
+  it and you still make progress, just slowly.
+
+  It is the one leviathan you cannot beat by halves, and it is deliberately
+  slow and turns like a barge so that the counterweight is real: you can
+  out-swim it trivially, and leading it off the crystal makes it turn back.
+  Tested: 147 swings and 75 seconds of uninterrupted knifing, through four
+  sets, to put one down. Bring a tank.
 * **Snowfleck / Ghost Bell** — the open abyss: a glowing swarm that hangs in the
   dark, and a slow pale bell that pulses rather than swims.
 * **Cobblejaw / Trench Dart / Weaverfish** — the boulder slope, the canyon and

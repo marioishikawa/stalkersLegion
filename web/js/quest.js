@@ -26,7 +26,8 @@
    * the one animal out there that is simply left alone. You still have to
    * catalogue it; you just have to do that with the scanner like anybody else.
    */
-  const LEVIATHANS = ['kingstalker', 'redpuff', 'kelperlev', 'glowlev', 'carnilev'];
+  const LEVIATHANS = ['kingstalker', 'redpuff', 'kelperlev', 'glowlev', 'carnilev',
+    'diamondlev'];
 
   const Quest = {
     /** Leviathan species ids killed in this world. */

@@ -440,6 +440,7 @@
       for (const c of this.game.kelpers) if (!c.dead) considerCreature(c);
       for (const c of this.game.carnis) if (!c.dead) considerCreature(c);
       for (const c of this.game.glowLevs) if (!c.dead) considerCreature(c);
+      for (const c of this.game.diamondLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.carniLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.crabers) if (!c.dead) considerCreature(c);
 
@@ -523,6 +524,7 @@
       for (const c of this.game.kelpers) if (!c.dead) consider(c);
       for (const c of this.game.carnis) if (!c.dead) consider(c);
       for (const c of this.game.glowLevs) if (!c.dead) consider(c);
+      for (const c of this.game.diamondLevs) if (!c.dead) consider(c);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c);
       for (const c of this.game.crabers) if (!c.dead) consider(c);
 
@@ -727,6 +729,7 @@
       }
       for (const c of this.game.carnis) if (!c.dead) consider(c.species.name, c.position, 30);
       for (const c of this.game.glowLevs) if (!c.dead) consider(c.species.name, c.position, 60);
+      for (const c of this.game.diamondLevs) if (!c.dead) consider(c.species.name, c.position, 52);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c.species.name, c.position, 50);
       for (const c of this.game.crabers) if (!c.dead) consider(c.species.name, c.position, 12);
       for (const n of this.game.nests) {
@@ -902,6 +905,7 @@
       for (const c of this.game.kelpers) resolve(c);
       for (const c of this.game.carnis) resolve(c);
       for (const c of this.game.glowLevs) resolve(c);
+      for (const c of this.game.diamondLevs) resolve(c);
       for (const c of this.game.carniLevs) resolve(c);
       for (const c of this.game.crabers) resolve(c);
 

@@ -31,6 +31,7 @@
       this.puffers = [];
       this.kelperLevs = [];
       this.glowLevs = [];
+      this.diamondLevs = [];
       this.carniLevs = [];
       this.crabers = [];
       this.kelpers = [];
@@ -144,6 +145,7 @@
       this.puffers.length = 0;
       this.kelperLevs.length = 0;
       this.glowLevs.length = 0;
+      this.diamondLevs.length = 0;
       this.carniLevs.length = 0;
       this.crabers.length = 0;
       // The surface patch lives in worldGroup and is rebuilt with it.
@@ -171,7 +173,7 @@
     /** Every leviathan in the world, in the one list the chart wants. */
     leviathans() {
       return this.kings.concat(this.whales, this.puffers, this.kelperLevs,
-        this.glowLevs, this.carniLevs);
+        this.glowLevs, this.carniLevs, this.diamondLevs);
     }
 
     /** Generates a world from a seed. The same seed always gives the same ocean. */
@@ -428,6 +430,11 @@
       // visible from a long way off in the dark is the entire animal.
       for (const lev of this.glowLevs) {
         lev.object.visible = lev.position.distanceToSquared(playerPos) < 25 * CULL_DISTANCE * CULL_DISTANCE;
+        lev.update(dt);
+      }
+
+      for (const lev of this.diamondLevs) {
+        lev.object.visible = lev.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
         lev.update(dt);
       }
 

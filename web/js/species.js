@@ -370,6 +370,32 @@
                dorsalFin: 0.14, sideFin: 0.10, eyeSize: 0.05, stripes: 3 }
     }),
 
+    fish('diamondlev', 'Diamond Fish Leviathan', 'crystal', 'diamond', {
+      leviathan: true, markerColor: '#bfe9ff',
+      diet: 'carnivore', groups: 0,
+      note: 'Eleven metres of cut stone with a fish inside it. Nothing else ' +
+            'down here comes close to what it can take: hit it hard enough ' +
+            'and it simply stops, sets, and grows the damage back while you ' +
+            'watch. Whittling it away does not work. Only a diver who will ' +
+            'not stop swinging ever finishes one.',
+      backColor: C(0.60, 0.81, 0.95), bellyColor: C(0.95, 0.99, 1.0), finColor: C(0.74, 0.91, 1.0),
+      eyeColor: C(0.10, 0.28, 0.42), glow: 0.3,
+      // The whole animal. Three thousand, and it heals.
+      maxHealth: 3000, cruiseSpeed: 1.3, sprintSpeed: 4.2, turnRate: 0.55,
+      senseRadius: 52, biteDamage: 36, biteInterval: 4.2,
+      schoolSize: 1, altitude: 12, wagRate: 0.8,
+      shape: { length: 11, height: 0.34, width: 0.27, bellyPosition: 0.44,
+               noseSharpness: 0.55,
+               // Low power on the superellipse: a faceted section rather than
+               // a round one, so it reads as cut rather than grown.
+               crossSection: 1.35,
+               tailHeight: 0.38, tailSweep: 0.30, tailFork: 0.30,
+               dorsalFin: 0.16, ventralFin: 0.10, sideFin: 0.15,
+               eyeSize: 0.018, eyeRing: true, eyePosition: 0.15,
+               mouthLine: 0.012, jawLength: 0.13, backSpikes: 9, stripes: 5,
+               spineSegments: 24, radialSegments: 10 }
+    }),
+
     // -------------------------------------------------------------- Deep Trench
     fish('lanternjaw', 'Lanternjaw', 'trench', 'eel', {
       note: "Bioluminescent eel. Often the only thing visible in the trench.",
@@ -712,6 +738,7 @@
     carniLeviathan: byId.carnilev,
     craber: byId.craber,
     glowLeviathan: byId.glowlev,
+    diamondLeviathan: byId.diamondlev,
     // Only ordinary prey spawns from the biome roster; the predators and the
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(
