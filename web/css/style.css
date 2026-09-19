@@ -833,8 +833,9 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
 .entry:not(.is-known) .entry__name { color: var(--muted); font-style: italic; }
 
 .entry__art {
-  width: 108px;
-  height: 62px;
+  /* Drawn at 240x144 and shown at half that, so the lines stay crisp. */
+  width: 120px;
+  height: 72px;
   background: color-mix(in srgb, var(--abyss) 60%, transparent);
   border: 1px solid color-mix(in srgb, var(--hull-line) 70%, transparent);
 }

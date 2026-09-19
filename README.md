@@ -292,11 +292,18 @@ frame costs.)
 Build the **Scanner**, hold `X` on a creature for a second and a half, and it is
 catalogued. Press `I` to read the result.
 
-Each entry draws the animal's **actual silhouette** — not an illustration, but
-the same profile function its mesh is lofted from, fitted to the card with a
-single uniform scale so the proportions are the creature's real ones. A ribbon
-reads as a ribbon, a stingray as a flat sliver, an eel as a thin line. Unscanned
-species keep their slot as a blank grey contact.
+Each entry is **drawn from the animal's own numbers** — the same profile
+function its mesh is lofted from, so the proportions are the creature's real
+ones and a ribbon reads as a ribbon, a stingray as a flat sliver, an eel as a
+thin line.
+
+It is a picture rather than a silhouette: every part the body builder puts on
+the mesh gets drawn as its own piece in its own colour. Fins behind the body, a
+gradient down the flank from back to belly, stripes clipped to it, spines along
+the back, legs, antennae, a mouth line, and a ringed eye with a catchlight —
+two pixels of white being the difference between an eye and a hole. Drawn at
+twice the size it is shown at, so the lines stay crisp. Unscanned species keep
+their slot as a blank grey contact.
 
 Scans belong to the world they were made in and are saved with it.
 
