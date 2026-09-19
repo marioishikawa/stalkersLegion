@@ -16,9 +16,20 @@
       this.ready = false;
     }
 
-    /** Must be called from a user gesture (browsers block audio otherwise). */
+    /**
+     * Must be called from a user gesture (browsers block audio otherwise), and
+     * is safe to call as often as you like afterwards.
+     *
+     * A browser can suspend an audio context whenever it feels like it - the
+     * tab going to the background is the usual one, an iframe that has not
+     * been clicked in is the other - and nothing tells the page it happened.
+     * The game just goes quiet and stays quiet. So this is idempotent and
+     * cheap on purpose: anything that could plausibly be a gesture calls it,
+     * and a context that has been put to sleep wakes back up at the first
+     * click or keypress rather than staying dead for the rest of the session.
+     */
     start() {
-      if (this.ready) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+      if (this.ready) { if (this.ctx.state !== 'running') this.resume(); return; }
 
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
@@ -283,6 +294,19 @@
     /** Heartbeat that rises as the air runs out. */
     heartbeat(intensity) {
       this.tone(48, 'sine', 0.30 * intensity, 0.01, 0.22);
+    }
+
+    /** Wakes a suspended context, quietly. Called from anywhere, often. */
+    resume() {
+      if (!this.ready || !this.ctx || this.ctx.state === 'running') return;
+      const resumed = this.ctx.resume();
+      // Older Safari returns undefined rather than a promise.
+      if (resumed && typeof resumed.catch === 'function') resumed.catch(() => {});
+    }
+
+    /** Whether sound is actually coming out, for the HUD to be honest about. */
+    get silent() {
+      return this.muted || !this.ready || !this.ctx || this.ctx.state !== 'running';
     }
 
     setMuted(muted) {

@@ -176,6 +176,24 @@
   </div>
 </div>
 
+<div class="fabricator" id="travelScreen">
+  <div class="fabricator__panel">
+    <header class="fabricator__head">
+      <h2 class="fabricator__title">Where To</h2>
+      <p class="fabricator__hint">
+        Write a place and press <kbd>Enter</kbd> — a biome, a landmark, a
+        leviathan that is still alive, or one of your own beacons. Spelling it
+        roughly is enough.
+      </p>
+      <input class="menu__input" id="travelInput" type="text" maxlength="40"
+             placeholder="deep trench" autocomplete="off" spellcheck="false">
+      <p class="fabricator__hint fabricator__hint--warn" id="travelFeedback"></p>
+    </header>
+    <div class="travel-list" id="travelList"></div>
+    <footer class="fabricator__foot"><kbd>Enter</kbd> go &nbsp;·&nbsp; <kbd>Esc</kbd> stay put</footer>
+  </div>
+</div>
+
 <div class="fabricator" id="fabricator">
   <div class="fabricator__panel">
     <header class="fabricator__head">
@@ -246,6 +264,7 @@
 <script src="js/apex.js"></script>
 <script src="js/kelpers.js"></script>
 <script src="js/island.js"></script>
+<script src="js/travel.js"></script>
 <script src="js/crab.js"></script>
 <script src="js/pet.js"></script>
 <script src="js/nodes.js"></script>

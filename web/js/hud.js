@@ -131,6 +131,9 @@
     update(dt) {
       const p = this.game.player;
 
+      // Cheap, and the one thing a silent game needs on screen.
+      this.updateSound();
+
       // --- Instruments --------------------------------------------------------
       const healthFraction = p.health / p.maxHealth;
       const airFraction = p.oxygen / p.maxOxygen;
@@ -290,11 +293,30 @@
       }
     }
 
+    /**
+     * Says so while it is true, rather than for a second and a quarter.
+     *
+     * Muting is one keypress (M) and the note used to fade, so a diver who hit
+     * it by accident - or in the middle of typing something - had a silent
+     * game and nothing on screen to say why. Sound off now stays on screen
+     * until it is not.
+     */
     showMuted(muted) {
-      this.el.muteNote.textContent = muted ? 'sound off' : 'sound on';
+      this.el.muteNote.textContent = muted ? 'sound off  ·  M' : 'sound on';
       this.el.muteNote.classList.add('is-visible');
       clearTimeout(this._muteTimer);
+      if (muted) return;
       this._muteTimer = setTimeout(() => this.el.muteNote.classList.remove('is-visible'), 1200);
+    }
+
+    /** Keeps that note honest without anyone having to press anything. */
+    updateSound() {
+      const silent = this.game.audio.silent;
+      if (silent === this._wasSilent) return;
+      this._wasSilent = silent;
+
+      this.el.muteNote.textContent = this.game.audio.muted ? 'sound off  ·  M' : 'sound off';
+      this.el.muteNote.classList.toggle('is-visible', silent);
     }
   }
 

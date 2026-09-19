@@ -811,6 +811,56 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
 
 /* ------------------------------------------------------------- The databank */
 
+/* --- The teleport box ------------------------------------------------------
+ *
+ * Built out of the fabricator's panel rather than given a look of its own: it
+ * is the same kind of object, a list you pick a line out of, and a cheat does
+ * not deserve furniture nothing else in the game has.
+ */
+.fabricator__hint--warn:empty { display: none; }
+.fabricator__hint--warn { color: var(--rust); }
+
+#travelScreen .menu__input { margin-top: 14px; width: min(420px, 100%); }
+
+.travel-list {
+  display: grid;
+  gap: 1px;
+  background: color-mix(in srgb, var(--hull-line) 60%, transparent);
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.travel__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+  padding: 11px 22px;
+  border: 0;
+  background: var(--hull);
+  text-align: left;
+  font: inherit;
+  color: var(--bone);
+  cursor: pointer;
+  transition: background 140ms ease-out;
+}
+
+.travel__row:hover { background: color-mix(in srgb, var(--kelp) 14%, transparent); }
+.travel__row:focus-visible { outline: 2px solid var(--phosphor); outline-offset: -2px; }
+
+.travel__name {
+  font: var(--label);
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.travel__hint {
+  font: var(--readout);
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
 .index-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));

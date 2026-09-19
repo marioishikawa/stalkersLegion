@@ -262,14 +262,15 @@
 
     /** The cursor is only free on the title card, the pause screen and the fabricator. */
     updateCursor() {
-      const free = this.paused || !this.started;
+      const free = this.paused || !this.started || this.travelOpen;
       document.body.classList.toggle('is-cursor-free', free);
     }
 
     togglePause(paused) {
       this.setPaused(paused);
       const show = paused && this.started && !this.player.dead
-        && !this.fabricatorOpen && !this.indexOpen && !this.completionOpen;
+        && !this.fabricatorOpen && !this.indexOpen && !this.completionOpen
+        && !this.travelOpen;
       document.getElementById('pauseScreen').classList.toggle('is-visible', show);
       if (show) document.getElementById('pauseObjective').textContent = SL.Quest.summary();
       this.updateCursor();
@@ -312,6 +313,8 @@
     enterWorld(world) {
       this.world = world;
       this.completionOpen = false;
+      this.travelOpen = false;
+      document.getElementById('travelScreen').classList.remove('is-visible');
       document.getElementById('completionScreen').classList.remove('is-visible');
       this.build(world.seed);
       SL.Saves.restore(world, this);
@@ -564,6 +567,10 @@
         ? 'CHEAT — hacked candle lit. It only burns in the Deep Trench'
         : 'CHEAT — candle out');
     },
+    // Write a place, go to it.
+    teletransportsus(game) {
+      if (SL.Travel) SL.Travel.open(game);
+    },
     // The stalker you would otherwise have to fill the databank for.
     tame(game) {
       if (game.pets.length) {
@@ -619,7 +626,30 @@
       KeyX: 'scan'
     };
 
+    // Any keypress or click is a gesture, and a gesture is permission to make
+    // noise - so every one of them is a chance to wake an audio context the
+    // browser suspended behind our back.
+    for (const gesture of ['pointerdown', 'keydown', 'touchstart']) {
+      window.addEventListener(gesture, () => {
+        if (game.started) game.audio.start();
+      }, { capture: true, passive: true });
+    }
+
+    // Coming back to the tab is the single most likely moment to find the
+    // sound switched off, because backgrounding it is what switched it off.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && game.started) game.audio.start();
+    });
+
     window.addEventListener('keydown', (e) => {
+      // While the teleport box is open the keyboard belongs to its text field:
+      // no movement keys, no hotkeys, and no feeding the cheat buffer letters
+      // that are part of a place name.
+      if (game.travelOpen) {
+        if (e.code === 'Escape') SL.Travel.close(game);
+        return;
+      }
+
       if (KEYS[e.code] !== undefined) { game.input[KEYS[e.code]] = true; e.preventDefault(); }
       const cheat = (e.key && e.key.length === 1)
         ? checkCheat(game, e.key.toLowerCase())

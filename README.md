@@ -589,6 +589,20 @@ python3 web/tools/build-artifact.py
 ...produces `web/dist/artifact.html`, which is what gets published alongside
 `web/css/` and `web/js/`.
 
+## When the sound goes
+
+A browser can suspend an audio context whenever it likes — a backgrounded tab
+is the usual reason, an iframe nobody has clicked in is the other — and it does
+not tell the page. The game simply goes quiet and stays quiet for the rest of
+the session, which is indistinguishable from a bug.
+
+Two things now stop that. Every keypress, click and touch is treated as
+permission to make noise and wakes a sleeping context, as does coming back to
+the tab; and **the HUD says `sound off` for exactly as long as it is true**,
+whether the cause is a suspended context or the mute key. Muting used to flash
+a note for a second and a quarter, so a diver who hit `M` by accident had a
+silent game and nothing on screen to explain it.
+
 ## What is not here
 
 * **No crafting, inventory, or base building.** The loop is dive, fight, bait,
@@ -597,7 +611,7 @@ python3 web/tools/build-artifact.py
   rippled surface plane, not a water shader.
 * **Health regenerates slowly** (2.5/s after 18 seconds without damage). With no
   medkits, the alternative was a one-way trip.
-* **There are four cheat codes**, typed at any point while diving:
+* **There are five cheat codes**, typed at any point while diving:
   * `sus` — every fabricator recipe, 99 of each material, infinite health and
     air, and a 9.4 m/s cruise with a 22.6 m/s sprint, because the map is
     3,400 m across and the point of this one is going to look at it.
@@ -608,6 +622,18 @@ python3 web/tools/build-artifact.py
   * `sandwich` — drags the king and the whale together, starts a clash, and
     parks you at a ringside seat to watch it.
   * `tame` — the bonded stalker now, without filling the databank first.
+  * `teletransportsus` — opens a box, you write a place, you go there. The
+    places are read off the world each time it opens rather than being a list
+    of coordinates: every biome, the island summit, the whale ground, the far
+    bank, home, straight up, straight down, every leviathan **still alive**,
+    and every beacon you have planted. Matching is deliberately loose — names
+    are stripped to letters and digits and tried exact, prefix, contained and
+    containing, and then by spelling, so `kelp`, `kelpers reach`, `cristal`,
+    `shalows` and `abbys` all arrive somewhere sensible while `narnia` is told
+    there is no such place. It never drops you inside the sea floor, it stands
+    you on the islet rather than in it, and a biome is re-rolled until the
+    point really is in that biome — ask for the abyss and you will not arrive
+    in the canyon that cuts through it. Tested: 55 biome jumps, no misses.
 
   A letter part-way through a code is swallowed rather than firing whatever it
   is normally bound to, so typing `sandwich` does not open the databank on the
