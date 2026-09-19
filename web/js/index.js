@@ -61,7 +61,20 @@
       : 0;
     const legDrop = S.legPairs > 0 ? S.legScale * 1.1 : 0;
 
-    const halfExtent = Math.max(maxHalf, S.tailHeight, dorsalPeak, ventralPeak, legDrop, 0.02);
+    /**
+     * A serpent is drawn in an S.
+     *
+     * Side on and straight, three and a half metres of snake is a horizontal
+     * line with an eye at one end, which tells you nothing. Laying the spine
+     * along a wave says "snake" before the caption does - and because every
+     * part of the card is placed through this, the fin, the bands and the eye
+     * all ride the curve with it.
+     */
+    const waveAmp = S.bodySegments > 1 ? 0.11 : 0;
+    const wave = (t) => (waveAmp ? Math.sin(t * Math.PI * 1.8) * waveAmp : 0);
+
+    const halfExtent = Math.max(maxHalf, S.tailHeight, dorsalPeak, ventralPeak, legDrop, 0.02)
+      + waveAmp;
     const totalLength = 1 + S.tailSweep;
 
     const scale = Math.min((CARD_W - 16) / totalLength, (CARD_H - 14) / (halfExtent * 2));
@@ -69,7 +82,8 @@
     const midY = CARD_H / 2;
 
     const px = (t) => originX + t * scale;
-    const py = (v) => midY + v * scale;
+    /** `t` is where along the body this point sits, and rides the curve. */
+    const py = (v, t) => midY + (v + (t === undefined ? 0 : wave(t))) * scale;
 
     // An unscanned entry keeps its slot and gives nothing away: one flat grey.
     const flat = 'rgba(125, 148, 154, 0.22)';
@@ -79,9 +93,9 @@
 
     const bodyPath = () => {
       ctx.beginPath();
-      ctx.moveTo(px(0), py(0));
-      for (const [t, half] of spine) ctx.lineTo(px(t), py(-half));
-      for (let i = spine.length - 1; i >= 0; i--) ctx.lineTo(px(spine[i][0]), py(spine[i][1]));
+      ctx.moveTo(px(0), py(0, 0));
+      for (const [t, half] of spine) ctx.lineTo(px(t), py(-half, t));
+      for (let i = spine.length - 1; i >= 0; i--) ctx.lineTo(px(spine[i][0]), py(spine[i][1], spine[i][0]));
       ctx.closePath();
     };
 
@@ -91,28 +105,28 @@
     // Tail, swept off the end and forked by its own number.
     const tailX = 1 + S.tailSweep;
     ctx.beginPath();
-    ctx.moveTo(px(0.97), py(-halfAt(0.97)));
-    ctx.lineTo(px(tailX), py(-S.tailHeight));
-    ctx.lineTo(px(1 + S.tailSweep * (1 - SL.clamp(S.tailFork, 0, 0.95))), py(0));
-    ctx.lineTo(px(tailX), py(S.tailHeight));
-    ctx.lineTo(px(0.97), py(halfAt(0.97)));
+    ctx.moveTo(px(0.97), py(-halfAt(0.97), 0.97));
+    ctx.lineTo(px(tailX), py(-S.tailHeight, tailX));
+    ctx.lineTo(px(1 + S.tailSweep * (1 - SL.clamp(S.tailFork, 0, 0.95))), py(0, 1));
+    ctx.lineTo(px(tailX), py(S.tailHeight, tailX));
+    ctx.lineTo(px(0.97), py(halfAt(0.97), 0.97));
     ctx.closePath();
     ctx.fill();
 
     if (dorsalPeak > 0) {
       ctx.beginPath();
-      ctx.moveTo(px(0.34), py(-halfAt(0.34)));
-      ctx.lineTo(px(0.53), py(-dorsalPeak));
-      ctx.lineTo(px(0.72), py(-halfAt(0.72)));
+      ctx.moveTo(px(0.34), py(-halfAt(0.34), 0.34));
+      ctx.lineTo(px(0.53), py(-dorsalPeak, 0.53));
+      ctx.lineTo(px(0.72), py(-halfAt(0.72), 0.72));
       ctx.closePath();
       ctx.fill();
     }
 
     if (ventralPeak > 0) {
       ctx.beginPath();
-      ctx.moveTo(px(0.45), py(halfAt(0.45)));
-      ctx.lineTo(px(0.6), py(ventralPeak));
-      ctx.lineTo(px(0.75), py(halfAt(0.75)));
+      ctx.moveTo(px(0.45), py(halfAt(0.45), 0.45));
+      ctx.lineTo(px(0.6), py(ventralPeak, 0.6));
+      ctx.lineTo(px(0.75), py(halfAt(0.75), 0.75));
       ctx.closePath();
       ctx.fill();
     }
@@ -126,15 +140,15 @@
       for (let i = 0; i < S.legPairs; i++) {
         const t = SL.lerp(0.28, 0.62, S.legPairs > 1 ? i / (S.legPairs - 1) : 0.5);
         const root = halfAt(t) * 0.75;
-        ctx.moveTo(px(t), py(root));
-        ctx.lineTo(px(t - S.legScale * 0.25), py(root + S.legScale * 1.05));
+        ctx.moveTo(px(t), py(root, t));
+        ctx.lineTo(px(t - S.legScale * 0.25), py(root + S.legScale * 1.05, t));
       }
       ctx.stroke();
     }
 
     // --- The body -------------------------------------------------------------
     if (known) {
-      const grad = ctx.createLinearGradient(0, py(-maxHalf), 0, py(maxHalf));
+      const grad = ctx.createLinearGradient(0, py(-maxHalf - waveAmp), 0, py(maxHalf + waveAmp));
       grad.addColorStop(0, shade(back, 0.85));
       grad.addColorStop(0.45, css(back));
       grad.addColorStop(1, css(belly));
@@ -153,7 +167,7 @@
       ctx.fillStyle = shade(back, 0.62);
       for (let i = 0; i < S.stripes; i++) {
         const t = SL.lerp(0.16, 0.82, S.stripes > 1 ? i / (S.stripes - 1) : 0.5);
-        ctx.fillRect(px(t) - scale * 0.018, py(-halfExtent), scale * 0.036, halfExtent * 2 * scale);
+        ctx.fillRect(px(t) - scale * 0.018, py(-halfExtent, t), scale * 0.036, halfExtent * 2 * scale);
       }
       ctx.restore();
     }
@@ -165,9 +179,9 @@
         const t = SL.lerp(0.25, 0.8, S.backSpikes > 1 ? i / (S.backSpikes - 1) : 0.5);
         const top = -halfAt(t);
         ctx.beginPath();
-        ctx.moveTo(px(t - 0.03), py(top));
-        ctx.lineTo(px(t), py(top - 0.075));
-        ctx.lineTo(px(t + 0.03), py(top));
+        ctx.moveTo(px(t - 0.03), py(top, t));
+        ctx.lineTo(px(t), py(top - 0.075, t));
+        ctx.lineTo(px(t + 0.03), py(top, t));
         ctx.closePath();
         ctx.fill();
       }
@@ -194,20 +208,20 @@
     ctx.strokeStyle = known ? shade(back, 0.4) : 'rgba(125, 148, 154, 0.3)';
     ctx.lineWidth = Math.max(1.2, scale * 0.008);
     ctx.beginPath();
-    ctx.moveTo(px(0.005), py(halfAt(0.02) * 0.15));
-    ctx.lineTo(px(0.10 + S.jawLength), py(halfAt(0.12) * 0.55));
+    ctx.moveTo(px(0.005), py(halfAt(0.02) * 0.15, 0.005));
+    ctx.lineTo(px(0.10 + S.jawLength), py(halfAt(0.12) * 0.55, 0.10 + S.jawLength));
     ctx.stroke();
 
     if (known && S.eyeRing) {
       ctx.fillStyle = 'rgba(245, 248, 246, 0.92)';
       ctx.beginPath();
-      ctx.arc(px(eyeT), py(eyeY), eyeR * 1.7, 0, Math.PI * 2);
+      ctx.arc(px(eyeT), py(eyeY, eyeT), eyeR * 1.7, 0, Math.PI * 2);
       ctx.fill();
     }
 
     ctx.fillStyle = known ? css(species.eyeColor) : 'rgba(125, 148, 154, 0.45)';
     ctx.beginPath();
-    ctx.arc(px(eyeT), py(eyeY), eyeR, 0, Math.PI * 2);
+    ctx.arc(px(eyeT), py(eyeY, eyeT), eyeR, 0, Math.PI * 2);
     ctx.fill();
 
     if (known) {
@@ -215,7 +229,7 @@
       // a hole.
       ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
       ctx.beginPath();
-      ctx.arc(px(eyeT) - eyeR * 0.3, py(eyeY) - eyeR * 0.3, Math.max(1, eyeR * 0.33), 0, Math.PI * 2);
+      ctx.arc(px(eyeT) - eyeR * 0.3, py(eyeY, eyeT) - eyeR * 0.3, Math.max(1, eyeR * 0.33), 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -224,10 +238,10 @@
       ctx.strokeStyle = known ? shade(fin, 0.8) : flat;
       ctx.lineWidth = Math.max(1.2, scale * 0.01);
       ctx.beginPath();
-      ctx.moveTo(px(0.1), py(-halfAt(0.1)));
-      ctx.lineTo(px(-S.antennae * 0.5), py(-S.antennae * 0.3));
-      ctx.moveTo(px(0.1), py(-halfAt(0.1) * 0.4));
-      ctx.lineTo(px(-S.antennae * 0.45), py(-S.antennae * 0.05));
+      ctx.moveTo(px(0.1), py(-halfAt(0.1), 0.1));
+      ctx.lineTo(px(-S.antennae * 0.5), py(-S.antennae * 0.3, 0));
+      ctx.moveTo(px(0.1), py(-halfAt(0.1) * 0.4, 0.1));
+      ctx.lineTo(px(-S.antennae * 0.45), py(-S.antennae * 0.05, 0));
       ctx.stroke();
     }
   }

@@ -12,6 +12,7 @@
   const _tmp = new THREE.Vector3();
   const _ahead = new THREE.Vector3();
   const _look = new THREE.Vector3();
+  const _shore = new THREE.Vector3();
 
   class Creature {
     constructor(game, species, x, y, z) {
@@ -37,17 +38,34 @@
       this.object.position.set(x, y, z);
 
       const material = species.glow > 0.35 ? game.materials.glow : game.materials.surface;
-      this.bodyMesh = new THREE.Mesh(built.body, material);
-      this.object.add(this.bodyMesh);
 
+      // Most bodies are a single mesh. A serpentine one comes back as a chain
+      // of links, each parented to the one ahead of it, so yawing a joint
+      // carries everything behind it - which is how a wave gets down a spine
+      // with no skeleton to put it there.
+      this.segmentMeshes = [];
+      let parent = this.object;
+      for (let i = 0; i < built.segments.length; i++) {
+        const mesh = new THREE.Mesh(built.segments[i].geometry, material);
+        if (i === 0) mesh.position.copy(built.rootOffset);
+        else mesh.position.set(0, 0, -built.segments[i - 1].span);
+        parent.add(mesh);
+        parent = mesh;
+        this.segmentMeshes.push(mesh);
+      }
+      this.bodyMesh = this.segmentMeshes[0];
+      this.segmented = this.segmentMeshes.length > 1;
+
+      // On a rigid animal the tail and jaw hang off the creature itself, as
+      // they always have. On a chain they ride the link they grow out of.
       this.tailMesh = new THREE.Mesh(built.tail, material);
       this.tailMesh.position.copy(built.tailPivot);
-      this.object.add(this.tailMesh);
+      (this.segmented ? this.segmentMeshes[built.tailSegment] : this.object).add(this.tailMesh);
 
       if (built.jaw) {
         this.jawMesh = new THREE.Mesh(built.jaw, game.materials.surface);
         this.jawMesh.position.copy(built.jawPivot);
-        this.object.add(this.jawMesh);
+        (this.segmented ? this.segmentMeshes[built.jawSegment] : this.object).add(this.jawMesh);
       }
 
       game.addToWorld(this.object);
@@ -60,6 +78,20 @@
 
     /** Subclass hook: whether this creature simply cannot be hurt by someone. */
     immuneTo(source) { return false; }
+
+    /**
+     * How hard its bite throws the diver, as a multiple of the usual shove.
+     * Zero means the damage lands and the diver stays where they were.
+     */
+    get knockback() { return 1; }
+
+    /**
+     * How much of a collision with the diver the diver absorbs. One is solid:
+     * they bounce off it. Zero lets it walk through them without pushing them
+     * around, for something big enough that being barged by it is worse than
+     * the bite.
+     */
+    get diverPush() { return 1; }
     onHurt(damage, source) {}
     onDeath(killer) {}
 
@@ -91,20 +123,47 @@
       const p = this.position;
       const speed = Math.max(this.species.cruiseSpeed, 0.1);
 
+      // Fish do not fly. Everything below steers them away from the shallows,
+      // but steering takes time and there is no version of this where one ends
+      // up over the beach and that is acceptable, so the surface is a hard lid
+      // as well. Air breathers are on their own - going up is the point.
+      if (!this.isMammal && this.state !== 'surfacing' && p.y > SL.WATER_LEVEL - 0.15) {
+        p.y = SL.WATER_LEVEL - 0.15;
+        if (this.velocity.y > 0) this.velocity.y = 0;
+      }
+
       // Sea floor: look ahead so fast swimmers pull up in time.
       _ahead.copy(desired).normalize().multiplyScalar(Math.max(1.2, this.bodyLength * 2)).add(p);
       const floor = Math.max(
         SL.Biomes.floorHeightAt(p.x, p.z),
         SL.Biomes.floorHeightAt(_ahead.x, _ahead.z));
       const clearance = Math.max(0.6, this.bodyLength * 0.6);
+      const ceiling = SL.WATER_LEVEL - (this.isMammal ? 0.35 : 1.2);
 
-      if (p.y < floor + clearance) {
+      if (floor + clearance > ceiling) {
+        // The ground ahead has run out of water over it.
+        //
+        // Climbing is the answer to a seamount because there is always sea
+        // above it. The islet is the one place where there is not: its slope
+        // comes clean out of the water, and a fish that treated it as just
+        // another hill swam up the beach and carried on over the island. So
+        // where the water runs out the shore is a wall, not a slope - it gets
+        // turned away from rather than climbed.
+        const probe = Math.max(3, this.bodyLength * 2);
+        const uphillX = SL.Biomes.floorHeightAt(p.x + probe, p.z) - SL.Biomes.floorHeightAt(p.x - probe, p.z);
+        const uphillZ = SL.Biomes.floorHeightAt(p.x, p.z + probe) - SL.Biomes.floorHeightAt(p.x, p.z - probe);
+        const steepness = Math.hypot(uphillX, uphillZ);
+        if (steepness > 1e-4) {
+          desired.addScaledVector(
+            _shore.set(-uphillX / steepness, 0, -uphillZ / steepness), speed * 2.2);
+        }
+        desired.y = Math.min(desired.y, 0);
+      } else if (p.y < floor + clearance) {
         desired.y += speed * SL.clamp((floor + clearance - p.y) / clearance, 0, 2) * 1.6;
       }
 
       // Surface: fish are held under it, but an air breather on its way up is
       // allowed through - that is the whole point of the climb.
-      const ceiling = SL.WATER_LEVEL - (this.isMammal ? 0.35 : 1.2);
       if (p.y > ceiling && this.state !== 'surfacing') {
         desired.y -= speed * SL.clamp((p.y - ceiling) / 2, 0, 2) * 1.6;
       }
@@ -149,6 +208,16 @@
 
       this.object.position.addScaledVector(this.velocity, dt);
 
+      // Checked again on the way out. Far-off fish are stepped in catch-up
+      // jumps of up to four tenths of a second, which is long enough for a
+      // fast one to finish a step in mid-air over the beach and stay there
+      // until its next turn comes round.
+      if (!this.isMammal && this.state !== 'surfacing'
+        && this.object.position.y > SL.WATER_LEVEL - 0.15) {
+        this.object.position.y = SL.WATER_LEVEL - 0.15;
+        if (this.velocity.y > 0) this.velocity.y = 0;
+      }
+
       if (this.velocity.lengthSq() > 1e-6) {
         _look.copy(this.position).add(this.velocity);
         this.object.lookAt(_look);
@@ -160,12 +229,34 @@
     /**
      * No skeleton: the body yaws gently and the tail follows a beat behind,
      * which reads convincingly as swimming for almost no CPU.
+     *
+     * A segmented body gets the same idea taken all the way down its length -
+     * every joint repeats its neighbour a beat later, which is a wave
+     * travelling from head to tail, which is a snake swimming.
      */
     animate(dt) {
       this.swimPhase += dt * this.species.wagRate * SL.clamp(this.exertion, 0.3, 2.2);
       const amp = SL.clamp(this.exertion, 0.3, 1.8);
 
-      this.bodyMesh.rotation.y = Math.sin(this.swimPhase) * 0.07 * amp;
+      if (this.segmented) {
+        const links = this.segmentMeshes.length;
+        // Just over a wavelength along the body: enough for a clear S, not so
+        // much that the animal ties itself in a knot.
+        const lag = (Math.PI * 2 * 1.25) / links;
+        const swing = (this.species.shape.bodySwing || 0.24) * amp;
+
+        // The head barely moves and the tail end throws itself about, which is
+        // the difference between a snake swimming and a rope being shaken.
+        this.segmentMeshes[0].rotation.y = Math.sin(this.swimPhase) * swing * 0.3;
+        for (let i = 1; i < links; i++) {
+          const along = i / (links - 1);
+          this.segmentMeshes[i].rotation.y =
+            Math.sin(this.swimPhase - i * lag) * swing * (0.45 + 0.55 * along);
+        }
+      } else {
+        this.bodyMesh.rotation.y = Math.sin(this.swimPhase) * 0.07 * amp;
+      }
+
       this.tailMesh.rotation.y = Math.sin(this.swimPhase - 0.9) * 0.38 * amp;
       if (this.jawMesh) this.jawMesh.rotation.x = this.jawOpen * 0.55;
     }

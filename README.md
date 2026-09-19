@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are eleven
-biomes, forty-five species, six leviathans, one island, and a kelp forest full of
+biomes, forty-six species, six leviathans, one island, and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
 **▶ Play it in the browser:** https://claude.ai/code/artifact/d8dc6549-e78f-4c4e-bbab-81b828bfdad7
@@ -52,7 +52,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all forty-five, in the databank.
+* **Catalogue every species** — all forty-six, in the databank.
 * **Kill every leviathan** — all five that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -63,9 +63,15 @@ that is simply left alone. You still have to catalogue it; you just have to do
 that with the scanner like anybody else. (The King Stalker can still mark it —
 their standoff is the one thing that does.)
 
-**A leviathan you kill is a leviathan you catalogued.** You are not going to
-hold a scanner steady on one for a second and a half and live, and a corpse is
-a specimen either way, so the kill records the entry.
+**Anything you kill is something you catalogued.** You are not going to hold a
+scanner steady on a leviathan for a second and a half and live, and a corpse is
+a specimen whatever size it was, so the kill records the entry.
+
+That is not only a convenience. Scanning is the only other way into the
+databank and a dead animal sinks: without this, killing the last of something
+you had never scanned left an entry that could never be filled and a world that
+could never be finished. It was not hypothetical — the islet used to hold
+exactly one Walkingcarni.
 
 Finishing does not end anything. The card that comes up offers *Keep diving* or
 *Leave the world*, and the only lasting change is that a finished world **can no
@@ -214,8 +220,29 @@ longer just distance from the middle:
   map from the far forest. It is the only dry ground in the game, and something
   lives on it. Built as a flat, a shoulder and a peak rather than one cone,
   because a cone that comes to a point has a summit you cannot stand anything
-  on: there are about **108 m of dry radius** up there, with room for more than
-  its two current residents.
+  on: there are about **108 m of dry radius** up there, and six animals live on
+  it.
+
+The islet is also the one place where the ground leaves the water, and two
+things had to learn that.
+
+**Fish do not climb out.** Floor avoidance works by rising, which is the right
+answer to a seamount because there is always sea above it — and the wrong answer
+to a beach, where a school would follow the sand up and carry on swimming over
+the island. Where the water over the ground ahead runs out, the shore is now a
+wall rather than a slope: the fish samples the gradient either side of itself
+and steers downhill, back toward deep water, instead of climbing. The surface is
+a hard lid as well, checked before the step and again after it, because far-off
+fish move in catch-up jumps of up to four tenths of a second and one of those
+can finish in mid-air.
+
+**And the sky has no black band in it.** The sky dome reaches a little below the
+horizon, where its `y` goes negative — and `Math.pow(negative, 0.65)` is NaN,
+which the renderer draws as black. Nobody saw it while the surface was a ceiling.
+The moment you could put your head out, there was a black stripe across the
+waterline. The exponent is clamped now, and below the horizon the dome simply
+stays horizon-coloured, which is the air fog's colour too, so the seam vanishes
+into the haze.
 
 Biomes then follow from what the floor *is* at a point — its depth, whether it
 sits on a seamount, whether it lies in the canyon — rather than from how far out
@@ -421,13 +448,27 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   further, and it will not leave the island at all — swimming off the flat is
   the whole of your defence, and it works. Tested: three bites and a dead diver
   in seventeen seconds if you stay; untouched and at full health if you swim.
-* **Walkingcarni** — lives on the islet, and is the only animal in the game that
-  is not swimming. Four legs, a long jaw, and it takes its height from the
+  It **bites and nothing else**: it neither knocks you back nor barges you along
+  in front of it. Six and a half metres of animal shoving a diver across the
+  beach turned a fight into a wrestling match with the terrain, and the damage
+  was always the threat. Tested: dead in sixteen seconds standing in its jaw,
+  and moved zero metres doing it.
+* **Walkingcarni** — **five of them** live on the islet, spread from the summit
+  down to the surf, and they are the only animals in the game that are not
+  swimming. Four legs, a long jaw, and it takes its height from the
   ground rather than integrating against the sea floor like everything else, so
   it walks the island and wades the shallows. Its appetite is tiny: a fish every
   few minutes out of the reef flat, and the rest of the time it does nothing in
   particular. It has no opinion about divers until one cuts it — and it cannot
-  follow you into deep water, which is the whole defence against it.
+  follow you into deep water, which is the whole defence against it. There used
+  to be exactly one, which was a problem: killing it was a perfectly reasonable
+  way to meet the species and then the species was gone, taking its databank
+  entry and any chance of finishing that world with it.
+* **Snake Fish** — four and a bit metres of banded rope over the boulder slope
+  and the seamount, and the only animal built as a chain rather than a single
+  mesh. Solitary, slow to turn, and no threat to anybody: it has no trick for
+  hiding and no speed to run with, so it pours itself between the boulders and
+  is gone.
 * **Snowfleck / Ghost Bell** — the open abyss: a glowing swarm that hangs in the
   dark, and a slow pale bell that pulses rather than swims.
 * **Cobblejaw / Trench Dart / Weaverfish** — the boulder slope, the canyon and
@@ -448,15 +489,33 @@ and real damage, then both break off and stay clear of each other for a while.
 Neither ever wins — health is floored at a third for both — so if you find them
 fighting, it is a thing happening in the ocean rather than a fight you are in.
 
-None of them have skeletons. The body yaws gently and the tail wags a beat
+Most of them have no skeleton. The body yaws gently and the tail wags a beat
 behind it, which costs almost nothing and reads as swimming.
+
+A serpentine species is the exception, because that trick has nothing to say
+about a snake. Its body is lofted as a **chain of linked pieces** instead of one
+mesh — neighbouring pieces share a spine ring and each is capped, so the joints
+stay closed however far they bend — and every joint repeats its neighbour a beat
+later. That is a wave travelling from head to tail, which is a snake swimming.
+The amplitude grows toward the tail, so the head leads and the tail throws
+itself about rather than the whole animal shaking like a rope. It costs one
+`rotation.y` per link per frame. The Snake Fish is four and a bit metres of it,
+in eleven links.
 
 ## Nests
 
-Six of the thirty-nine species build them — Bladefish, Grass Nibbler, Stone
-Gulper, Cobblejaw, Weaverfish and the Bubble Clown. A nest is a scrape in the
-floor with a clutch in it, tinted from the sea floor it is dug out of and the
-parent it belongs to.
+Six species build them — Bladefish, Grass Nibbler, Stone Gulper, Cobblejaw,
+Weaverfish and the Bubble Clown. A nest is a scrape in the floor with a clutch
+in it, tinted from the sea floor it is dug out of and the parent it belongs to.
+
+**They hatch, and how fast depends on how badly the species is doing.** Every
+world records what it started with, species by species. A nest compares that
+against how many are still alive: at ninety per cent or better it does nothing,
+and below that the eggs come faster the fewer there are — from one every four
+minutes down to one every twenty seconds for something almost gone. Nests tick
+everywhere at once, not only where you are, so a species being farmed out at one
+end of the map recovers at the other. It is the only way anything comes back,
+and it means the last few of something are worth more alive than dead.
 
 They are placed **before** the schools are, and a nesting species puts most of
 its schools on its own clutches rather than on arbitrary points. That is what

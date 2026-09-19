@@ -2,9 +2,10 @@
  * Grows a creature body from a species definition.
  *
  * Bodies are built nose-forward along +Z (so Object3D.lookAt points them where
- * they swim) and split into three pieces so they can animate without a
- * skeleton: a static body, a tail that wags around its pivot, and - for
- * predators - a hinged lower jaw.
+ * they swim) and split into pieces so they can animate without a skeleton: a
+ * body, a tail that wags around its pivot, and - for predators - a hinged
+ * lower jaw. A serpentine species splits its body further still, into a chain
+ * of linked segments a wave can travel down.
  */
 (function (SL) {
   'use strict';
@@ -130,28 +131,104 @@
       ringColors.push(species.backColor.clone().lerp(dark, stripe));
     }
 
-    Geo.loft(body, spine, halfWidths, halfHeights, ringColors,
-      SL.clamp(S.radialSegments, 5, 24), S.crossSection, species.bellyColor, 0.85);
+    // --- Pieces ---------------------------------------------------------------
+    //
+    // Almost everything is one rigid loft: a fish is stiff enough that yawing
+    // the whole body and wagging the tail reads as swimming. A snake is not.
+    // A serpentine body is cut into a chain of pieces, each with its own
+    // object, so a wave can travel down the spine instead of the animal
+    // swinging about as a plank. Neighbouring pieces share their boundary ring
+    // and the loft caps both ends of each, so the joints stay closed however
+    // far they bend.
+    const pieceCount = SL.clamp(Math.round(S.bodySegments || 1), 1, 16);
+    const radial = SL.clamp(S.radialSegments, 5, 24);
+    const pieces = [];
+
+    if (pieceCount === 1) {
+      Geo.loft(body, spine, halfWidths, halfHeights, ringColors,
+        radial, S.crossSection, species.bellyColor, 0.85);
+      // A body in one piece pivots about its middle, the way it always has.
+      pieces.push({ mesh: body, frontZ: 0, originZ: length * 0.5 });
+    } else {
+      for (let i = 0; i < pieceCount; i++) {
+        const from = Math.round(i * (rings - 1) / pieceCount);
+        const to = Math.round((i + 1) * (rings - 1) / pieceCount);
+        const mesh = i === 0 ? body : new MeshData();
+        Geo.loft(mesh, spine.slice(from, to + 1), halfWidths.slice(from, to + 1),
+          halfHeights.slice(from, to + 1), ringColors.slice(from, to + 1),
+          radial, S.crossSection, species.bellyColor, 0.85);
+        // Each piece hangs off the joint at its own nose end.
+        pieces.push({ mesh, frontZ: spine[from].z, originZ: spine[from].z });
+      }
+    }
+
+    /** The piece a feature at this point along the spine belongs to. */
+    const pieceFor = (z) => {
+      for (let i = pieces.length - 1; i > 0; i--) if (z >= pieces[i].frontZ) return pieces[i];
+      return pieces[0];
+    };
 
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
     const ringAt = (t) => SL.clamp(Math.round(t * (rings - 1)), 0, rings - 1);
 
+    // Everything hung on the body goes onto whichever piece carries that part
+    // of the spine, so it bends with the flesh underneath it. With one piece
+    // these are exactly the calls they replaced.
+    const addFin = (a, b, c, colour) => Geo.fin(pieceFor((a.z + b.z + c.z) / 3).mesh, a, b, c, colour);
+    const addSphere = (x, y, z, r, seg, colour) => Geo.sphere(pieceFor(z).mesh, x, y, z, r, seg, colour);
+    const addQuad = (a, b, c, d, colour, flat) =>
+      Geo.quadPoly(pieceFor((a.z + b.z + c.z + d.z) / 4).mesh, a, b, c, d, colour, flat);
+
+    /**
+     * A fin running the length of a segmented body.
+     *
+     * One triangle pinned at two rings is fine on something rigid, but on a
+     * chain it would span several pieces and tear itself apart as they bend.
+     * This lays the fin down one ring-span at a time instead, so every span
+     * rides the piece it grows out of.
+     */
+    const ribbon = (from, to, sign) => {
+      const a = ringAt(from), b = ringAt(to);
+      const crestAt = (ring) => {
+        const t = (ring - a) / Math.max(1, b - a);
+        return length * S.dorsalFin * Math.pow(Math.sin(Math.PI * SL.clamp(t, 0, 1)), 0.6);
+      };
+      for (let ring = a; ring < b; ring++) {
+        const y0 = sign * halfHeights[ring] * 0.9;
+        const y1 = sign * halfHeights[ring + 1] * 0.9;
+        addQuad(
+          V(0, y0, spine[ring].z),
+          V(0, y1, spine[ring + 1].z),
+          V(0, y1 + sign * crestAt(ring + 1), spine[ring + 1].z),
+          V(0, y0 + sign * crestAt(ring), spine[ring].z),
+          species.finColor, true);
+      }
+    };
+
     // --- Dorsal fin: a swept triangle riding the back -------------------------
     if (S.dorsalFin > 0.001) {
-      const f = ringAt(0.34), b = ringAt(0.72);
-      const front = V(0, halfHeights[f] * 0.9, spine[f].z);
-      const back = V(0, halfHeights[b] * 0.9, spine[b].z);
-      const peak = V(0, Math.max(front.y, back.y) + length * S.dorsalFin, (front.z + back.z) * 0.5);
-      Geo.fin(body, front, back, peak, species.finColor);
+      if (pieceCount > 1) {
+        ribbon(0.14, 0.97, 1);
+      } else {
+        const f = ringAt(0.34), b = ringAt(0.72);
+        const front = V(0, halfHeights[f] * 0.9, spine[f].z);
+        const back = V(0, halfHeights[b] * 0.9, spine[b].z);
+        const peak = V(0, Math.max(front.y, back.y) + length * S.dorsalFin, (front.z + back.z) * 0.5);
+        addFin(front, back, peak, species.finColor);
+      }
     }
 
     // --- Ventral fin -----------------------------------------------------------
     if (S.ventralFin > 0.001) {
-      const f = ringAt(0.45), b = ringAt(0.75);
-      const front = V(0, -halfHeights[f] * 0.9, spine[f].z);
-      const back = V(0, -halfHeights[b] * 0.9, spine[b].z);
-      const peak = V(0, Math.min(front.y, back.y) - length * S.ventralFin, (front.z + back.z) * 0.5);
-      Geo.fin(body, back, front, peak, species.finColor);
+      if (pieceCount > 1) {
+        ribbon(0.3, 0.97, -1);
+      } else {
+        const f = ringAt(0.45), b = ringAt(0.75);
+        const front = V(0, -halfHeights[f] * 0.9, spine[f].z);
+        const back = V(0, -halfHeights[b] * 0.9, spine[b].z);
+        const peak = V(0, Math.min(front.y, back.y) - length * S.ventralFin, (front.z + back.z) * 0.5);
+        addFin(back, front, peak, species.finColor);
+      }
     }
 
     // --- Pectoral fins: one per side, angled back -------------------------------
@@ -162,7 +239,7 @@
         const root = V(side * halfWidths[r] * 0.85, 0, spine[r].z);
         const tip = V(side * (halfWidths[r] + finLen), -finLen * 0.35, root.z - finLen * 0.7);
         const back = V(side * halfWidths[r] * 0.85, 0, root.z + finLen * 0.45);
-        Geo.fin(body, root, back, tip, species.finColor);
+        addFin(root, back, tip, species.finColor);
       }
     }
 
@@ -172,7 +249,7 @@
       const reach = length * S.antennae;
       for (const side of [1, -1]) {
         const root = V(side * halfWidths[r] * 0.6, halfHeights[r] * 0.5, spine[r].z);
-        Geo.fin(body,
+        addFin(
           root,
           root.clone().add(V(side * 0.02 * length, 0.02 * length, 0)),
           root.clone().add(V(side * reach * 0.35, reach * 0.28, reach)),
@@ -187,7 +264,7 @@
       const legLength = length * (S.legScale || 0.11);
       for (const side of [1, -1]) {
         const root = V(side * halfWidths[r] * 0.8, -halfHeights[r] * 0.6, spine[r].z);
-        Geo.fin(body,
+        addFin(
           root,
           root.clone().add(V(0, 0, legLength * 0.3)),
           root.clone().add(V(side * legLength * 0.7, -legLength, -legLength * 0.2)),
@@ -201,7 +278,7 @@
       const r = ringAt(t);
       const len = length * 0.09;
       const y = halfHeights[r] * 0.95;
-      Geo.fin(body,
+      addFin(
         V(0, y, spine[r].z - len * 0.4),
         V(0, y, spine[r].z + len * 0.4),
         V(0, y + len, spine[r].z - len * 0.3),
@@ -219,10 +296,10 @@
         // A pale ring behind the pupil, so an eye reads at a distance instead
         // of vanishing into a dark body.
         if (S.eyeRing) {
-          Geo.sphere(body, ex * 0.97, ey, spine[r].z, eyeRadius * 1.45, 7,
+          addSphere(ex * 0.97, ey, spine[r].z, eyeRadius * 1.45, 7,
             new THREE.Color(0.92, 0.90, 0.84));
         }
-        Geo.sphere(body, ex, ey, spine[r].z, eyeRadius, 7, species.eyeColor);
+        addSphere(ex, ey, spine[r].z, eyeRadius, 7, species.eyeColor);
       }
     }
 
@@ -232,7 +309,7 @@
       const back = SL.clamp(ringAt(0.30), 1, rings - 1);
       const front = SL.clamp(ringAt(0.04), 0, rings - 1);
       for (const side of [1, -1]) {
-        Geo.quadPoly(body,
+        addQuad(
           V(side * halfWidths[back] * 0.92, -halfHeights[back] * 0.1, spine[back].z),
           V(side * halfWidths[front] * 0.92, -halfHeights[front] * 0.1, spine[front].z),
           V(side * halfWidths[front] * 0.90, -halfHeights[front] * 0.1 - length * S.mouthLine, spine[front].z),
@@ -330,28 +407,51 @@
       }
     }
 
-    body.computeNormals();
     tailMesh.computeNormals();
     if (!jawMesh.isEmpty) jawMesh.computeNormals();
 
     // The loft grows nose-at-origin toward +Z, but Object3D.lookAt() points an
     // object's +Z at its target - so a body used as built swims tail-first.
-    // Turn it end for end and recentre, which puts the nose at +Z (forward) and
-    // the tail root at -Z, with the object pivoting mid-body.
+    // Turning each piece end for end puts the nose at +Z (forward) and the
+    // tail root at -Z, and drops its origin on the joint it hangs from: the
+    // middle of a body in one piece, the front of a link in a chain.
     //
     // The tail and jaw are separate objects positioned at the pivots below, and
     // both are authored along this corrected axis already: the tail fin sweeps
     // back toward -Z and the jaw runs forward toward +Z.
-    const recentre = new THREE.Matrix4().makeRotationY(Math.PI);
-    recentre.premultiply(new THREE.Matrix4().makeTranslation(0, 0, length * 0.5));
+    const recentreAt = (originZ) => new THREE.Matrix4()
+      .makeRotationY(Math.PI)
+      .premultiply(new THREE.Matrix4().makeTranslation(0, 0, originZ));
 
-    const centred = new MeshData();
-    centred.append(body, recentre);
-    tailPivot.applyMatrix4(recentre);
-    if (jawPivot) jawPivot.applyMatrix4(recentre);
+    const jawPiece = jawPivot ? pieces.indexOf(pieceFor(jawPivot.z)) : 0;
+    const segments = pieces.map((piece, i) => {
+      piece.mesh.computeNormals();
+      const centred = new MeshData();
+      centred.append(piece.mesh, recentreAt(piece.originZ));
+      const next = pieces[i + 1];
+      return {
+        geometry: centred.toGeometry(),
+        // How far back the next joint sits, which is where the next link hangs.
+        span: next ? next.originZ - piece.originZ : 0
+      };
+    });
+
+    // The tail always belongs to the hindmost piece; the jaw to whichever piece
+    // carries the head.
+    tailPivot.applyMatrix4(recentreAt(pieces[pieces.length - 1].originZ));
+    if (jawPivot) jawPivot.applyMatrix4(recentreAt(pieces[jawPiece].originZ));
 
     return {
-      body: centred.toGeometry(),
+      body: segments[0].geometry,
+      // One entry for a rigid animal, several for a serpentine one. Each is
+      // parented to the one in front of it, so bending a joint carries
+      // everything behind it around with it.
+      segments,
+      // Where the head of the chain sits in the creature's own frame: a body in
+      // one piece is already centred, a chain hangs back from its nose.
+      rootOffset: new THREE.Vector3(0, 0, pieces.length > 1 ? length * 0.5 : 0),
+      tailSegment: segments.length - 1,
+      jawSegment: jawPiece,
       tail: tailMesh.toGeometry(),
       jaw: jawMesh.isEmpty ? null : jawMesh.toGeometry(),
       tailPivot,
@@ -368,7 +468,7 @@
       const built = build(species);
       // Shared across every individual of the species and across worlds, so
       // world teardown must not dispose these.
-      for (const geometry of [built.body, built.tail, built.jaw]) {
+      for (const geometry of [built.tail, built.jaw].concat(built.segments.map((s) => s.geometry))) {
         if (geometry) geometry.userData.shared = true;
       }
       cache[species.id] = built;

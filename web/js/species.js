@@ -36,7 +36,11 @@
       eyeSize: 0.05, stripes: 0, backSpikes: 0, jawLength: 0,
       antennae: 0, legPairs: 0, legScale: 0.11,
       eyePosition: 0.14, eyeHeight: 0.45, eyeRing: false, mouthLine: 0, jawTeeth: true,
-      spineSegments: 14, radialSegments: 10
+      spineSegments: 14, radialSegments: 10,
+      // How many linked pieces the body is built from. One is a rigid animal
+      // that yaws and wags; more than one is a spine a wave can travel down.
+      // bodySwing is how far each of those joints bends.
+      bodySegments: 1, bodySwing: 0.24
     }, overrides.shape) });
   }
 
@@ -290,6 +294,32 @@
       shape: { length: 0.66, height: 0.055, width: 0.44, bellyPosition: 0.38, noseSharpness: 0.5,
                crossSection: 1.7, tailHeight: 0.07, tailSweep: 0.34, tailFork: 0,
                dorsalFin: 0, ventralFin: 0, sideFin: 0, eyeSize: 0.028, spineSegments: 16 }
+    }),
+
+    fish('snakefish', 'Snake Fish', 'boulders', 'eel', {
+      alsoIn: ['coral'],
+      note: 'Three and a half metres of banded rope. It has no trick for ' +
+            'hiding and no speed to run with, so it simply pours itself ' +
+            'between the boulders and is gone.',
+      backColor: C(0.15, 0.20, 0.13), bellyColor: C(0.88, 0.86, 0.52), finColor: C(0.22, 0.30, 0.16),
+      eyeColor: C(0.72, 0.62, 0.10),
+      maxHealth: 26, cruiseSpeed: 1.5, sprintSpeed: 3.4,
+      // Long things do not corner. It swings its whole length around instead.
+      turnRate: 1.2,
+      // Solitary, and thin on the ground: one of these is already plenty of
+      // animal, and a reef with sixty of them in it is not a reef with a
+      // snake in it.
+      schoolSize: 1, groups: 2, altitude: 3,
+      // Slow beats, big ones - the wave is what moves it, not a tail flick.
+      wagRate: 3.4,
+      shape: { length: 4.2, height: 0.026, width: 0.023, bellyPosition: 0.42,
+               noseSharpness: 0.75, crossSection: 2.1, tailHeight: 0.042,
+               tailSweep: 0.08, tailFork: 0, dorsalFin: 0.018, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.010, eyePosition: 0.045, eyeHeight: 0.55,
+               stripes: 14, mouthLine: 0.010,
+               // Eleven links and a long stride to the wave: a proper serpent.
+               bodySegments: 11, bodySwing: 0.3,
+               spineSegments: 33, radialSegments: 8 }
     }),
 
     // ---------------------------------------------------------- Crystal Caverns

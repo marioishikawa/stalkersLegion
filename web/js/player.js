@@ -358,10 +358,13 @@
       this.game.hud.flashDamage();
 
       // Knocked back by the hit, which is what makes a stalker bite frightening.
-      if (source && source.position) {
+      // Some things are not allowed to: being shoved several metres every time
+      // a six-metre animal closes its mouth is not frightening, it is annoying.
+      const shove = source && source.knockback !== undefined ? source.knockback : 1;
+      if (source && source.position && shove > 0) {
         _tmp.subVectors(this.position, source.position).normalize();
-        this.velocity.addScaledVector(_tmp, 5.2);
-        this.velocity.y += 0.6;
+        this.velocity.addScaledVector(_tmp, 5.2 * shove);
+        this.velocity.y += 0.6 * shove;
       }
 
       // A bitten diver drops whatever they were holding.
@@ -878,14 +881,15 @@
         if (distance < 1e-4) _normal.set(1, 0, 0); else _normal.divideScalar(distance);
 
         const creatureMass = Math.max(0.05, creature.bodyLength * creature.bodyLength);
-        const diverShare = creatureMass / (creatureMass + DIVER_MASS);
+        const solidity = creature.diverPush !== undefined ? creature.diverPush : 1;
+        const diverShare = (creatureMass / (creatureMass + DIVER_MASS)) * solidity;
 
         this.position.addScaledVector(_normal, overlap * diverShare);
         creature.object.position.addScaledVector(_normal, -overlap * (1 - diverShare));
 
         // Stop swimming into it, and let it know it was bumped.
         const closing = this.velocity.dot(_normal);
-        if (closing < 0) this.velocity.addScaledVector(_normal, -closing);
+        if (closing < 0) this.velocity.addScaledVector(_normal, -closing * solidity);
         if (typeof creature.startle === 'function') creature.startle(this.position, 2.5);
       };
 

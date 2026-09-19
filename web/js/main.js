@@ -466,6 +466,10 @@
       for (let i = this.pickups.length - 1; i >= 0; i--) this.pickups[i].update(dt);
       for (let i = this.crystals.length - 1; i >= 0; i--) this.crystals[i].update(dt);
       for (const beacon of this.beacons) beacon.update(dt);
+      // Nests tick everywhere, not just where you are looking - a species
+      // getting wiped out at one end of the map has to be able to recover at
+      // the other.
+      for (const nest of this.nests) nest.update(dt);
       for (let i = this.vines.length - 1; i >= 0; i--) this.vines[i].update(dt);
       for (let i = this.bubbles.length - 1; i >= 0; i--) this.bubbles[i].update(dt);
 

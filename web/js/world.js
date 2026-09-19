@@ -204,7 +204,13 @@
 
       for (let seg = 0; seg <= segments; seg++) {
         const theta = (seg / segments) * Math.PI * 2;
-        colour.copy(horizon).lerp(zenith, Math.pow(y, 0.65));
+        // The dome reaches below the horizon, where y goes negative - and a
+        // negative base under a fractional power is NaN, which the renderer
+        // draws as black. That is what put a black band across the waterline
+        // the moment the diver could see the sky at all. Below the horizon the
+        // sky simply stays horizon-coloured, which is the air fog's colour too,
+        // so the seam disappears into the haze.
+        colour.copy(horizon).lerp(zenith, Math.pow(Math.max(y, 0), 0.65));
         mesh.vertex(Math.cos(theta) * r * radius, y * radius * 0.55 - 6,
           Math.sin(theta) * r * radius, 0, -1, 0, colour);
       }
@@ -570,8 +576,20 @@
       if (shore) game.carniLevs.push(new SL.WalkingcarniLeviathan(game, shore.x, shore.z));
     }
 
-    const slope = highestPointOn(islet, 1.4, 30);
-    if (slope) game.carnis.push(new SL.Walkingcarni(game, slope.x, slope.z));
+    // A band of small ones, spread from the summit down to the surf.
+    //
+    // There used to be exactly one. It barely eats and it has no quarrel with
+    // anybody, so for a long time that was enough - until you consider that
+    // killing it was the only way to meet the species and then it was gone,
+    // taking its databank entry with it. A population survives being hunted.
+    const SMALL_CARNIS = 5;
+    for (let i = 0; i < SMALL_CARNIS; i++) {
+      // Spread across the island rather than stacked on the peak: the first
+      // goes high, the rest work their way down the flanks.
+      const spread = SL.lerp(0.7, 2.2, i / Math.max(1, SMALL_CARNIS - 1));
+      const spot = highestPointOn(islet, spread, 12);
+      if (spot) game.carnis.push(new SL.Walkingcarni(game, spot.x, spot.z));
+    }
   }
 
   /** Crabs, on the sand of the Safe Shallows and nowhere else. */
@@ -598,6 +616,11 @@
   }
 
   function spawnCreatures(game) {
+    // What a healthy sea looks like, species by species: whatever this world
+    // started with. The nests measure themselves against it when deciding how
+    // hard to work.
+    game.startPopulation = {};
+
     spawnLeviathans(game);
     scatterNests(game);
     spawnIslander(game);
@@ -627,7 +650,13 @@
           if (!point) continue;
 
           const floor = SL.Biomes.floorHeightAt(point.x, point.z);
+          // Not on the beach. A school dropped where the islet comes out of
+          // the sea starts inside the hill and spends its life climbing out.
+          if (floor > SL.WATER_LEVEL - 4) continue;
+
           const y = Math.min(floor + species.altitude * SL.randRange(0.8, 1.6), SL.WATER_LEVEL - 3);
+          game.startPopulation[species.id] =
+            (game.startPopulation[species.id] || 0) + species.schoolSize;
 
           let leader = null;
           for (let i = 0; i < species.schoolSize; i++) {

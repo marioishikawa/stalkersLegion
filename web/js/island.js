@@ -356,6 +356,18 @@
     get wadeDepth() { return 7; }
 
     /**
+     * It bites, and that is all it does to you.
+     *
+     * Six and a half metres of animal walking into a diver used to shove them
+     * across the beach - the bite knocked them back, and then the body itself
+     * bulldozed them along in front of it, so a fight with it was mostly being
+     * pushed about. The damage is the threat; the barging was never meant to
+     * be part of it.
+     */
+    get knockback() { return 0; }
+    get diverPush() { return 0; }
+
+    /**
      * Its own island - and it has to be able to see across the beach.
      *
      * The summit is eighty metres from the nearest water on an island this

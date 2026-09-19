@@ -416,6 +416,21 @@
   //
   // The eggs are scenery you can cut, and cutting them does nothing good.
 
+  /**
+   * How long between one hatching and the next.
+   *
+   * A species doing fine barely uses its nests at all: the sea is as full of
+   * them as it is going to get, and the clutch just sits there. One being
+   * hunted out works flat out instead - the fewer of them are left, the faster
+   * the eggs come. It is the only way a species that someone has decided to
+   * wipe out ever comes back, and it means the last few of anything are always
+   * worth more alive than dead.
+   */
+  const HATCH_FAST = 22;      // seconds, with the species nearly gone
+  const HATCH_SLOW = 240;     // seconds, with it merely thinned out
+  const HATCH_IDLE = 30;      // how often a nest bothers to look, at full strength
+  const HEALTHY = 0.9;        // the share of the original population that counts as fine
+
   class Nest {
     constructor(game, species, x, z, seed) {
       SL.setSeed(seed);
@@ -424,6 +439,9 @@
       this.species = species;
       this.dead = false;
       this.eggsLeft = SL.randInt(4, 7);
+
+      // Staggered, so a biome's nests do not all go off together.
+      this.hatchTimer = SL.randRange(10, HATCH_SLOW);
 
       const floor = SL.Biomes.floorHeightAt(x, z);
       this.radius = SL.randRange(0.9, 1.4);
@@ -492,7 +510,47 @@
 
     get position() { return this.object.position; }
 
-    update() {}
+    /** One more of them, out of the scrape and straight into the water. */
+    hatch() {
+      const p = this.position;
+      const floor = SL.Biomes.floorHeightAt(p.x, p.z);
+      const y = Math.min(floor + this.species.altitude * SL.randRange(0.5, 1.1),
+        SL.WATER_LEVEL - 2);
+
+      const fry = new SL.Fish(this.game, this.species,
+        p.x + SL.randRange(-1.2, 1.2), y, p.z + SL.randRange(-1.2, 1.2));
+      // It stays by the nest it came out of rather than wandering off into
+      // whatever emptied the biome in the first place.
+      fry.territory.set(p.x, y, p.z);
+      fry.territoryRadius = 26;
+      this.game.fish.push(fry);
+
+      if (this.game.distanceToPlayer(p) < 34) {
+        this.game.hud.toast('A ' + this.species.name + ' hatches');
+      }
+    }
+
+    update(dt) {
+      if (this.dead) return;
+
+      this.hatchTimer -= dt;
+      if (this.hatchTimer > 0) return;
+
+      const target = (this.game.startPopulation || {})[this.species.id] || 0;
+      if (!target) { this.hatchTimer = HATCH_IDLE; return; }
+
+      let alive = 0;
+      for (const fish of this.game.fish) {
+        if (fish.species === this.species && !fish.dead) alive++;
+      }
+
+      const share = alive / target;
+      if (share >= HEALTHY) { this.hatchTimer = HATCH_IDLE; return; }
+
+      // The scarcer they are, the sooner the next one comes.
+      this.hatchTimer = SL.lerp(HATCH_FAST, HATCH_SLOW, SL.clamp(share / HEALTHY, 0, 1));
+      this.hatch();
+    }
   }
 
   SL.Nest = Nest;
