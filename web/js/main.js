@@ -74,6 +74,13 @@
           vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.9
         }),
 
+        // The sky dome. Unlit, unfogged and written behind everything, so it
+        // reads as distance rather than as a painted ceiling.
+        sky: new THREE.MeshBasicMaterial({
+          vertexColors: true, side: THREE.BackSide, fog: false,
+          depthWrite: false, transparent: true, opacity: 1
+        }),
+
         // Light bleeding into the water around something that produces it.
         // Additive and depth-write-off so it layers over whatever is behind it
         // instead of cutting a hole, and back-faced so the body still reads
@@ -139,6 +146,8 @@
       this.glowLevs.length = 0;
       this.carniLevs.length = 0;
       this.crabers.length = 0;
+      // The surface patch lives in worldGroup and is rebuilt with it.
+      this.water = null;
       this.kelpers.length = 0;
       this.pets.length = 0;
       this.petRespawn = 0;
@@ -179,6 +188,7 @@
       SL.World.buildLighting(this);
       SL.World.buildTerrain(this);
       SL.World.buildWaterSurface(this);
+      if (!this.sky) SL.World.buildSky(this);
       const plants = SL.World.scatterFlora(this);
       SL.World.scatterScrap(this);
       SL.World.scatterCrystals(this);
@@ -462,6 +472,7 @@
       this.scrapTimer -= dt;
       if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }
 
+      SL.World.updateWater(this, dt);
       SL.World.updateAmbience(this, dt);
       this.hud.update(dt);
 

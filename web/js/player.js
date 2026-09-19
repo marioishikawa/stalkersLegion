@@ -15,6 +15,7 @@
   const _tmp = new THREE.Vector3();
   const _toTarget = new THREE.Vector3();
   const _axis = new THREE.Vector3();
+  const _flat = new THREE.Vector3();
   const _swingA = new THREE.Vector3();
   const _swingB = new THREE.Vector3();
   const _bodyA = new THREE.Vector3();
@@ -26,6 +27,12 @@
   const _c2 = new THREE.Vector3();
   const _normal = new THREE.Vector3();
   const _up = new THREE.Vector3();
+
+  /** Out of the water, metres per second squared. Brisk, not lunar. */
+  const GRAVITY = 16;
+
+  /** A short hop, enough to get over a lip of rock on the way up a beach. */
+  const JUMP_SPEED = 5.2;
 
   // Base knife stats live on the player rather than as constants, because the
   // fabricator upgrades them in place.
@@ -218,8 +225,12 @@
       this.timeSinceDamage = 999;
 
       this.swimSpeed = 4.2;
+      /** On dry land. Slower than swimming - you are carrying a tank. */
+      this.walkSpeed = 3.4;
       this.sprintMultiplier = 1.85;
       this.sprinting = false;
+      this.inWater = true;
+      this.grounded = false;
 
       this.carriedScrap = null;
 
@@ -308,6 +319,7 @@
       this.lanternBuilt = false;
       this.invulnerable = false;
       this.swimSpeed = 4.2;
+      this.walkSpeed = 3.4;
       this.swingDuration = 0.48;
       if (this.carriedScrap) { this.carriedScrap = null; }
       this.respawn();
@@ -743,25 +755,66 @@
         return;
       }
 
-      // --- Swim where you look ------------------------------------------------
       this.camera.getWorldDirection(_forward);
       _right.set(_forward.z, 0, -_forward.x).normalize();
 
-      _tmp.set(0, 0, 0);
-      if (input.forward) _tmp.add(_forward);
-      if (input.back) _tmp.sub(_forward);
-      if (input.right) _tmp.sub(_right);
-      if (input.left) _tmp.add(_right);
-      if (input.up) _tmp.y += 1;
-      if (input.down) _tmp.y -= 1;
+      // Head above the waterline is a different world: no water to swim
+      // against, and something pulling you down.
+      const ground = SL.Biomes.floorHeightAt(this.position.x, this.position.z) + 0.55;
+      this.inWater = this.position.y < SL.WATER_LEVEL;
+      this.grounded = !this.inWater && this.position.y <= ground + 0.08;
 
-      this.sprinting = input.sprint && _tmp.lengthSq() > 0;
-      const speed = this.swimSpeed * (this.sprinting ? this.sprintMultiplier : 1);
+      if (this.inWater) {
+        // --- Swim where you look ----------------------------------------------
+        _tmp.set(0, 0, 0);
+        if (input.forward) _tmp.add(_forward);
+        if (input.back) _tmp.sub(_forward);
+        if (input.right) _tmp.sub(_right);
+        if (input.left) _tmp.add(_right);
+        if (input.up) _tmp.y += 1;
+        if (input.down) _tmp.y -= 1;
 
-      if (_tmp.lengthSq() > 0) _tmp.normalize().multiplyScalar(speed);
+        this.sprinting = input.sprint && _tmp.lengthSq() > 0;
+        const speed = this.swimSpeed * (this.sprinting ? this.sprintMultiplier : 1);
 
-      // Water: quick to get going, quick to stop. No inertia slides.
-      this.velocity.lerp(_tmp, 1 - Math.exp(-6 * dt));
+        if (_tmp.lengthSq() > 0) _tmp.normalize().multiplyScalar(speed);
+
+        // Water: quick to get going, quick to stop. No inertia slides.
+        this.velocity.lerp(_tmp, 1 - Math.exp(-6 * dt));
+      } else {
+        // --- Out of the water --------------------------------------------------
+        //
+        // Steering is flattened, because looking at your feet should not drive
+        // you into them, and the vertical axis belongs to gravity now. Over the
+        // island that means you walk; over open sea it means you fall back in,
+        // which is exactly what should happen to someone who swam upwards.
+        _flat.copy(_forward).setY(0);
+        if (_flat.lengthSq() < 1e-6) _flat.set(0, 0, 1);
+        _flat.normalize();
+
+        _tmp.set(0, 0, 0);
+        if (input.forward) _tmp.add(_flat);
+        if (input.back) _tmp.sub(_flat);
+        if (input.right) _tmp.sub(_right);
+        if (input.left) _tmp.add(_right);
+        _tmp.y = 0;
+
+        this.sprinting = input.sprint && _tmp.lengthSq() > 0;
+        const speed = this.walkSpeed * (this.sprinting ? this.sprintMultiplier : 1);
+        if (_tmp.lengthSq() > 0) _tmp.normalize().multiplyScalar(speed);
+
+        // Horizontal control only; far less of it in mid-air than on your feet.
+        const grip = this.grounded ? 9 : 1.6;
+        this.velocity.x = SL.lerp(this.velocity.x, _tmp.x, 1 - Math.exp(-grip * dt));
+        this.velocity.z = SL.lerp(this.velocity.z, _tmp.z, 1 - Math.exp(-grip * dt));
+
+        this.velocity.y -= GRAVITY * dt;
+
+        if (this.grounded) {
+          if (this.velocity.y < 0) this.velocity.y = 0;
+          if (input.up) this.velocity.y = JUMP_SPEED;
+        }
+      }
       this.position.addScaledVector(this.velocity, dt);
 
       this.pushOutOfCreatures(dt);
@@ -941,11 +994,9 @@
       const floor = SL.Biomes.floorHeightAt(p.x, p.z) + 0.55;
       if (p.y < floor) { p.y = floor; if (this.velocity.y < 0) this.velocity.y = 0; }
 
-      // You can break the surface but not leave the water.
-      if (p.y > SL.WATER_LEVEL) {
-        p.y = SL.WATER_LEVEL;
-        if (this.velocity.y > 0) this.velocity.y = 0;
-      }
+      // The surface is no longer a ceiling. You can put your head out, and
+      // where there is ground above the waterline you can climb out onto it -
+      // gravity in update() is what brings you back down everywhere else.
 
       // A soft wall at the edge of the world.
       const distance = Math.hypot(p.x, p.z);

@@ -231,12 +231,11 @@
           const gap = towards.length();
           towards.normalize();
 
-          // Too deep ahead, or the diver has drifted over ground it cannot
-          // climb to - either way it has to let them go.
-          const overLand = SL.Biomes.floorHeightAt(threat.position.x, threat.position.z)
-            > SL.WATER_LEVEL - 0.5;
+          // Too deep ahead, or the diver is somewhere it cannot climb to -
+          // either way it has to let them go.
           const next = _tmp.copy(this.position).addScaledVector(towards, 2);
-          if (overLand || -SL.Biomes.floorHeightAt(next.x, next.z) > this.wadeDepth) {
+          if (!this.canReach(threat)
+            || -SL.Biomes.floorHeightAt(next.x, next.z) > this.wadeDepth) {
             this.threat = null;
             this.faceTarget = null;
             this.enterState('roam');
@@ -366,6 +365,25 @@
     get guardRadius() { return 95; }
 
     /**
+     * Whether it could actually get its jaw to something.
+     *
+     * Two ways to fail. The water there may be deeper than it will wade, which
+     * is the defence against it - swim off the flat and it has to turn back. Or
+     * the target may be nowhere near the ground: someone treading water above
+     * the summit is thirty metres over anything with legs, and chasing that
+     * left it standing on the peak enraged at somebody in the sky.
+     *
+     * Height off the ground is the test rather than whether the ground is dry,
+     * so a diver who has climbed out onto the island counts - which they can,
+     * now that the surface is no longer a ceiling.
+     */
+    canReach(target) {
+      const ground = SL.Biomes.floorHeightAt(target.position.x, target.position.z);
+      if (-ground > this.wadeDepth) return false;
+      return target.position.y - ground < 6;
+    }
+
+    /**
      * It patrols the shoreline rather than the summit.
      *
      * Everything it could ever want is at the waterline: the fish on the flat,
@@ -420,19 +438,7 @@
       if (this.state !== 'angry' && !player.dead) {
         const distance = player.position.distanceTo(this.position);
 
-        // Only water it can actually reach counts, and "reach" has two ends.
-        //
-        // A diver is always in the water - the game clamps them to the surface,
-        // so they can never stand on the island however dry the ground under
-        // them looks. A diver floating over the summit is thirty metres above
-        // anything with legs, and treating that as a target left it standing up
-        // there enraged at somebody in the sky. So the floor beneath them has
-        // to be under water as well as within wading depth.
-        const floorUnder = SL.Biomes.floorHeightAt(player.position.x, player.position.z);
-        const depthUnder = -floorUnder;
-        const wadeable = depthUnder > 0.5 && depthUnder <= this.wadeDepth;
-
-        if (distance < this.guardRadius && wadeable) {
+        if (distance < this.guardRadius && this.canReach(player)) {
           this.guardTimer += dt;
           // A beat before it commits, so walking across a corner of the island
           // is not instantly a fight.

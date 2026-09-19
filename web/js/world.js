@@ -87,36 +87,142 @@
   }
 
   /**
-   * A gently rippled sheet at the water line. From below it is the ceiling of
-   * the world; from above it reads as open ocean.
+   * The sea surface: a live patch of water that follows the diver.
+   *
+   * It used to be one enormous static sheet, which is all you need when the
+   * only place you ever see it from is underneath. Now that you can put your
+   * head out it has to read as water from above too, so it is a finer grid
+   * covering rather less than the camera can see, recentred on the diver every
+   * frame and displaced by a couple of crossing swells. The fog hides the far
+   * edge long before the grid runs out.
    */
+  const WATER_CELLS = 64;
+  const WATER_EXTENT = 340;          // metres from the diver to the grid edge
+
   function buildWaterSurface(game) {
-    const extent = SL.WORLD_RADIUS * 1.5;
-    const cells = 26;
-    const step = (extent * 2) / cells;
+    const step = (WATER_EXTENT * 2) / WATER_CELLS;
     const mesh = new MeshData();
-    const verts = cells + 1;
-    const color = new THREE.Color();
+    const verts = WATER_CELLS + 1;
+    const color = new THREE.Color(0.05, 0.24, 0.32);
 
     for (let z = 0; z < verts; z++) {
       for (let x = 0; x < verts; x++) {
-        const wx = -extent + x * step;
-        const wz = -extent + z * step;
-        const ripple = SL.fbm(wx, wz, 2, 0.08, 2, 0.5, 4242) * 0.35;
-        color.setRGB(0.04, 0.22, 0.30).multiplyScalar(1 + ripple * 0.4);
-        mesh.vertex(wx, SL.WATER_LEVEL + ripple, wz, 0, 1, 0, color);
+        mesh.vertex(-WATER_EXTENT + x * step, SL.WATER_LEVEL, -WATER_EXTENT + z * step,
+          0, 1, 0, color);
       }
     }
 
-    for (let z = 0; z < cells; z++) {
-      for (let x = 0; x < cells; x++) {
+    for (let z = 0; z < WATER_CELLS; z++) {
+      for (let x = 0; x < WATER_CELLS; x++) {
         const a = z * verts + x;
         mesh.quad(a, a + verts, a + verts + 1, a + 1);
       }
     }
 
     mesh.computeNormals();
-    game.addToWorld(new THREE.Mesh(mesh.toGeometry(), game.materials.water));
+
+    const surface = new THREE.Mesh(mesh.toGeometry(), game.materials.water);
+    // It moves with the diver, so it must never be frustum-culled on the
+    // strength of where it was built.
+    surface.frustumCulled = false;
+    game.addToWorld(surface);
+
+    game.water = { mesh: surface, step, verts, centre: new THREE.Vector3(1e9, 0, 1e9) };
+  }
+
+  /**
+   * Swell, and the patch keeping up with the diver.
+   *
+   * Recentring is snapped to whole cells, because sliding the grid continuously
+   * under a wave function makes the whole sea crawl sideways; snapped, the
+   * waves stay put in the world and only the patch moves.
+   */
+  function updateWater(game, dt) {
+    const water = game.water;
+    if (!water) return;
+
+    const p = game.player.position;
+    const cx = Math.round(p.x / water.step) * water.step;
+    const cz = Math.round(p.z / water.step) * water.step;
+
+    const geometry = water.mesh.geometry;
+    const pos = geometry.attributes.position;
+    const colours = geometry.attributes.color;
+    const t = game.time;
+
+    water.mesh.position.set(cx, 0, cz);
+    water.centre.set(cx, 0, cz);
+
+    for (let i = 0; i < pos.count; i++) {
+      const wx = pos.getX(i) + cx;
+      const wz = pos.getZ(i) + cz;
+
+      // Two crossing swells and a small chop, which is enough to read as a
+      // moving sea without anything as expensive as a real wave solver.
+      const h =
+        Math.sin(wx * 0.045 + t * 0.9) * 0.34 +
+        Math.sin(wz * 0.031 - t * 0.7) * 0.28 +
+        Math.sin((wx + wz) * 0.12 + t * 1.8) * 0.09;
+
+      pos.setY(i, SL.WATER_LEVEL + h);
+
+      // Crests catch the light, troughs go darker - the thing that actually
+      // makes a flat-shaded sheet look wet.
+      // Floored well above black: at eye level you are looking across wave
+      // faces rather than down at them, and a dark trough colour turns the
+      // whole horizon into a bar of soot.
+      const lift = SL.clamp(0.5 + h * 0.9, 0, 1.4);
+      colours.setXYZ(i, 0.09 + lift * 0.10, 0.30 + lift * 0.17, 0.38 + lift * 0.21);
+    }
+
+    pos.needsUpdate = true;
+    colours.needsUpdate = true;
+    geometry.computeVertexNormals();
+  }
+
+  /**
+   * The sky, for the first time - there was never anywhere to see it from.
+   *
+   * An inverted sphere carried on the camera, vertex-shaded from a pale horizon
+   * to a deeper zenith, with fog off so it does not get eaten by the haze it is
+   * supposed to be behind. Hidden underwater, where the murk is the ceiling.
+   */
+  function buildSky(game) {
+    const mesh = new MeshData();
+    const radius = 360;
+    const rings = 10;
+    const segments = 20;
+
+    const horizon = new THREE.Color(0.62, 0.76, 0.84);
+    const zenith = new THREE.Color(0.16, 0.38, 0.62);
+    const colour = new THREE.Color();
+
+    for (let ring = 0; ring <= rings; ring++) {
+      // Only the upper half is ever looked at; below the horizon is sea.
+      const phi = (ring / rings) * Math.PI * 0.6;
+      const y = Math.cos(phi), r = Math.sin(phi);
+
+      for (let seg = 0; seg <= segments; seg++) {
+        const theta = (seg / segments) * Math.PI * 2;
+        colour.copy(horizon).lerp(zenith, Math.pow(y, 0.65));
+        mesh.vertex(Math.cos(theta) * r * radius, y * radius * 0.55 - 6,
+          Math.sin(theta) * r * radius, 0, -1, 0, colour);
+      }
+    }
+
+    const stride = segments + 1;
+    for (let ring = 0; ring < rings; ring++) {
+      for (let seg = 0; seg < segments; seg++) {
+        const a = ring * stride + seg;
+        mesh.quad(a, a + 1, a + stride + 1, a + stride);
+      }
+    }
+
+    const sky = new THREE.Mesh(mesh.toGeometry(), game.materials.sky);
+    sky.frustumCulled = false;
+    sky.renderOrder = -1;
+    game.camera.add(sky);
+    game.sky = sky;
   }
 
   function buildLighting(game) {
@@ -590,6 +696,12 @@
   /** The colour the hacked candle drags the trench water toward. */
   const _candleWater = new THREE.Color(0.10, 0.062, 0.030);
 
+  /** Where the air goes at distance, matched to the sky's horizon band. */
+  const _airHaze = new THREE.Color(0.62, 0.76, 0.84);
+
+  /** Thin, but enough to hide the rim of the water patch. */
+  const AIR_FOG = 0.0045;
+
   function updateAmbience(game, dt) {
     const p = game.player.position;
     const biome = SL.Biomes.biomeAt(p.x, p.z);
@@ -597,6 +709,13 @@
     // Above the surface the haze lifts; deeper water is darker water.
     const submerged = SL.clamp((SL.WATER_LEVEL - p.y) / 4, 0, 1);
     const depthFade = SL.clamp(1 - (SL.WATER_LEVEL - p.y) / 90, 0.12, 1);
+
+    // The sky is only there when there is somewhere to see it from, and it
+    // fades in across the same few metres the murk fades out over.
+    if (game.sky) {
+      game.sky.material.opacity = 1 - submerged;
+      game.sky.visible = submerged < 0.995;
+    }
 
     // The Quartz Visor cuts the murk everywhere.
     let clarity = 1 - (game.player.visionBonus || 0);
@@ -614,14 +733,20 @@
     // as the same black with less of it.
     if (candle > 0.01) _fogTarget.lerp(_candleWater, candle * 0.5);
 
+    // Out of the water the fog becomes distance haze in the horizon's colour,
+    // thin enough to see a long way and thick enough to swallow the edge of
+    // the water patch before the camera's far plane cuts it.
+    _fogTarget.lerp(_airHaze, 1 - submerged);
+    const density = SL.lerp(AIR_FOG, biome.fogDensity * clarity, submerged);
+
     game.scene.fog.color.lerp(_fogTarget, 1 - Math.exp(-1.2 * dt));
-    game.scene.fog.density = SL.damp(game.scene.fog.density, biome.fogDensity * submerged * clarity, 1.2, dt);
+    game.scene.fog.density = SL.damp(game.scene.fog.density, density, 1.2, dt);
     game.scene.background = game.scene.fog.color;
 
     game.audio.setDepth(game.player.depth);
   }
 
-  SL.World = { buildTerrain, buildWaterSurface, buildLighting, scatterFlora, scatterScrap,
-    scatterCrystals, spawnCreatures, spawnLeviathans, scatterNests, spawnIslander,
-    scatterCrabers, replenishScrap, updateAmbience };
+  SL.World = { buildTerrain, buildWaterSurface, buildSky, updateWater, buildLighting,
+    scatterFlora, scatterScrap, scatterCrystals, spawnCreatures, spawnLeviathans,
+    scatterNests, spawnIslander, scatterCrabers, replenishScrap, updateAmbience };
 })(window.SL);
