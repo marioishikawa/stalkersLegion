@@ -11,6 +11,9 @@
 
   const _tmp = new THREE.Vector3();
   const _ahead = new THREE.Vector3();
+  const _up = new THREE.Vector3(0, 1, 0);
+  const _right = new THREE.Vector3(1, 0, 0);
+  const _rock = new THREE.Vector3();
   const _look = new THREE.Vector3();
   const _shore = new THREE.Vector3();
 
@@ -27,6 +30,8 @@
       this.territoryRadius = 22;
 
       this.exertion = 1;
+      /** Set by a creature that is pretending not to be one. */
+      this.holdStill = false;
       this.swimPhase = Math.random() * Math.PI * 2;
       this.jawOpen = 0;
 
@@ -162,6 +167,22 @@
         desired.y += speed * SL.clamp((floor + clearance - p.y) / clearance, 0, 2) * 1.6;
       }
 
+      // Rocks. The boulders on the floor are solid now, so a fish that is in
+      // one is pushed out of it and then told to swim the other way - the
+      // push alone would leave it grinding along the surface of the rock,
+      // because its steering has no idea the rock is there.
+      //
+      // Only for creatures near enough to be seen. Past the fog this is a
+      // grid lookup and a dozen distance tests, several thousand times a
+      // frame, to decide something nobody can look at.
+      if (this.inSight !== false && SL.Solids && SL.Solids.count) {
+        const bulk = Math.max(this.radius, this.bodyLength * 0.3);
+        if (SL.Solids.correction(p, bulk, _rock)) {
+          p.add(_rock);
+          desired.addScaledVector(_rock.normalize(), speed * 1.4);
+        }
+      }
+
       // Surface: fish are held under it, but an air breather on its way up is
       // allowed through - that is the whole point of the climb.
       if (p.y > ceiling && this.state !== 'surfacing') {
@@ -182,6 +203,24 @@
       if (this.dead) return this.updateDeath(dt);
 
       const desired = this.avoidEnvironment(this.desiredVelocity(dt));
+
+      // Something pretending to be scenery is steered by nothing at all.
+      //
+      // avoidEnvironment above still runs, because its hard corrections - out
+      // of a rock, off the floor, under the surface - should still apply. What
+      // is thrown away is the steering it asks for: a mimic sitting on the
+      // bottom gets a permanent nudge upward from floor clearance, and that
+      // nudge is enough to keep it drifting, which keeps its speed above the
+      // threshold where the body turns to face its travel, which drags it back
+      // out of the pose it is holding. A coral does not hold station. It sits
+      // there.
+      if (this.holdStill) {
+        this.velocity.set(0, 0, 0);
+        this.exertion = SL.damp(this.exertion, 0.2, 3, dt);
+        this.animate(dt);
+        return;
+      }
+
       const desiredSpeed = desired.length();
 
       if (desiredSpeed > 1e-4) {
@@ -317,6 +356,17 @@
         : 0;
 
       this.state = 'cruise';
+
+      // A mimic holds one pose: nose to the surface, like the thing it is
+      // pretending to be. The yaw is per-fish, so a patch of them does not all
+      // face the same way - which is the sort of thing that gives a disguise
+      // away at a glance.
+      this.mimicPose = species.mimic
+        ? new THREE.Quaternion()
+          .setFromAxisAngle(_up, SL.random() * Math.PI * 2)
+          .multiply(new THREE.Quaternion().setFromAxisAngle(_right, -Math.PI / 2))
+        : null;
+
       this.leader = null;
       this.slot = new THREE.Vector3();
       this.wanderTarget = new THREE.Vector3();
@@ -329,6 +379,22 @@
     }
 
     setLeader(leader, slot) { this.leader = leader; this.slot.copy(slot); }
+
+    /**
+     * A mimic in the act does not animate.
+     *
+     * The wag is what gives a fish away at any distance, so it stops, and the
+     * body turns nose-up into the pose it holds. Everything else animates the
+     * way it always has.
+     */
+    animate(dt) {
+      if (this.state !== 'mimic' || !this.mimicPose) return super.animate(dt);
+
+      this.object.quaternion.slerp(this.mimicPose, 1 - Math.exp(-7 * dt));
+      this.bodyMesh.rotation.y = SL.damp(this.bodyMesh.rotation.y, 0, 5, dt);
+      this.tailMesh.rotation.y = SL.damp(this.tailMesh.rotation.y, 0, 5, dt);
+      if (this.jawMesh) this.jawMesh.rotation.x = 0;
+    }
 
     startle(from, duration) {
       if (this.dead) return;
@@ -387,6 +453,7 @@
 
     desiredVelocity(dt) {
       const p = this.position;
+      this.holdStill = false;
 
       this.senseTimer -= dt;
       if (this.senseTimer <= 0) { this.senseTimer = SL.randRange(0.3, 0.6); this.sense(); }
@@ -467,6 +534,36 @@
 
         if (this.fleeTimer <= 0) { this.state = 'cruise'; this.chooseWanderTarget(); this.stateTimer = 0; }
         return _tmp.add(_look).normalize().multiplyScalar(this.species.sprintSpeed);
+      }
+
+      // --- Being a coral ---------------------------------------------------------
+      //
+      // Fleeing outranks this, which is the right order: once the act is blown,
+      // running beats standing there. Everything the fish would otherwise be
+      // doing loses to it.
+      if (this.species.mimic) {
+        const S = this.species;
+        // Explicit undefined checks rather than `||`: zero is a perfectly
+        // sensible thing for either of these to be, and `|| 4` quietly turns
+        // "never break the act" into "break it at four metres".
+        const range = S.mimicRange !== undefined ? S.mimicRange : 24;
+        const breakAt = S.mimicBreak !== undefined ? S.mimicBreak : 4;
+        const distance = this.game.distanceToPlayer(p);
+
+        if (distance < range) {
+          // Close enough to have been reaching for it: the act is over.
+          if (distance < breakAt) {
+            this.startle(this.game.player.position, 7);
+            this.state = 'flee';
+            return _tmp.set(0, 0, 0);
+          }
+
+          this.state = 'mimic';
+          this.holdStill = true;
+          return _tmp.set(0, 0, 0);
+        }
+
+        if (this.state === 'mimic') { this.state = 'cruise'; this.chooseWanderTarget(); }
       }
 
       // --- Following a leader ---------------------------------------------------

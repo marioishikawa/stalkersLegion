@@ -382,13 +382,25 @@
       // exists to stop the frame cost growing with the map: the far majority
       // are stepped once every sixteen frames with a correspondingly longer
       // step, which is invisible at 140 m and costs a sixteenth of the work.
+      // Everything close enough to be drawn, collected as it is stepped: the
+      // separation pass below runs over these and nothing else, because a
+      // school smearing through itself two hundred metres away in the fog is
+      // not a problem anybody has.
+      const crowd = this._crowd || (this._crowd = []);
+      crowd.length = 0;
+
       for (const fish of this.fish) {
         const d2 = fish.position.distanceToSquared(playerPos);
         const near = d2 <= NEAR_DISTANCE_SQ;
         fish.object.visible = near;
+        // Close enough for the expensive parts of avoidance to be worth doing:
+        // the middle tier rather than the near one, so nothing pops out of a
+        // rock as you swim up to it.
+        fish.inSight = d2 <= MID_DISTANCE_SQ;
 
         if (near || fish.dead) {
           fish.update(dt);
+          if (near && !fish.dead) crowd.push(fish);
           continue;
         }
 
@@ -467,6 +479,16 @@
         if (near || crab.dead) crab.update(dt);
         else if ((this.frame & 3) === 0) crab.update(dt * 4);
       }
+
+      // Nothing goes through anything else. Run after every creature has had
+      // its step, so a fish cannot finish its frame inside another one or
+      // inside the diver.
+      for (const stalker of this.stalkers) {
+        if (!stalker.dead && stalker.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ) {
+          crowd.push(stalker);
+        }
+      }
+      SL.Crowd.separate(this, crowd);
 
       // The pet is always beside you, so it is never culled.
       for (const pet of this.pets) pet.update(dt);

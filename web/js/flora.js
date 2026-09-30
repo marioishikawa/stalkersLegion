@@ -129,8 +129,17 @@
   }
 
   /** A lumpy rock: a sphere with its vertices pushed around by noise. */
+  /**
+   * How big a boulder a seed and a scale will grow.
+   *
+   * Exported because the world builder records every rock it plants so that
+   * fish can be kept out of them, and a rock the collision grid thinks is a
+   * different size from the one you can see is worse than no collision at all.
+   */
+  SL.boulderRadius = (seed, scale) => SL.lerp(0.9, 3.2, hash(seed, 1, 19)) * scale;
+
   function boulder(mesh, seed, scale) {
-    const radius = SL.lerp(0.9, 3.2, hash(seed, 1, 19)) * scale;
+    const radius = SL.boulderRadius(seed, scale);
     const rock = new MeshData();
     Geo.sphere(rock, 0, 0, 0, radius, 10, new THREE.Color(0.30, 0.30, 0.32));
 

@@ -265,6 +265,11 @@
   function scatterFlora(game) {
     let total = 0;
 
+    // The rocks are about to be baked into merged patches, after which nobody
+    // can tell where any single one of them is. Recorded here first, so fish
+    // have something to not swim into.
+    if (SL.Solids) SL.Solids.reset();
+
     for (const biome of SL.Biomes.list) {
       const patches = Math.round((biome.floraDensity || 0) * 34 * areaFactorOf(biome));
       for (let p = 0; p < patches; p++) {
@@ -288,6 +293,8 @@
           const scale = Math.min(SL.randRange(0.7, 1.4), headroom / FLORA_HEIGHT[type]);
           if (scale < 0.25) continue;
 
+          const seed = (SL.random() * 1e9) | 0;
+
           instances.push({
             type,
             // Patch-local, with each plant's foot on the sea floor.
@@ -296,8 +303,17 @@
             z: z - center.z,
             yaw: SL.random() * Math.PI * 2,
             scale,
-            seed: (SL.random() * 1e9) | 0
+            seed
           });
+
+          // Only the rocks are solid. Kelp and grass are meant to be swum
+          // through, and a fish threading a sea fan is what a reef looks like.
+          if (type === 'boulder' && SL.Solids && SL.boulderRadius) {
+            const r = SL.boulderRadius(seed, scale);
+            // The builder lifts a boulder by a third of its radius so it sits
+            // on the floor rather than in it; the sphere has to match.
+            SL.Solids.add(x, floorY + r * 0.35, z, r);
+          }
         }
 
         const patch = SL.buildFloraPatch(instances, game.materials);

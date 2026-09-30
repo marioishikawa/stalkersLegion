@@ -322,6 +322,32 @@
                spineSegments: 33, radialSegments: 8 }
     }),
 
+    // ------------------------------------------------------------- The Cold Reef
+    fish('coralfish', 'Coral Fish', 'coldreef', 'disc', {
+      alsoIn: ['coral'],
+      note: 'It does not hide behind the coral, it hides as the coral: stops ' +
+            'dead, stands on its nose and holds a fan of red spines out into ' +
+            'the current. The colours are the sea fan\'s own, down to the ' +
+            'dark red at the base. Swim close enough to touch one and it ' +
+            'stops being a plant very suddenly.',
+      // The sea fan's own palette - dark red at the root, bright at the edge.
+      backColor: C(0.55, 0.10, 0.12), bellyColor: C(0.95, 0.35, 0.28), finColor: C(0.88, 0.28, 0.22),
+      eyeColor: C(0.12, 0.03, 0.04),
+      maxHealth: 24, cruiseSpeed: 1.0, sprintSpeed: 4.8, turnRate: 2.6,
+      senseRadius: 13, schoolSize: 2, groups: 6, altitude: 1.8, wagRate: 3.2,
+      // Freezes when anything comes within this, and gives up the act at the
+      // second one, which is close enough to have been about to touch it.
+      mimic: true, mimicRange: 26, mimicBreak: 4.2,
+      drops: { titanium: [1, 1] },
+      shape: { length: 0.42, height: 0.54, width: 0.05, bellyPosition: 0.46,
+               noseSharpness: 0.3, crossSection: 1.5, tailHeight: 0.30,
+               tailSweep: 0.16, tailFork: 0.15, dorsalFin: 0.20, ventralFin: 0.16,
+               sideFin: 0.06, eyeSize: 0.028, eyePosition: 0.10,
+               // The branches. Nine of them, which is what sells it.
+               backSpikes: 9,
+               spineSegments: 16, radialSegments: 9 }
+    }),
+
     // ------------------------------------------------------------ The Vent Field
     fish('smokerfin', 'Smokerfin', 'vents', 'torpedo', {
       note: 'Soot-black with a seam of heat down each flank. It holds station ' +

@@ -1,8 +1,8 @@
 # Stalkers Legion
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
-surface with a survival knife and ninety seconds of air. Below you are twelve
-biomes, fifty-one species, seven leviathans, one island, a field of black smokers
+surface with a survival knife and ninety seconds of air. Below you are thirteen
+biomes, fifty-two species, seven leviathans, one island, a field of black smokers
 and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
@@ -53,7 +53,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all fifty-one, in the databank.
+* **Catalogue every species** — all fifty-two, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -272,6 +272,7 @@ even past 120 m.
 | **Deep Trench** | Inside the canyon | ~4% |
 | **King's Basin** | The gouged basin | ~1% |
 | **Kelper's Reach** | The sunlit crown of the far bank | ~0.1% |
+| **The Cold Reef** | Coral patches scattered across the deep plain | ~5% |
 | **The Vent Field** | The smoker field, about 1,400 m out | ~0.7% |
 | **The Islet** | The island and its reef flat | ~0.8% |
 | **Abyssal Plain** | Everything below 76 m | ~70% |
@@ -284,6 +285,25 @@ the water outside your door.
 The world is **3,760 m across**. The islet is about 990 m out, the far forest
 about 1,170 m and the vent field about 1,400 m, which are serious swims at
 4.2 m/s on ninety seconds of air — the fabricator exists to close that gap.
+
+### The Cold Reef
+
+Cold-water coral, which is a real thing and grows in the dark. The abyssal
+plain was two thirds of the sea floor and it is *meant* to feel like crossing
+nothing — but nothing for two kilometres is a long time, so about a tenth of it
+is now reef: patches of coral garden you come across rather than a destination
+you set out for, pale pink floor, sea fans and tubes, and four times the life
+of the plain around them.
+
+It is a **threshold on noise the biome test already had in hand**, and that is
+the whole engineering story. The first version had a field function of its own
+that also raised the sea floor thirteen metres under each patch, which was
+prettier and cost nearly two seconds of world build and a measurable slice of
+every frame — because `floorHeightAt` runs for every terrain vertex and several
+times per fish per update, and `biomeAt` runs for all half a million vertices
+at build. Reusing the region noise that separates kelp from grass elsewhere
+costs nothing at all. The reef is its colour, its coral and its animals; the
+ground under it stays the plain's.
 
 ### The Vent Field
 
@@ -556,6 +576,16 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   out-swim it trivially, and leading it off the crystal makes it turn back.
   Tested: 147 swings and 75 seconds of uninterrupted knifing, through four
   sets, to put one down. Bring a tank.
+* **Coral Fish** — it does not hide *behind* the coral, it hides *as* the coral.
+  Come within twenty-six metres and it stops dead, stands on its nose and holds
+  a fan of nine red spines out into the current, in the sea fan's own palette —
+  dark red at the root, bright at the edge. Come within four and it stops being
+  a plant very suddenly. Getting that to work took one more thing than it
+  looks: a creature holding still still gets a permanent nudge upward from
+  floor clearance, and that nudge kept its speed just high enough that the body
+  turned to face its travel, which dragged it back out of the pose. A mimic in
+  the act now discards its steering entirely — the hard corrections that keep
+  it out of rocks and floors still apply, the drift does not.
 * **Snowfleck / Ghost Bell** — the open abyss: a glowing swarm that hangs in the
   dark, and a slow pale bell that pulses rather than swims.
 * **Cobblejaw / Trench Dart / Weaverfish** — the boulder slope, the canyon and
@@ -588,6 +618,41 @@ The amplitude grows toward the tail, so the head leads and the tail throws
 itself about rather than the whole animal shaking like a rope. It costs one
 `rotation.y` per link per frame. The Snake Fish is four and a bit metres of it,
 in eleven links.
+
+## Nothing goes through anything else
+
+Three separate problems that all read as one bug:
+
+**Rocks are solid.** Boulders are baked into merged patch geometry for the
+renderer's sake, after which nothing knows where any individual rock is — so
+the world builder now records each one as a sphere in a grid as it plants it,
+and creatures are pushed out of any they are inside *and* steered away from it,
+because the push alone leaves a fish grinding along the rock's surface with no
+idea it is there. Tested by dropping forty fish dead centre inside forty
+boulders: none of them were still inside a rock a quarter of a second later.
+Only rocks are solid — kelp and grass are meant to be swum through, and a fish
+threading a sea fan is what a reef looks like.
+
+**Fish are solid to each other.** A school used to interpenetrate freely, which
+reads as one smeared animal rather than nine. Every creature close enough to be
+drawn goes into a small grid each frame and overlapping pairs are eased apart —
+eased, not snapped, because a hard correction against a creature's own steering
+is how a fish ends up vibrating in place. The personal space is most of a body
+length rather than the mesh radius, which on a fish is its half-height and lets
+two of them sit inside one another nose to tail.
+
+**And nothing finishes its frame inside the diver.** The diver's own update
+already pushes creatures out, but the creature then swims its own step
+afterwards and can end it inside you. The same pass fixes that, moving the fish
+rather than the diver: you have already had your share of the shove, and a
+minnow does not move a person.
+
+The whole thing runs over the creatures near enough to be drawn — rarely more
+than a few dozen — and the rock tests are gated to the middle distance tier, so
+nothing pops out of a boulder as you swim up to it but the far ocean is not
+paying to resolve collisions nobody can see. Measured old against new,
+interleaved in the same container: frame time indistinguishable, world build up
+about a tenth, which is the coral rather than the collisions.
 
 ## Nests
 

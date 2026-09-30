@@ -121,6 +121,24 @@
     },
 
     {
+      // Cold-water coral, which is a real thing and grows in the dark: mounds
+      // of it scattered across the abyssal plain, in patches rather than in
+      // one place. The plain is most of the sea floor and it is meant to feel
+      // like crossing nothing - but nothing for two thousand metres is a long
+      // time, and this is what you find in the middle of it.
+      id: 'coldreef', name: 'The Cold Reef',
+      populationBoost: 1.8,
+      floorColor: new THREE.Color(0.52, 0.40, 0.42),
+      waterColor: new THREE.Color(0.06, 0.13, 0.20),
+      fogDensity: 0.034,
+      scrapDensity: 0.2, stalkerDensity: 0,
+      // Dense enough to read as a garden, and no denser. Coral is the most
+      // expensive thing to plant per square metre in the game and this biome
+      // covers a slice of the largest one - at reef-flat density it put two
+      // and a half seconds on world build all by itself.
+      flora: ['coralFan', 'coralTube', 'coralFan', 'glowPod'], floraDensity: 1.2
+    },
+    {
       // A field of black smokers on the deep floor, a long way out. The only
       // warm water in the game and the only light down there that is not
       // something's lure - chimneys standing twenty and thirty metres off a
@@ -507,6 +525,17 @@
     // the ocean - so the mineral noise has to run well above average for it.
     if (depth < 56) return mineral > 0.24 ? byId.crystal : byId.boulders;
     if (depth < 76) return mineral > 0.34 ? byId.crystal : byId.abyss;
+
+    // The plain, and the coral growing in patches across it.
+    //
+    // Tested last, so every seamount, bank, island and vent keeps its own
+    // ground - and tested with the region noise this function already has in
+    // hand rather than a field of its own. That matters more than it looks:
+    // biomeAt runs for all half a million terrain vertices at world build and
+    // a dedicated noise lookup here put nearly two seconds on the dive. The
+    // reef is a place, and a place is allowed to be a threshold on noise that
+    // was already computed.
+    if (region > 0.36) return byId.coldreef;
     return byId.abyss;
   }
 
