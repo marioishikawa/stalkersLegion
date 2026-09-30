@@ -879,8 +879,21 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
   background: var(--hull);
 }
 
-/* An unscanned entry keeps its slot but gives nothing away. */
+/* An unscanned entry keeps its slot and gives away one thing, if asked. */
 .entry:not(.is-known) .entry__name { color: var(--muted); font-style: italic; }
+
+.entry:not(.is-known) { cursor: pointer; transition: background 140ms ease-out; }
+.entry:not(.is-known):hover { background: color-mix(in srgb, var(--kelp) 10%, var(--hull)); }
+.entry:focus-visible { outline: 2px solid var(--phosphor); outline-offset: -2px; }
+
+/* A card you have already asked about, so a long list stays readable. */
+.entry.is-hinted { background: color-mix(in srgb, var(--phosphor) 7%, var(--hull)); }
+
+/* The prompt is furniture; the answer is a readout. */
+.entry__stats--ask {
+  color: color-mix(in srgb, var(--muted) 85%, transparent);
+  font-style: italic;
+}
 
 .entry__art {
   /* Drawn at 240x144 and shown at half that, so the lines stay crisp. */

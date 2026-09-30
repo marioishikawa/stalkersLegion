@@ -250,7 +250,55 @@
     /** Species ids the player has scanned, in this world. */
     scanned: {},
 
-    reset() { this.scanned = {}; },
+    /**
+     * Unscanned cards whose whereabouts have been asked for.
+     *
+     * Not part of the save. It is a card turned face up, not progress - a
+     * world that is reloaded starts them face down again, and turning one back
+     * over costs a click.
+     */
+    hinted: {},
+
+    reset() { this.scanned = {}; this.hinted = {}; },
+
+    /**
+     * Where a species is found, written out.
+     *
+     * The one thing an unscanned card will tell you. It is the same biome name
+     * the depth readout shows and the same one the teleport answers to, so it
+     * is a direction rather than trivia.
+     */
+    whereabouts(species) {
+      // "Somewhere in Safe Shallows" is not a sentence anybody writes. Biome
+      // names that already carry their article keep it, a possessive does not
+      // want one, and everything else gets a "the".
+      const name = (id) => {
+        const biome = SL.Biomes.byId[id];
+        if (!biome) return null;
+        // A name that carries its own article keeps it, lowercased because it
+        // is landing mid-sentence; a possessive does not want one at all.
+        if (/^The\b/.test(biome.name)) return 't' + biome.name.slice(1);
+        if (/'s\b/.test(biome.name)) return biome.name;
+        return 'the ' + biome.name;
+      };
+
+      const homes = [name(species.biome)]
+        .concat((species.alsoIn || []).map(name))
+        .filter(Boolean);
+
+      if (!homes.length) return 'Somewhere out there';
+      if (homes.length === 1) return 'Somewhere in ' + homes[0];
+      return 'Somewhere in ' + homes.slice(0, -1).join(', ') + ' or ' + homes[homes.length - 1];
+    },
+
+    /** Turns an unscanned card over, or back. */
+    toggleHint(id) {
+      if (this.scanned[id]) return;
+      if (this.hinted[id]) delete this.hinted[id];
+      else this.hinted[id] = true;
+      if (this.game) this.game.audio.click();
+      this.refresh();
+    },
 
     has(id) { return !!this.scanned[id]; },
 
@@ -300,6 +348,18 @@
 
         card.appendChild(canvas);
         card.appendChild(body);
+
+        // An unscanned card is a question you can ask: click it and it gives
+        // up where the animal lives, and nothing else.
+        card.tabIndex = 0;
+        card.addEventListener('click', () => this.toggleHint(species.id));
+        card.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleHint(species.id);
+        });
+
         this.list.appendChild(card);
         return { species, card, canvas, body };
       });
@@ -310,7 +370,12 @@
 
       for (const { species, card, canvas, body } of this.cards) {
         const known = this.has(species.id);
+        const hinted = !known && !!this.hinted[species.id];
         card.classList.toggle('is-known', known);
+        card.classList.toggle('is-hinted', hinted);
+        card.setAttribute('aria-label', known
+          ? species.name
+          : 'Unscanned creature. ' + (hinted ? this.whereabouts(species) : 'Click to see where it lives.'));
 
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, CARD_W, CARD_H);
@@ -319,7 +384,9 @@
         body.querySelector('.entry__name').textContent = known ? species.name : 'Unscanned';
 
         const biome = SL.Biomes.byId[species.biome];
-        body.querySelector('.entry__stats').textContent = known
+        const stats = body.querySelector('.entry__stats');
+
+        stats.textContent = known
           ? [
               (species.shape.length < 1
                 ? Math.round(species.shape.length * 100) + ' cm'
@@ -328,7 +395,8 @@
               biome ? biome.name : '',
               species.biteDamage > 0 ? species.biteDamage + ' dmg bite' : 'Harmless'
             ].filter(Boolean).join('  ·  ')
-          : '—';
+          : (hinted ? this.whereabouts(species) : 'Click for where it lives');
+        stats.classList.toggle('entry__stats--ask', !known && !hinted);
 
         body.querySelector('.entry__note').textContent = known ? (species.note || '') : '';
       }

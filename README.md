@@ -384,6 +384,19 @@ two pixels of white being the difference between an eye and a hole. Drawn at
 twice the size it is shown at, so the lines stay crisp. Unscanned species keep
 their slot as a blank grey contact.
 
+**An unscanned card will still tell you where to look.** Click one — or focus it
+and press Enter — and the line under it turns from *Click for where it lives*
+into **Somewhere in the Kelp Forest**, or wherever that animal actually is,
+listing both homes for the ten species that have two. It gives up nothing else:
+the name stays *Unscanned*, the note stays empty, and the picture stays a flat
+grey contact, so the card is still a thing to go and find rather than a thing
+you have read. The biome it names is the same name on the depth readout and the
+same one the teleport answers to, so it is a direction rather than trivia.
+
+Which cards you have turned over is **not** part of the save. It is a card face
+up, not progress — reload and they are face down again, and turning one back
+over costs a click.
+
 Scans belong to the world they were made in and are saved with it.
 
 ## The chart
