@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are thirteen
-biomes, fifty-two species, seven leviathans, one island, a field of black smokers
+biomes, fifty-six species, seven leviathans, one island, a field of black smokers
 and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
@@ -53,7 +53,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all fifty-two, in the databank.
+* **Catalogue every species** — all fifty-six, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -576,6 +576,27 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   out-swim it trivially, and leading it off the crystal makes it turn back.
   Tested: 147 swings and 75 seconds of uninterrupted knifing, through four
   sets, to put one down. Bring a tank.
+* **Sphere Fish** — a ball with an eye and a tail. No spines, no teeth, no
+  trick and no opinion. The spindle peaks dead centre, the section is a circle
+  and the height and width are each half the length, which makes the diameter
+  the length: measured off the built mesh, its bounding box is 0.287 × 0.285 ×
+  0.300 m, so it is round to within five per cent. Shallows and the islet, and
+  completely harmless.
+* **Green, Blue and Red Turtle** — one animal in three coats, the way the Craber
+  and the Crober are: a low domed shell just under a metre across, swept front
+  flippers, small back ones held almost flat, banded scutes, and a lungful of
+  air that lasts nearly two minutes before it climbs to blow. They are all
+  shallow-water animals for that last reason — something that has to reach the
+  surface has no business living at eighty metres — and they live in three
+  different places, so finding all three is a tour of the sunlit half of the
+  map rather than three identical encounters in one bay. Green in the shallows
+  and the kelp, blue over the grass flats, red on the reef and the islet, where
+  a red shell on red coral is most of a hiding place.
+
+  The back flippers needed one new number. Legs were built hanging straight
+  down, which is right for a crab and wrong for a turtle, so limbs now take a
+  `legDrop`: one is a crab's leg, a quarter is a flipper held out to the side.
+  Everything already walking in the game defaults to one and is untouched.
 * **Coral Fish** — it does not hide *behind* the coral, it hides *as* the coral.
   Come within twenty-six metres and it stops dead, stands on its nose and holds
   a fan of nine red spines out into the current, in the sea fan's own palette —

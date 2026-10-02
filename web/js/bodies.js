@@ -262,12 +262,20 @@
       const t = SL.lerp(0.28, 0.62, S.legPairs > 1 ? i / (S.legPairs - 1) : 0.5);
       const r = ringAt(t);
       const legLength = length * (S.legScale || 0.11);
+
+      // How far a limb hangs rather than reaches. One is a crab's leg, straight
+      // down under the body; a quarter is a turtle's back flipper, held almost
+      // flat out to the side. Defaulting to one leaves every legged animal
+      // already in the game exactly as it was.
+      const drop = S.legDrop !== undefined ? S.legDrop : 1;
+      const reach = 0.7 + (1 - drop) * 1.1;
+
       for (const side of [1, -1]) {
         const root = V(side * halfWidths[r] * 0.8, -halfHeights[r] * 0.6, spine[r].z);
         addFin(
           root,
-          root.clone().add(V(0, 0, legLength * 0.3)),
-          root.clone().add(V(side * legLength * 0.7, -legLength, -legLength * 0.2)),
+          root.clone().add(V(0, 0, legLength * (0.3 + (1 - drop) * 0.5))),
+          root.clone().add(V(side * legLength * reach, -legLength * drop, -legLength * 0.2)),
           species.finColor);
       }
     }

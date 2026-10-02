@@ -44,6 +44,36 @@
     }, overrides.shape) });
   }
 
+  /**
+   * One turtle, worn three times.
+   *
+   * A flat wide shell rather than a tall one - the disc profile with the height
+   * and the width swapped round from a reef fish - with a high cross-section
+   * power so the section is a rounded box instead of a lens, two pairs of
+   * flippers where a crab would have legs, and banded scutes from the stripe
+   * term. Shared by all three so the colours are the only difference, which is
+   * what was asked for and is also how the Craber and the Crober work.
+   */
+  const TURTLE = {
+    length: 1.15, height: 0.19, width: 0.40, bellyPosition: 0.44,
+    // Rounded rather than boxy: a high cross-section power made a brick with
+    // spikes on it, which is not what a shell looks like from any angle.
+    noseSharpness: 0.5, crossSection: 2.4,
+    tailHeight: 0.06, tailSweep: 0.09, tailFork: 0.2,
+    dorsalFin: 0, ventralFin: 0,
+    // The front flippers, which are the big ones: the pectoral-fin builder
+    // already sweeps a fin out and back from the shoulder, which is exactly
+    // the shape wanted.
+    sideFin: 0.32,
+    // And the back pair, held almost flat rather than hanging down.
+    legPairs: 1, legScale: 0.26, legDrop: 0.25,
+    // The ridge down the shell, and the scutes across it.
+    backSpikes: 3, stripes: 4,
+    eyeSize: 0.038, eyeRing: true, eyePosition: 0.07, eyeHeight: 0.55,
+    mouthLine: 0.012,
+    spineSegments: 15, radialSegments: 12
+  };
+
   const SPECIES = [
     // ------------------------------------------------------------- Safe Shallows
     fish('glimmerfin', 'Glimmerfin', 'shallows', 'torpedo', {
@@ -53,6 +83,26 @@
       backColor: C(0.35, 0.72, 0.85), bellyColor: C(0.95, 0.96, 0.90), finColor: C(0.95, 0.78, 0.30),
       schoolSize: 10, groups: 6,
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
+    }),
+    fish('spherefish', 'Sphere Fish', 'shallows', 'torpedo', {
+      alsoIn: ['islet'],
+      note: 'A ball with an eye and a tail. No spines, no teeth, no trick and ' +
+            'no opinion - it is the roundest thing in the sea and it is ' +
+            'entirely harmless.',
+      backColor: C(0.95, 0.74, 0.26), bellyColor: C(1.0, 0.93, 0.70), finColor: C(0.98, 0.56, 0.22),
+      eyeColor: C(0.05, 0.04, 0.03),
+      maxHealth: 16, cruiseSpeed: 1.1, sprintSpeed: 2.6, turnRate: 2.0,
+      schoolSize: 5, groups: 5, altitude: 3, wagRate: 5,
+      // A sphere, and nothing but: the spindle peaks dead centre, the section
+      // is a circle, and the height and the width are each half the length -
+      // which makes the diameter the length. The nose sharpness is zero so
+      // even the snout does not pinch in.
+      shape: { length: 0.30, height: 0.5, width: 0.5, bellyPosition: 0.5,
+               noseSharpness: 0, crossSection: 2,
+               tailHeight: 0.16, tailSweep: 0.14, tailFork: 0.3,
+               dorsalFin: 0.07, ventralFin: 0.05, sideFin: 0.09,
+               eyeSize: 0.075, eyeRing: true, eyePosition: 0.16,
+               spineSegments: 16, radialSegments: 14 }
     }),
     fish('bubblepeep', 'Bubblepeep', 'shallows', 'bulb', {
       alsoIn: ['islet'],
@@ -157,6 +207,62 @@
       shape: { length: 1.9, height: 0.17, width: 0.13, bellyPosition: 0.34, noseSharpness: 0.55,
                tailHeight: 0.17, tailSweep: 0.20, tailFork: 0.65, dorsalFin: 0.13,
                sideFin: 0.15, eyeSize: 0.018, spineSegments: 18 }
+    }),
+    // --------------------------------------------------------------- The turtles
+    //
+    // One animal in three coats, the way the Craber and the Crober are: a flat
+    // wide shell, four flippers, a small beaked head, and a lungful of air that
+    // lasts the best part of two minutes. They are all shallow-water animals
+    // for that last reason - something that has to reach the surface has no
+    // business living at eighty metres.
+    //
+    // They differ by colour and by where they live, and nothing else. Finding
+    // all three is a tour of the sunlit half of the map rather than three
+    // identical encounters in the same bay.
+    fish('greenturtle', 'Green Turtle', 'shallows', 'disc', {
+      alsoIn: ['kelp'],
+      diet: 'mammal',
+      note: 'Grazes the shallows at walking pace and climbs for air about ' +
+            'twice a minute. Nothing hurries it and nothing much bothers it: ' +
+            'the shell is the whole strategy.',
+      backColor: C(0.26, 0.52, 0.26), bellyColor: C(0.90, 0.92, 0.74), finColor: C(0.34, 0.60, 0.30),
+      eyeColor: C(0.06, 0.05, 0.03),
+      maxHealth: 85, cruiseSpeed: 1.2, sprintSpeed: 3.6, turnRate: 1.4,
+      // Solitary, and thin on the ground: a turtle should be something you
+      // come across, not something you wade through.
+      senseRadius: 14, schoolSize: 1, groups: 1.1, altitude: 3, wagRate: 2.2,
+      breathSeconds: 110, voice: 'blow',
+      shape: TURTLE
+    }),
+    fish('blueturtle', 'Blue Turtle', 'plateau', 'disc', {
+      alsoIn: ['shallows'],
+      diet: 'mammal',
+      note: 'The open-ground one: slate blue, and it works the grass flats ' +
+            'rather than the weed. Slightly smaller than the green and no ' +
+            'faster, which on a turtle means nothing at all.',
+      backColor: C(0.22, 0.42, 0.72), bellyColor: C(0.84, 0.90, 0.96), finColor: C(0.30, 0.54, 0.80),
+      eyeColor: C(0.04, 0.05, 0.08),
+      maxHealth: 85, cruiseSpeed: 1.2, sprintSpeed: 3.6, turnRate: 1.4,
+      // Solitary, and thin on the ground: a turtle should be something you
+      // come across, not something you wade through.
+      senseRadius: 14, schoolSize: 1, groups: 1.1, altitude: 3, wagRate: 2.2,
+      breathSeconds: 110, voice: 'blow',
+      shape: TURTLE
+    }),
+    fish('redturtle', 'Red Turtle', 'coral', 'disc', {
+      alsoIn: ['islet'],
+      diet: 'mammal',
+      note: 'Rust red, and it keeps to the reef, where a red shell on red ' +
+            'coral is most of a hiding place. The seamount tops are its ' +
+            'country, which is also the shortest climb to air in the game.',
+      backColor: C(0.72, 0.26, 0.15), bellyColor: C(0.94, 0.84, 0.66), finColor: C(0.82, 0.36, 0.20),
+      eyeColor: C(0.08, 0.03, 0.02),
+      maxHealth: 85, cruiseSpeed: 1.2, sprintSpeed: 3.6, turnRate: 1.4,
+      // Solitary, and thin on the ground: a turtle should be something you
+      // come across, not something you wade through.
+      senseRadius: 14, schoolSize: 1, groups: 1.1, altitude: 3, wagRate: 2.2,
+      breathSeconds: 110, voice: 'blow',
+      shape: TURTLE
     }),
     fish('fatfish', 'Fatfish', 'shallows', 'bulb', {
       alsoIn: ['islet'],
