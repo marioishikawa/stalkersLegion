@@ -78,6 +78,10 @@
     // ------------------------------------------------------------- Safe Shallows
     fish('glimmerfin', 'Glimmerfin', 'shallows', 'torpedo', {
       alsoIn: ['islet'],
+      // Nests, because something now hunts them on purpose. The scarcer they
+      // get the faster the clutches come, which is what stops a shark - or a
+      // diver - taking the shallows apart.
+      nests: true,
       note: "Small, quick and mirror-bright. The first fish anyone sees.",
       // Small, quick, mirror-bright. The first fish you ever see.
       backColor: C(0.35, 0.72, 0.85), bellyColor: C(0.95, 0.96, 0.90), finColor: C(0.95, 0.78, 0.30),
@@ -138,6 +142,37 @@
                noseSharpness: 0.85, crossSection: 1.8, tailHeight: 0.035,
                tailSweep: 0.10, tailFork: 0, dorsalFin: 0.015, ventralFin: 0,
                sideFin: 0.02, eyeSize: 0.022, spineSegments: 20, radialSegments: 7 }
+    }),
+    fish('bluelong', 'Blue Longfish', 'kelp', 'ribbon', {
+      alsoIn: ['plateau'],
+      note: 'A metre and a half of blue ribbon with a fish at one end. It ' +
+            'does not dart and it does not hide - it just keeps going, in a ' +
+            'straight line, at its own pace.',
+      backColor: C(0.12, 0.34, 0.78), bellyColor: C(0.76, 0.88, 0.98), finColor: C(0.20, 0.52, 0.92),
+      eyeColor: C(0.03, 0.04, 0.10),
+      maxHealth: 24, cruiseSpeed: 1.6, sprintSpeed: 4.0, turnRate: 1.5,
+      schoolSize: 3, groups: 5, altitude: 4.5, wagRate: 3.4,
+      shape: { length: 1.5, height: 0.14, width: 0.035, bellyPosition: 0.30,
+               noseSharpness: 0.65, crossSection: 1.7,
+               tailHeight: 0.10, tailSweep: 0.18, tailFork: 0.25,
+               dorsalFin: 0.09, ventralFin: 0.06, sideFin: 0.05,
+               eyeSize: 0.022, stripes: 7, spineSegments: 22 }
+    }),
+    fish('bluefat', 'Blue Fatfish', 'shallows', 'bulb', {
+      alsoIn: ['plateau'],
+      note: 'Deep blue, nearly as wide as it is long, and built like ' +
+            'something that has never had to hurry. It hangs just off the ' +
+            'bottom and watches you go past.',
+      backColor: C(0.10, 0.26, 0.62), bellyColor: C(0.70, 0.84, 0.94), finColor: C(0.16, 0.40, 0.80),
+      eyeColor: C(0.04, 0.03, 0.06),
+      maxHealth: 44, cruiseSpeed: 0.9, sprintSpeed: 2.2, turnRate: 1.3,
+      schoolSize: 3, groups: 5, altitude: 2.6, wagRate: 3.2,
+      shape: { length: 0.80, height: 0.44, width: 0.38, bellyPosition: 0.36,
+               noseSharpness: 0.12, crossSection: 3.0,
+               tailHeight: 0.20, tailSweep: 0.15, tailFork: 0.2,
+               dorsalFin: 0.12, ventralFin: 0.09, sideFin: 0.17,
+               eyeSize: 0.055, eyeRing: true, mouthLine: 0.016,
+               spineSegments: 16, radialSegments: 12 }
     }),
     fish('darter', 'Kelp Darter', 'kelp', 'arrow', {
       note: "Needle-nosed sprinter. Bolts the instant anything looks at it.",
@@ -655,6 +690,26 @@
     }),
 
     // ------------------------------------------------------------- The predator
+    fish('shark', 'Shark', 'shallows', 'torpedo', {
+      alsoIn: ['kelp'],
+      diet: 'carnivore',
+      note: 'Here for the Glimmerfin, and it will cross its whole range for ' +
+            'one. It has no interest in scrap and none in you - but it will ' +
+            'pick a fight with a stalker that gets in the way, and anything ' +
+            'that cuts it has its full attention.',
+      backColor: C(0.30, 0.34, 0.38), bellyColor: C(0.92, 0.93, 0.90), finColor: C(0.24, 0.28, 0.32),
+      eyeColor: C(0.04, 0.04, 0.05),
+      maxHealth: 180, cruiseSpeed: 2.4, sprintSpeed: 7.4, turnRate: 2.0,
+      senseRadius: 34, biteDamage: 20, biteInterval: 3.0,
+      schoolSize: 1, groups: 0, altitude: 5, wagRate: 3.0,
+      shape: { length: 3.2, height: 0.15, width: 0.10, bellyPosition: 0.32,
+               noseSharpness: 0.8, crossSection: 2.2,
+               // The crescent tail and the fin that gives it away.
+               tailHeight: 0.22, tailSweep: 0.24, tailFork: 0.7,
+               dorsalFin: 0.17, ventralFin: 0.06, sideFin: 0.17,
+               eyeSize: 0.016, eyePosition: 0.12, mouthLine: 0.014,
+               jawLength: 0.15, spineSegments: 20, radialSegments: 11 }
+    }),
     fish('stalker', 'Stalker', 'kelp', 'eel', {
       note: "Obsessed with scrap metal. Chews it, hauls it, and bites whatever interrupts.",
       diet: 'carnivore',
@@ -929,6 +984,7 @@
     whale: byId.whale,
     redPuff: byId.redpuff,
     petStalker: byId.petstalker,
+    shark: byId.shark,
     kelperLeviathan: byId.kelperlev,
     kelper: byId.kelper,
     walkingcarni: byId.walkingcarni,

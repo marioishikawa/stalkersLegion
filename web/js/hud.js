@@ -183,6 +183,12 @@
       // frightening, it is just unfair.
       let closest = null, closestDistance = 26, range = 26;
 
+      for (const shark of this.game.sharks) {
+        if (shark.dead || !shark.hunting) continue;
+        const d = shark.position.distanceTo(p.position);
+        if (d < closestDistance) { closestDistance = d; closest = shark; }
+      }
+
       for (const stalker of this.game.stalkers) {
         if (stalker.dead) continue;
         const d = stalker.position.distanceTo(p.position);

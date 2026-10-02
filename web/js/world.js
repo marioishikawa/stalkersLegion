@@ -715,6 +715,7 @@
     scatterNests(game);
     spawnIslander(game);
     scatterCrabers(game);
+    scatterSharks(game);
 
     for (const biome of SL.Biomes.list) {
       const density = POPULATION * areaFactorOf(biome);
@@ -783,6 +784,34 @@
         const stalker = new SL.Stalker(game, SL.Species.stalker, point.x, y, point.z);
         stalker.territory.set(point.x, y, point.z);
         game.stalkers.push(stalker);
+      }
+    }
+  }
+
+  /**
+   * Sharks, where the Glimmerfin are.
+   *
+   * Few and widely spread: one shark is an event, six are a hazard, and sixty
+   * would empty the shallows no matter how hard the nests worked.
+   */
+  function scatterSharks(game) {
+    if (!SL.Shark) return;
+
+    for (const biome of [SL.Biomes.byId.shallows, SL.Biomes.byId.kelp]) {
+      if (!biome) continue;
+      const count = Math.max(1, Math.round(0.55 * areaFactorOf(biome)));
+
+      for (let i = 0; i < count; i++) {
+        const point = SL.Biomes.randomPointIn(biome);
+        if (!point) continue;
+
+        const floor = SL.Biomes.floorHeightAt(point.x, point.z);
+        if (floor > SL.WATER_LEVEL - 5) continue;      // needs water over it
+
+        const y = Math.min(floor + 5, SL.WATER_LEVEL - 3);
+        const shark = new SL.Shark(game, point.x, y, point.z);
+        shark.territory.set(point.x, y, point.z);
+        game.sharks.push(shark);
       }
     }
   }
@@ -867,5 +896,6 @@
 
   SL.World = { buildTerrain, buildWaterSurface, buildSky, updateWater, buildLighting,
     scatterFlora, scatterScrap, scatterCrystals, spawnCreatures, spawnLeviathans,
-    scatterNests, spawnIslander, scatterCrabers, replenishScrap, updateAmbience };
+    scatterNests, spawnIslander, scatterCrabers, scatterSharks, replenishScrap,
+    updateAmbience };
 })(window.SL);

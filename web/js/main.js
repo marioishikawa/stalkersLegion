@@ -32,6 +32,7 @@
       this.kelperLevs = [];
       this.glowLevs = [];
       this.diamondLevs = [];
+      this.sharks = [];
       this.carniLevs = [];
       this.crabers = [];
       this.kelpers = [];
@@ -146,6 +147,7 @@
       this.kelperLevs.length = 0;
       this.glowLevs.length = 0;
       this.diamondLevs.length = 0;
+      this.sharks.length = 0;
       this.carniLevs.length = 0;
       this.crabers.length = 0;
       // The surface patch lives in worldGroup and is rebuilt with it.
@@ -453,6 +455,13 @@
         lev.update(dt);
       }
 
+      // Sharks always think, the same way stalkers do: a hunt that only runs
+      // when you are watching is not a population, it is a cutscene.
+      for (const shark of this.sharks) {
+        shark.object.visible = shark.position.distanceToSquared(playerPos) < 6 * CULL_DISTANCE * CULL_DISTANCE;
+        shark.update(dt);
+      }
+
       // Kelpers exist to reach you, so they always think - and they remove
       // themselves the moment they get away, hence the backwards walk.
       for (let i = this.kelpers.length - 1; i >= 0; i--) {
@@ -486,6 +495,11 @@
       for (const stalker of this.stalkers) {
         if (!stalker.dead && stalker.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ) {
           crowd.push(stalker);
+        }
+      }
+      for (const shark of this.sharks) {
+        if (!shark.dead && shark.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ) {
+          crowd.push(shark);
         }
       }
       SL.Crowd.separate(this, crowd);

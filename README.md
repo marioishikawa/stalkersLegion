@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are thirteen
-biomes, fifty-six species, seven leviathans, one island, a field of black smokers
+biomes, fifty-nine species, seven leviathans, one island, a field of black smokers
 and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
@@ -53,7 +53,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all fifty-six, in the databank.
+* **Catalogue every species** — all fifty-nine, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -576,6 +576,29 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   out-swim it trivially, and leading it off the crystal makes it turn back.
   Tested: 147 swings and 75 seconds of uninterrupted knifing, through four
   sets, to put one down. Bring a tank.
+* **Shark** — a second predator in water that already had one, and deliberately
+  not a second stalker. A stalker is obsessed with scrap metal and bites
+  whatever interrupts it; the shark has no interest in metal at all, and none
+  in you. It is here for the **Glimmerfin**, and three rules make it its own
+  animal:
+
+  **It hunts one fish**, and will cross its whole range for one. **It will not
+  eat them out**: below 45% of what the world started with it stops hunting
+  them entirely and takes something else, which together with the nests on the
+  species is what keeps the shallows from going quiet. And **it fights
+  stalkers, sometimes** — a roll when one comes into range and a long cooldown
+  afterwards, so meeting a shark and a stalker in the same stretch of kelp is
+  an event rather than a fixture. Tested: it took a stalker from 130 health to
+  30 and the stalker bit back for 52 before breaking off. Neither of them is on
+  your side.
+
+  It also had to learn to be hungry. The first version ate a Glimmerfin every
+  five seconds — twelve kills a minute from one animal, seventy-seven fish out
+  of the shallows in a minute flat. A shark that has just eaten now spends a
+  minute or two digesting, which is what a shark mostly does.
+* **Blue Longfish and Blue Fatfish** — a metre and a half of blue ribbon that
+  never hurries, and a deep blue thing nearly as wide as it is long that hangs
+  off the bottom and watches you go past. Kelp and the grass flats.
 * **Sphere Fish** — a ball with an eye and a tail. No spines, no teeth, no
   trick and no opinion. The spindle peaks dead centre, the section is a circle
   and the height and width are each half the length, which makes the diameter
@@ -639,6 +662,24 @@ The amplitude grows toward the tail, so the head leads and the tail throws
 itself about rather than the whole animal shaking like a rope. It costs one
 `rotation.y` per link per frame. The Snake Fish is four and a bit metres of it,
 in eleven links.
+
+## Nothing goes extinct either
+
+The Glimmerfin is the first fish anyone sees and now the thing a shark came for,
+so it gets two defences that work in opposite directions and meet in the middle.
+
+**It nests.** Nests hatch faster the scarcer a species is (see below), so the
+harder something is hunted the harder they work.
+
+**And the shark counts.** Every few seconds it compares the living Glimmerfin
+against what this world started with, and below 45% it takes them off the menu
+entirely and hunts something else. A predator that eats the last of its prey has
+made a mistake, and this one does not make it.
+
+Tested by culling the shallows to 30% of the starting population — below the
+floor — and leaving eight sharks in the water for four minutes: every shark had
+switched off them, and the population climbed 162 → 167 → 169 → 176 → 183 → 189
+→ 196 without a single dip. It cannot be driven to zero, by a shark or by you.
 
 ## Nothing goes through anything else
 
