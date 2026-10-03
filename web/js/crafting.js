@@ -29,7 +29,7 @@
       name: 'Serrated Blade',
       blurb: 'Knife 28 → 52 damage, and swings faster. Three hits to a stalker.',
       cost: { titanium: 4, tooth: 2 },
-      apply(player) { player.knifeDamage = 52; player.swingDuration = 0.36; }
+      apply(player) { player.knifeDamage = 52; player.swingDuration = 0.36; player.setKnifeTier(1); }
     },
     {
       id: 'suit',
@@ -52,7 +52,7 @@
       blurb: 'Knife 52 → 84 damage and longer reach. Two hits to a stalker.',
       cost: { titanium: 8, tooth: 6 },
       requires: 'blade2',
-      apply(player) { player.knifeDamage = 84; player.knifeReach = 2.9; }
+      apply(player) { player.knifeDamage = 84; player.knifeReach = 2.9; player.setKnifeTier(2); }
     },
 
     // --- Consumables. These stack and are spent, not equipped. ---------------
@@ -139,7 +139,7 @@
       blurb: 'Knife 84 → 140 damage. The only edge that troubles a leviathan.',
       cost: { diamond: 4, titanium: 10, tooth: 8 },
       requires: 'blade3',
-      apply(player) { player.knifeDamage = 140; player.knifeReach = 3.2; }
+      apply(player) { player.knifeDamage = 140; player.knifeReach = 3.2; player.setKnifeTier(3); }
     }
   ];
 

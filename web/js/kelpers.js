@@ -315,6 +315,45 @@
     }
   }
 
+  /**
+   * The forest's own thieves, independent of the leviathan.
+   *
+   * Kelpers used to exist only while the Kelper Leviathan was alive to call
+   * them, and they delete themselves after seventy seconds. Killing that
+   * leviathan is REQUIRED to finish a world - so a diver who killed it before
+   * ever scanning a kelper could never catalogue the species, and could never
+   * finish that world again. A permanent, silent, unrecoverable dead end.
+   *
+   * They live in the Reach whether or not anything is directing them. If the
+   * diver is in the forest and there is not a single kelper in the world, a
+   * pair comes out of the weeds. The leviathan calling up a whole court is
+   * still its own move; this is only the floor under it.
+   */
+  const RESTOCK_INTERVAL = 22;
+
+  SL.Kelpers = {
+    tick(game, dt) {
+      if (!game.started || !game.player || game.player.dead) return;
+
+      game.kelperRestock = (game.kelperRestock || 0) - dt;
+      if (game.kelperRestock > 0 || game.kelpers.length > 0) return;
+
+      const p = game.player.position;
+      if (SL.Biomes.biomeAt(p.x, p.z) !== SL.Biomes.byId.farkelp) return;
+
+      game.kelperRestock = RESTOCK_INTERVAL;
+
+      for (let i = 0; i < 2; i++) {
+        const angle = SL.random() * Math.PI * 2;
+        const radius = SL.randRange(22, 40);
+        const x = p.x + Math.cos(angle) * radius;
+        const z = p.z + Math.sin(angle) * radius;
+        const y = Math.min(SL.Biomes.floorHeightAt(x, z) + SL.randRange(3, 8), SL.WATER_LEVEL - 3);
+        game.kelpers.push(new Kelper(game, x, y, z, new THREE.Vector3(x, y, z)));
+      }
+    }
+  };
+
   SL.Kelper = Kelper;
   SL.KelperLeviathan = KelperLeviathan;
 })(window.SL);

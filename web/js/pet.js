@@ -130,9 +130,29 @@
       return this.fishSpecies().filter((s) => SL.Index.has(s.id)).length;
     },
 
+    /**
+     * Sends the bonded stalker away, and makes it stay away.
+     *
+     * Three things would otherwise bring it straight back: the respawn timer,
+     * the databank check that awarded it in the first place, and - if it was
+     * killed rather than dismissed - its own death handler. So dismissal is a
+     * flag on the world rather than just a deletion, and taming again clears
+     * it.
+     */
+    dismiss(game) {
+      if (!game) return false;
+      game.petDismissed = true;
+      game.petRespawn = 0;
+
+      const had = game.pets.length > 0;
+      for (let i = game.pets.length - 1; i >= 0; i--) game.pets[i].destroy();
+      game.pets.length = 0;
+      return had;
+    },
+
     /** Called whenever something new is catalogued. */
     checkUnlock(game) {
-      if (!game || game.pets.length || game.petRespawn > 0) return;
+      if (!game || game.petDismissed || game.pets.length || game.petRespawn > 0) return;
 
       const fish = this.fishSpecies();
       if (this.scannedFish() < fish.length) return;
@@ -150,6 +170,7 @@
     },
 
     update(game, dt) {
+      if (game.petDismissed) { game.petRespawn = 0; return; }
       if (game.petRespawn > 0) {
         game.petRespawn -= dt;
         if (game.petRespawn <= 0 && !game.pets.length) {

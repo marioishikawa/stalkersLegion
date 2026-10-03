@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are thirteen
-biomes, sixty-three species, seven leviathans, one island, a field of black smokers
+biomes, sixty-four species, seven leviathans, one island, a field of black smokers
 and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
@@ -53,7 +53,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all sixty-three, in the databank.
+* **Catalogue every species** — all sixty-four, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -608,6 +608,21 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   out-swim it trivially, and leading it off the crystal makes it turn back.
   Tested: 147 swings and 75 seconds of uninterrupted knifing, through four
   sets, to put one down. Bring a tank.
+* **Spotted Handfish** — a real fish, and a famously unlucky one. It walks the
+  bottom on a pair of modified fins rather than swimming, and it will not leave
+  its eggs: come near the clutch and it puts itself between you and them. That
+  is above fleeing in its priority list, which is the whole behaviour — a fish
+  that runs from its own eggs is not guarding them. Guarding species are now
+  spawned *on* a nest with a seven-metre leash rather than the usual
+  twenty-two, because the first version spawned keepers fifty metres from any
+  clutch and they never found one to keep. Tested: twenty of twenty-six nests
+  have a keeper within twelve metres, it rests 0.79 m from its eggs, and over a
+  diver's whole approach it guarded for 206 frames and fled for none.
+
+  Its spots are geometry, not a stripe: the stripe term bands a whole ring at a
+  time, which is the wrong shape for a spotted animal entirely, so they are
+  small spheres set into the flanks and laid out by golden-ratio steps, which
+  keeps the markings identical every time the body is built.
 * **Shark** — a second predator in water that already had one, and deliberately
   not a second stalker. A stalker is obsessed with scrap metal and bites
   whatever interrupts it; the shark has no interest in metal at all, and none
@@ -628,6 +643,13 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   five seconds — twelve kills a minute from one animal, seventy-seven fish out
   of the shallows in a minute flat. A shark that has just eaten now spends a
   minute or two digesting, which is what a shark mostly does.
+* **The knife changes when you upgrade it.** Three fabricator upgrades used to
+  change nothing but a number in a menu — you swung identical steel at a
+  leviathan with a diamond edge. Each tier is its own geometry now: the plain
+  survival knife, then a longer blade with a full row of deeper serrations and
+  a bronze guard, then stalker teeth set along the cutting edge over a bound
+  grip, and finally a pale crystal edge with gold furniture. The grip and the
+  point carry through all four so it stays recognisably one tool.
 * **Blue Longfish and Blue Fatfish** — a metre and a half of blue ribbon that
   never hurries, and a deep blue thing nearly as wide as it is long that hangs
   off the bottom and watches you go past. Kelp and the grass flats.
@@ -700,6 +722,50 @@ The amplitude grows toward the tail, so the head leads and the tail throws
 itself about rather than the whole animal shaking like a rope. It costs one
 `rotation.y` per link per frame. The Snake Fish is four and a bit metres of it,
 in eleven links.
+
+## The stalkers had all gone to the king
+
+They are supposed to live in the kelp forest. Somebody playing noticed there
+were only ever a handful about, and the measurement was worse than the
+complaint: **two minutes into a world, 88 of 126 stalkers were on a tribute
+run**, 85 were more than 150 m from the water they live in, nineteen were strung
+out across the abyssal plain, and the kelp forest had lost half its population
+and did not get it back.
+
+One line did it. Scrap is everywhere, a stalker that picks a piece up carries it
+to the king's hoard, and the hoard is 800 m out — so every stalker in the game
+became a courier, and the return trip is a patrol swim at 2.2 m/s. A stalker now
+hauls to the hoard only if the hoard is within **300 m**, and otherwise stashes
+the piece near home, which is what it did before there was a king to serve at
+all. Measured directly rather than soaked for: of 135 stalkers, **6 would haul
+and 129 stash**, and none disagree with the rule.
+
+The basin's own stalkers still feed the hoard, so you still see the behaviour
+where the hoard is.
+
+## Two ways a world could brick itself
+
+Both found by playing rather than by testing, and both the same shape: a species
+that cannot be catalogued is a world that cannot be finished.
+
+**The Bonded Stalker could not be scanned.** It is a databank entry like any
+other, and the one creature you are *given* rather than find — you earn it by
+scanning every fish, which makes it always the last card. `game.pets` was
+missing from the scanner's target list, so every world in the game stopped dead
+at 63 of 64 and nobody could tell why. It was in no target list at all: it
+could not be scanned, it had no focus label, and you swam through it.
+
+**And the Kelper could be lost forever.** Kelpers only existed while the Kelper
+Leviathan was alive to call them, and they delete themselves after seventy
+seconds — but killing that leviathan is *required* to finish a world. Kill it
+before scanning one and the species was gone from that world permanently. The
+forest now keeps its own: if the diver is in Kelper's Reach and there is not a
+single kelper alive anywhere, a pair comes out of the weeds. Tested with the
+leviathan dead: two appeared and were catalogued.
+
+The beatability check below was no help with either, because it *excluded* both
+species as "special". That is the lesson worth keeping — a test that skips the
+awkward cases tests nothing.
 
 ## It is beatable, and that is checked
 
@@ -879,6 +945,11 @@ silent game and nothing on screen to explain it.
   * `sandwich` — drags the king and the whale together, starts a clash, and
     parks you at a ringside seat to watch it.
   * `tame` — the bonded stalker now, without filling the databank first.
+  * `untame` — and the undo, for when you would rather dive alone. It has to be
+    a flag on the world rather than a deletion, because three separate things
+    would otherwise hand it straight back: the ten-second respawn, the databank
+    check that awarded it, and its own death handler. It stays gone across a
+    save until you type `tame` again.
   * `teletransportsus` — opens a box, you write a place, you go there. The
     places are read off the world each time it opens rather than being a list
     of coordinates: every biome, the island summit, the whale ground, the far

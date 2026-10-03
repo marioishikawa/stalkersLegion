@@ -171,7 +171,10 @@
       fogDensity: 0.010,
       // A small place that has to feed something. Stacked deep on purpose.
       populationBoost: 3.5,
-      scrapDensity: 0.25, stalkerDensity: 0,
+      // And now something eats some of it. A couple of stalkers on the reef
+      // flat, not a pack: the islet is stuffed with glimmerfin and bubble
+      // clowns and had nothing at all working on them.
+      scrapDensity: 0.25, stalkerDensity: 0.14,
       flora: ['coralFan', 'seagrass', 'coralTube', 'boulder'], floraDensity: 1.6
     }
   ];

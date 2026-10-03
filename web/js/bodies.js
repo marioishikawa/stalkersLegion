@@ -311,6 +311,31 @@
       }
     }
 
+    // --- Spots ------------------------------------------------------------------
+    //
+    // The stripe term bands a whole ring at a time, which is the wrong shape
+    // for a spotted animal entirely. These are small spheres set into the
+    // flanks - the same trick the eyes use - laid out by golden-ratio steps
+    // rather than randomly, so a species keeps the same markings every time
+    // its body is built.
+    if (S.spots > 0) {
+      const spotColor = species.spotColor
+        || species.backColor.clone().multiplyScalar(0.4);
+      const spotRadius = length * (S.spotSize || 0.028);
+
+      for (let i = 0; i < S.spots; i++) {
+        const along = SL.lerp(0.16, 0.88, (i * 0.6180339887) % 1);
+        const r = SL.clamp(ringAt(along), 1, rings - 1);
+        // Spread up and down the flank as well as along it.
+        const lift = ((i * 0.3819660113) % 1) * 1.5 - 0.55;
+
+        for (const side of [1, -1]) {
+          addSphere(side * halfWidths[r] * 0.9, halfHeights[r] * lift, spine[r].z,
+            spotRadius, 6, spotColor);
+        }
+      }
+    }
+
     // --- Mouth line: a dark seam along the jawline of a closed mouth ----------
     if (S.mouthLine > 0.001) {
       const mouthColor = species.backColor.clone().multiplyScalar(0.35);

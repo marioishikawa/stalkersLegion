@@ -38,30 +38,101 @@
   // fabricator upgrades them in place.
 
   /** The knife mesh, built from the same primitives as everything else. */
-  function buildKnife() {
+  /**
+   * The knife, in four tiers.
+   *
+   * The fabricator can upgrade the blade three times and the only thing that
+   * used to change was a number in a menu - you swung the identical steel at a
+   * leviathan with a diamond edge. Each tier now looks like what it is: the
+   * blade gets longer, the teeth change, and the metal changes colour.
+   *
+   *   0  Survival knife   plain steel, a few serrations
+   *   1  Serrated Blade   longer, a full row of deeper teeth, bronze guard
+   *   2  Tooth-Edged      stalker teeth lashed along the edge, bound grip
+   *   3  Diamond Blade    a pale crystal edge on a gold-furnitured handle
+   *
+   * All four share the grip and the point so it stays recognisably one tool.
+   */
+  const KNIFE_TIERS = [
+    { blade: [0.78, 0.80, 0.84], edge: [0.95, 0.96, 0.98], guard: [0.35, 0.33, 0.30],
+      grip: [0.14, 0.16, 0.18], length: 0.09, tip: 0.26, teeth: 5, toothSize: 0.014 },
+    { blade: [0.80, 0.82, 0.86], edge: [0.97, 0.98, 1.00], guard: [0.58, 0.42, 0.18],
+      grip: [0.14, 0.16, 0.18], length: 0.105, tip: 0.29, teeth: 9, toothSize: 0.019 },
+    { blade: [0.70, 0.70, 0.72], edge: [0.92, 0.89, 0.78], guard: [0.46, 0.38, 0.26],
+      grip: [0.20, 0.16, 0.12], length: 0.115, tip: 0.31, teeth: 7, toothSize: 0.026,
+      ivory: true, bound: true },
+    { blade: [0.80, 0.93, 0.99], edge: [1.00, 1.00, 1.00], guard: [0.92, 0.74, 0.22],
+      grip: [0.10, 0.12, 0.16], length: 0.125, tip: 0.34, teeth: 6, toothSize: 0.024,
+      crystal: true, bound: true }
+  ];
+
+  function buildKnife(tier) {
+    const T = KNIFE_TIERS[SL.clamp(tier | 0, 0, KNIFE_TIERS.length - 1)];
     const mesh = new MeshData();
-    const blade = new THREE.Color(0.78, 0.80, 0.84);
-    const edge = new THREE.Color(0.95, 0.96, 0.98);
-    const grip = new THREE.Color(0.14, 0.16, 0.18);
-    const guard = new THREE.Color(0.35, 0.33, 0.30);
+    const C = (rgb) => new THREE.Color(rgb[0], rgb[1], rgb[2]);
+    const blade = C(T.blade);
+    const edge = C(T.edge);
+    const grip = C(T.grip);
+    const guard = C(T.guard);
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
     Geo.box(mesh, 0, 0, -0.06, 0.016, 0.022, 0.06, grip);
+
+    // A wrapped grip on the later blades: three bands of cord.
+    if (T.bound) {
+      const cord = new THREE.Color(0.42, 0.34, 0.22);
+      for (let i = 0; i < 3; i++) {
+        Geo.box(mesh, 0, 0, -0.095 + i * 0.03, 0.019, 0.025, 0.007, cord);
+      }
+    }
+
     Geo.box(mesh, 0, 0, 0.01, 0.030, 0.030, 0.010, guard);
-    Geo.box(mesh, 0, 0.006, 0.10, 0.005, 0.020, 0.09, blade);
+    Geo.box(mesh, 0, 0.006, 0.10, 0.005, 0.020, T.length, blade);
 
-    // Tapered point.
-    Geo.fin(mesh, V(-0.005, 0.026, 0.19), V(-0.005, -0.014, 0.19), V(-0.005, 0.012, 0.26), edge);
-    Geo.fin(mesh, V(0.005, -0.014, 0.19), V(0.005, 0.026, 0.19), V(0.005, 0.012, 0.26), edge);
+    // Tapered point, which gets longer with every tier.
+    const shoulder = 0.10 + T.length;
+    Geo.fin(mesh, V(-0.005, 0.026, shoulder), V(-0.005, -0.014, shoulder), V(-0.005, 0.012, T.tip), edge);
+    Geo.fin(mesh, V(0.005, -0.014, shoulder), V(0.005, 0.026, shoulder), V(0.005, 0.012, T.tip), edge);
 
-    // Serrations along the spine.
-    for (let i = 0; i < 5; i++) {
-      const z = 0.08 + i * 0.024;
-      Geo.fin(mesh, V(0, 0.026, z), V(0, 0.026, z + 0.016), V(0, 0.040, z + 0.008), edge);
+    // The teeth. Steel serrations on the spine for the first two tiers;
+    // stalker teeth hung off the cutting edge for the Tooth-Edged blade; and
+    // facets of crystal standing proud of the metal on the Diamond.
+    const toothColor = T.ivory ? new THREE.Color(0.92, 0.89, 0.78)
+      : T.crystal ? new THREE.Color(0.86, 0.97, 1.0) : edge;
+
+    for (let i = 0; i < T.teeth; i++) {
+      const span = T.length + (T.tip - shoulder) * 0.4;
+      const z = 0.08 + (i + 0.5) * (span / T.teeth);
+
+      if (T.ivory) {
+        // Below the blade, curving forward: teeth set into the edge.
+        Geo.fin(mesh, V(0, -0.012, z), V(0, -0.012, z + 0.012),
+          V(0, -0.012 - T.toothSize, z + 0.004), toothColor);
+      } else if (T.crystal) {
+        // A row of facets along the spine, each one a little prism.
+        Geo.fin(mesh, V(-0.006, 0.020, z), V(0.006, 0.020, z),
+          V(0, 0.020 + T.toothSize, z + 0.008), toothColor);
+        Geo.fin(mesh, V(0.006, 0.020, z), V(-0.006, 0.020, z),
+          V(0, 0.020 + T.toothSize, z - 0.008), toothColor);
+      } else {
+        Geo.fin(mesh, V(0, 0.026, z), V(0, 0.026, z + 0.016),
+          V(0, 0.026 + T.toothSize, z + 0.008), toothColor);
+      }
     }
 
     mesh.computeNormals();
     return mesh.toGeometry();
+  }
+
+  /** Built once per tier and shared, the way creature bodies are. */
+  const knifeGeometry = [];
+  function knifeFor(tier) {
+    const i = SL.clamp(tier | 0, 0, KNIFE_TIERS.length - 1);
+    if (!knifeGeometry[i]) {
+      knifeGeometry[i] = buildKnife(i);
+      knifeGeometry[i].userData.shared = true;
+    }
+    return knifeGeometry[i];
   }
 
   /**
@@ -248,7 +319,8 @@
       this.hand.rotation.y = Math.PI;
       this.camera.add(this.hand);
 
-      this.knife = new THREE.Mesh(buildKnife(), game.materials.surface);
+      this.knifeTier = 0;
+      this.knife = new THREE.Mesh(knifeFor(0), game.materials.surface);
       this.knife.scale.setScalar(0.72);
       this.knifeRest = new THREE.Vector3().fromArray(KNIFE_REST.pos);
       this.knife.position.copy(this.knifeRest);
@@ -301,6 +373,19 @@
       this.respawn();
     }
 
+    /**
+     * Swaps the blade for the one that tier actually looks like.
+     *
+     * Called by the fabricator recipes, and by resetLoadout on the way into a
+     * world - which runs before the save is applied over the top, so a loaded
+     * world rebuilds its blade from the recipes it has built.
+     */
+    setKnifeTier(tier) {
+      if (!this.knife || tier === this.knifeTier) return;
+      this.knifeTier = tier;
+      this.knife.geometry = knifeFor(tier);
+    }
+
     get depth() { return Math.max(0, SL.WATER_LEVEL - this.position.y); }
     get atSurface() { return this.position.y > SL.WATER_LEVEL - 0.9; }
     get biome() { return SL.Biomes.biomeAt(this.position.x, this.position.z); }
@@ -314,6 +399,7 @@
       this.maxOxygen = 90;
       this.knifeDamage = 28;
       this.knifeReach = 2.2;
+      this.setKnifeTier(0);
       this.damageResist = 0;
       this.visionBonus = 0;
       this.lanternBuilt = false;
@@ -575,6 +661,12 @@
       for (const c of this.game.sharks) if (!c.dead) consider(c);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c);
       for (const c of this.game.crabers) if (!c.dead) consider(c);
+      // The bonded stalker. It is a species in the databank like any other and
+      // it was the only one nothing could scan - which, since finishing a
+      // world means cataloguing every species, made the world unfinishable by
+      // anyone who got that far. It is also the one creature you are given
+      // rather than find, so nobody notices until the very end.
+      for (const c of this.game.pets) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 
@@ -781,6 +873,7 @@
       for (const c of this.game.sharks) if (!c.dead) consider(c.species.name, c.position, 40);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c.species.name, c.position, 50);
       for (const c of this.game.crabers) if (!c.dead) consider(c.species.name, c.position, 12);
+      for (const c of this.game.pets) if (!c.dead) consider(c.species.name, c.position, 20);
       for (const n of this.game.nests) {
         consider(n.species.name + ' nest', n.position, 10);
       }
@@ -958,6 +1051,7 @@
       for (const c of this.game.sharks) resolve(c);
       for (const c of this.game.carniLevs) resolve(c);
       for (const c of this.game.crabers) resolve(c);
+      for (const c of this.game.pets) resolve(c);
 
       this.pushOutOfVines();
     }

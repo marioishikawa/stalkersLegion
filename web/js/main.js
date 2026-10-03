@@ -37,6 +37,8 @@
       this.deathDrop = null;
       /** Set once they have swum away from it, so returning can clear it. */
       this.deathDropArmed = false;
+      /** True once the bonded stalker has been sent away with `untame`. */
+      this.petDismissed = false;
       this.carniLevs = [];
       this.crabers = [];
       this.kelpers = [];
@@ -154,6 +156,7 @@
       this.sharks.length = 0;
       this.deathDrop = null;
       this.deathDropArmed = false;
+      this.petDismissed = false;
       this.carniLevs.length = 0;
       this.crabers.length = 0;
       // The surface patch lives in worldGroup and is rebuilt with it.
@@ -461,6 +464,12 @@
         lev.update(dt);
       }
 
+      // The forest keeps a thief or two in it whether or not the leviathan
+      // that commands them is still alive, because the species has to stay
+      // catalogue-able after you have killed the thing the objective told you
+      // to kill.
+      if (SL.Kelpers) SL.Kelpers.tick(this, dt);
+
       // Sharks always think, the same way stalkers do: a hunt that only runs
       // when you are watching is not a population, it is a cutscene.
       for (const shark of this.sharks) {
@@ -626,6 +635,7 @@
     },
     // The stalker you would otherwise have to fill the databank for.
     tame(game) {
+      game.petDismissed = false;
       if (game.pets.length) {
         game.hud.toast('CHEAT — your stalker is already with you');
         return;
@@ -633,6 +643,15 @@
       game.petRespawn = 0;
       SL.Pet.spawn(game);
       game.hud.toast('CHEAT — a stalker has bonded to you');
+    },
+    // And the undo, for when you would rather dive alone. It stays gone until
+    // you type `tame` again - including across a save, and including the
+    // databank award, which would otherwise hand it straight back.
+    untame(game) {
+      const had = SL.Pet.dismiss(game);
+      game.hud.toast(had
+        ? 'CHEAT — your stalker has gone'
+        : 'CHEAT — no stalker will bond to you');
     }
   };
 

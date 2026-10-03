@@ -36,6 +36,7 @@
       eyeSize: 0.05, stripes: 0, backSpikes: 0, jawLength: 0,
       antennae: 0, legPairs: 0, legScale: 0.11,
       eyePosition: 0.14, eyeHeight: 0.45, eyeRing: false, mouthLine: 0, jawTeeth: true,
+      spots: 0, spotSize: 0.028,
       spineSegments: 14, radialSegments: 10,
       // How many linked pieces the body is built from. One is a rigid animal
       // that yaws and wags; more than one is a spine a wave can travel down.
@@ -87,6 +88,33 @@
       backColor: C(0.35, 0.72, 0.85), bellyColor: C(0.95, 0.96, 0.90), finColor: C(0.95, 0.78, 0.30),
       schoolSize: 10, groups: 6,
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
+    }),
+    fish('handfish', 'Spotted Handfish', 'shallows', 'bulb', {
+      alsoIn: ['plateau'],
+      // The whole animal: it lays a clutch and then does not leave it.
+      nests: true,
+      guards: true, guardRange: 15,
+      note: 'A real fish, and a famously unlucky one: it walks the bottom on ' +
+            'a pair of modified fins rather than swimming, and it will not ' +
+            'leave its eggs. Come near the clutch and it puts itself between ' +
+            'you and them - which works on most things and does not work on ' +
+            'you at all.',
+      backColor: C(0.88, 0.80, 0.64), bellyColor: C(0.98, 0.94, 0.86), finColor: C(0.84, 0.52, 0.30),
+      spotColor: C(0.42, 0.20, 0.14),
+      eyeColor: C(0.08, 0.06, 0.04),
+      maxHealth: 14, cruiseSpeed: 0.7, sprintSpeed: 1.8, turnRate: 2.2,
+      senseRadius: 12, schoolSize: 2, groups: 4, altitude: 0.7, wagRate: 2.4,
+      drops: { titanium: [1, 1] },
+      shape: { length: 0.22, height: 0.40, width: 0.26, bellyPosition: 0.34,
+               noseSharpness: 0.2, crossSection: 2.4,
+               tailHeight: 0.22, tailSweep: 0.14, tailFork: 0.1,
+               dorsalFin: 0.20, ventralFin: 0.06,
+               // The hands: one pair, held out and down, which is what it
+               // props itself up on.
+               sideFin: 0, legPairs: 1, legScale: 0.42, legDrop: 0.45,
+               spots: 11, spotSize: 0.045,
+               eyeSize: 0.065, eyeRing: true, eyePosition: 0.13, mouthLine: 0.02,
+               spineSegments: 14, radialSegments: 11 }
     }),
     fish('spherefish', 'Sphere Fish', 'shallows', 'torpedo', {
       alsoIn: ['islet'],
@@ -293,9 +321,13 @@
       backColor: C(0.72, 0.26, 0.15), bellyColor: C(0.94, 0.84, 0.66), finColor: C(0.82, 0.36, 0.20),
       eyeColor: C(0.08, 0.03, 0.02),
       maxHealth: 85, cruiseSpeed: 1.2, sprintSpeed: 3.6, turnRate: 1.4,
-      // Solitary, and thin on the ground: a turtle should be something you
-      // come across, not something you wade through.
-      senseRadius: 14, schoolSize: 1, groups: 1.1, altitude: 3, wagRate: 2.2,
+      // Its two homes are the two smallest sunlit biomes in the game - the
+      // seamount tops are 3% of the sea floor and the islet's reef flat is
+      // half a per cent - so the group count that gives the green turtle
+      // twenty gave this one nine, scattered over tops you have to go looking
+      // for. It reads as extinct. Same animal, same rarity per reef, more
+      // reefs with one on them.
+      senseRadius: 14, schoolSize: 1, groups: 3.2, altitude: 3, wagRate: 2.2,
       breathSeconds: 110, voice: 'blow',
       shape: TURTLE
     }),

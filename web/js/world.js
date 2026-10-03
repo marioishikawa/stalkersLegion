@@ -731,7 +731,12 @@
           : null;
 
         for (let g = 0; g < groups; g++) {
-          const nest = nests && nests.length && SL.random() < 0.6
+          // A nesting species keeps most of its schools over its own clutches;
+          // a GUARDING one is put on them every time and given a short leash.
+          // Its whole behaviour is standing over the eggs, and a keeper that
+          // spawned fifty metres away never finds a nest to keep.
+          const guards = species.guards && nests && nests.length;
+          const nest = nests && nests.length && (guards || SL.random() < 0.6)
             ? nests[Math.floor(SL.random() * nests.length)]
             : null;
 
@@ -756,7 +761,7 @@
               y + SL.randRange(-1.2, 1.2),
               point.z + SL.randRange(-2.6, 2.6));
             fish.territory.set(point.x, y, point.z);
-            fish.territoryRadius = 22;
+            fish.territoryRadius = species.guards ? 7 : 22;
 
             if (i === 0) {
               leader = fish;
@@ -797,16 +802,25 @@
   function scatterSharks(game) {
     if (!SL.Shark) return;
 
-    for (const biome of [SL.Biomes.byId.shallows, SL.Biomes.byId.kelp]) {
+    // The islet's reef flat is on the list because it is the densest water in
+    // the game and the glimmerfin there had nothing hunting them at all.
+    for (const biome of [SL.Biomes.byId.shallows, SL.Biomes.byId.kelp, SL.Biomes.byId.islet]) {
       if (!biome) continue;
       const count = Math.max(1, Math.round(0.55 * areaFactorOf(biome)));
 
       for (let i = 0; i < count; i++) {
-        const point = SL.Biomes.randomPointIn(biome);
+        // A shark needs water over it, and on the islet's reef flat most
+        // points do not have five metres of it - one try per shark meant the
+        // island got none at all. Tried until it finds somewhere deep enough.
+        let point = null;
+        let floor = 0;
+        for (let attempt = 0; attempt < 12 && !point; attempt++) {
+          const candidate = SL.Biomes.randomPointIn(biome);
+          if (!candidate) break;
+          const y = SL.Biomes.floorHeightAt(candidate.x, candidate.z);
+          if (y <= SL.WATER_LEVEL - 5) { point = candidate; floor = y; }
+        }
         if (!point) continue;
-
-        const floor = SL.Biomes.floorHeightAt(point.x, point.z);
-        if (floor > SL.WATER_LEVEL - 5) continue;      // needs water over it
 
         const y = Math.min(floor + 5, SL.WATER_LEVEL - 3);
         const shark = new SL.Shark(game, point.x, y, point.z);

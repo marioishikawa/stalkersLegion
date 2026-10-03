@@ -361,6 +361,10 @@
       // pretending to be. The yaw is per-fish, so a patch of them does not all
       // face the same way - which is the sort of thing that gives a disguise
       // away at a glance.
+      /** The clutch this one is standing over, for the species that do. */
+      this.guardedNest = null;
+      this.nestTimer = SL.random() * 2;
+
       this.mimicPose = species.mimic
         ? new THREE.Quaternion()
           .setFromAxisAngle(_up, SL.random() * Math.PI * 2)
@@ -519,6 +523,48 @@
         }
       }
 
+      // --- Guarding a clutch ---------------------------------------------------
+      //
+      // Deliberately ABOVE fleeing, which is the whole behaviour: a fish that
+      // runs from its own eggs is not guarding them. It puts itself between
+      // the threat and the clutch and stays there, and against a diver with a
+      // knife that is a losing plan it makes anyway.
+      if (this.species.guards) {
+        this.nestTimer -= dt;
+        if (this.nestTimer <= 0) {
+          this.nestTimer = 2;
+          this.guardedNest = null;
+          let best = 900;                       // 30 m, squared
+          for (const nest of this.game.nests) {
+            if (nest.dead || nest.species !== this.species) continue;
+            const d = nest.position.distanceToSquared(p);
+            if (d < best) { best = d; this.guardedNest = nest; }
+          }
+        }
+
+        const nest = this.guardedNest;
+        if (nest && !nest.dead) {
+          const player = this.game.player;
+          const range = this.species.guardRange || 15;
+          const threat = player.dead ? Infinity : player.position.distanceTo(nest.position);
+
+          if (threat < range) {
+            this.state = 'guard';
+            this.fleeTimer = 0;
+
+            // A body's length out from the clutch, on the side the threat is.
+            _look.subVectors(player.position, nest.position);
+            const reach = Math.min(1.4, Math.max(0.4, threat * 0.45));
+            _look.setLength(reach).add(nest.position);
+            _look.y = nest.position.y + 0.5;
+
+            _tmp.subVectors(_look, p);
+            if (_tmp.lengthSq() < 0.06) return _tmp.set(0, 0, 0);
+            return _tmp.normalize().multiplyScalar(this.species.sprintSpeed);
+          }
+        }
+      }
+
       // --- Fleeing ------------------------------------------------------------
       if (this.fleeTimer > 0) {
         this.fleeTimer -= dt;
@@ -617,6 +663,15 @@
   const BITES_BEFORE_CARRY = 3;
   const SCRAP_BITE_DAMAGE = 14;
 
+  /**
+   * How far a stalker will carry scrap to the king.
+   *
+   * Far enough that the basin's own stalkers still feed the hoard and you see
+   * the behaviour when you go there, short enough that the kelp forest keeps
+   * the stalkers that live in it.
+   */
+  const TRIBUTE_RANGE = 300;
+
   const STATE_LABELS = {
     patrol: 'patrolling',
     seekScrap: 'drawn to scrap',
@@ -664,15 +719,26 @@
       this.stateTimer = 0;
 
       if (state === 'carryScrap') {
-        // Scrap belongs to the king. A stalker that has a king to serve hauls
-        // the piece out to the hoard; one with no king dumps it nearby.
+        // Scrap belongs to the king - but only if the king is near enough to
+        // carry it to.
+        //
+        // Without the distance test this one line emptied the shelf. Scrap is
+        // everywhere, every stalker that picks a piece up became a courier,
+        // and the basin is 800 m out: two minutes into a world, 88 of 126
+        // stalkers were on a tribute run, 85 of them were more than 150 m from
+        // the water they live in, nineteen were strung out across the abyssal
+        // plain, and the kelp forest had lost half its population and did not
+        // get it back. A stalker now hauls to the hoard if the hoard is a
+        // reasonable swim away, and otherwise stashes the piece near home,
+        // which is what it did before there was a king at all.
         const king = this.game.kings.find((k) => !k.dead);
-        this.tribute = !!king;
+        this.tribute = !!king && king.hoard.distanceTo(this.position) < TRIBUTE_RANGE;
 
-        if (king) {
+        if (this.tribute) {
           this.carryDestination.copy(king.hoard);
           this.carryDestination.y += 2;
         } else {
+          // No king, or one too far to be worth the swim: stash it at home.
           const angle = Math.random() * Math.PI * 2;
           const dist = SL.randRange(this.territoryRadius * 0.4, this.territoryRadius);
           const x = this.territory.x + Math.cos(angle) * dist;

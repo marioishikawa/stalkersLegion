@@ -170,6 +170,7 @@
       // to the world just as much as the gear does.
       world.scanned = Object.assign({}, SL.Index.scanned);
       world.pet = game.pets.length > 0 || game.petRespawn > 0;
+      world.petDismissed = !!game.petDismissed;
 
       // Which leviathans are down, and whether the world has been finished -
       // the second of which is what stops it being deleted.
@@ -195,7 +196,8 @@
 
       SL.Index.reset();
       if (world.scanned) Object.assign(SL.Index.scanned, world.scanned);
-      if (world.pet && !game.pets.length) SL.Pet.spawn(game);
+      game.petDismissed = !!world.petDismissed;
+      if (world.pet && !game.petDismissed && !game.pets.length) SL.Pet.spawn(game);
 
       SL.Quest.reset();
       if (world.killed) Object.assign(SL.Quest.killed, world.killed);
