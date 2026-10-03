@@ -2,7 +2,7 @@
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are thirteen
-biomes, fifty-nine species, seven leviathans, one island, a field of black smokers
+biomes, sixty-three species, seven leviathans, one island, a field of black smokers
 and a kelp forest full of
 stalkers — long, armoured predators with a fixation on scrap metal.
 
@@ -53,7 +53,7 @@ no server and no build step. The only external dependency is Three.js from a CDN
 
 Two things, and they turn out to be one list:
 
-* **Catalogue every species** — all fifty-nine, in the databank.
+* **Catalogue every species** — all sixty-three, in the databank.
 * **Kill every leviathan** — all six that can be killed.
 
 The Glasswhale is deliberately not on the list. It cannot hurt you and **you
@@ -272,10 +272,10 @@ even past 120 m.
 | **Deep Trench** | Inside the canyon | ~4% |
 | **King's Basin** | The gouged basin | ~1% |
 | **Kelper's Reach** | The sunlit crown of the far bank | ~0.1% |
-| **The Cold Reef** | Coral patches scattered across the deep plain | ~5% |
+| **The Cold Reef** | Coral patches scattered across the deep plain | ~12% |
 | **The Vent Field** | The smoker field, about 1,400 m out | ~0.7% |
 | **The Islet** | The island and its reef flat | ~0.8% |
-| **Abyssal Plain** | Everything below 76 m | ~70% |
+| **Abyssal Plain** | Everything below 76 m | ~52% |
 
 Those are one world's numbers; shares move with the seed, since the features are
 placed from it. The small ones are small on purpose and carry a population
@@ -285,6 +285,38 @@ the water outside your door.
 The world is **3,760 m across**. The islet is about 990 m out, the far forest
 about 1,170 m and the vent field about 1,400 m, which are serious swims at
 4.2 m/s on ninety seconds of air — the fabricator exists to close that gap.
+
+### The plain was too big
+
+It was **64% of the sea floor**, against 10% for the next biggest biome. One
+biome owning two thirds of a map is too much however empty it is supposed to
+feel.
+
+The interesting part is what the measurements said when the question came up.
+The routes from the origin to every landmark are *already* broken up — the
+Islet, the Vent Field and King's Basin are each **0% plain** door to door, and
+the Far Bank is 23% with its longest unbroken stretch at 270 m. So the plain
+was never in the way. What it was, was most of the map at 14 fish per hectare
+against the kelp's 51.
+
+And the thing added to break it up was worse: **the Cold Reef had exactly one
+species in it**, so at 7.3 fish per hectare it was emptier than the plain it
+was supposed to interrupt. That was the actual bug.
+
+So the deep got filled rather than shrunk. The Cold Reef has five species of
+its own now — the Lacefish, the Polyp Fish, the Deep Grazer, the Thicket Eel
+and the Coral Fish — and takes a bigger bite of the deep floor; crystal country
+reaches further down; and there are 118 seamounts rather than 88, which is more
+rubble and more sunlit tops a long way out. The plain is **~52%** across eight
+seeds, the reef is ~12%, and what replaced the plain is somewhere to be rather
+than a different colour of nothing.
+
+That added about five thousand fish, and it is worth saying what that cost:
+measured old against new, interleaved in one container to cancel host load,
+**nothing measurable** — 23.9 ms a frame before against 21.0 after, which is
+inside the run-to-run spread either way. Almost all the new fish are in the
+deep, where the outer culling tier steps them once every sixteen frames. World
+build is up about a sixth, and that is the extra seven thousand coral.
 
 ### The Cold Reef
 
@@ -620,6 +652,12 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
   down, which is right for a crab and wrong for a turtle, so limbs now take a
   `legDrop`: one is a crab's leg, a quarter is a flipper held out to the side.
   Everything already walking in the game defaults to one and is untouched.
+* **Lacefish, Polyp Fish, Deep Grazer and Thicket Eel** — the Cold Reef's own,
+  added when it turned out the biome had exactly one species in it and was the
+  emptiest place in the game. A near-transparent ribbon lit along its edges, a
+  round thing covered in growths it did not grow, the most ordinary animal in
+  the deep and a great many of them, and two metres of eel with its head in a
+  gap in the coral.
 * **Coral Fish** — it does not hide *behind* the coral, it hides *as* the coral.
   Come within twenty-six metres and it stops dead, stands on its nose and holds
   a fan of nine red spines out into the current, in the sea fan's own palette —
@@ -662,6 +700,38 @@ The amplitude grows toward the tail, so the head leads and the tail throws
 itself about rather than the whole animal shaking like a rope. It costs one
 `rotation.y` per link per frame. The Snake Fish is four and a bit metres of it,
 in eleven links.
+
+## It is beatable, and that is checked
+
+A world is finished by catalogu­ing every species and killing every leviathan,
+which means **a world where one species never spawned is a world that cannot be
+finished**. The small biomes make that a real risk: Kelper's Reach is 0.1% of
+the sea floor and the Vent Field 0.5%, and a spawn point that lands outside its
+own biome is skipped rather than retried.
+
+So it is tested rather than assumed. Eight worlds are built from different
+seeds, every creature in each is counted by species, and the check is that
+nothing is missing and every leviathan is present. All eight pass. The same run
+reports the biome shares, which is how the plain's size above is known rather
+than guessed.
+
+## Dying costs you the trip, not the dive
+
+Everything you were carrying goes on the floor where you died — every scrap of
+material and every medkit, beacon, bait pod and repellent — and stays there.
+Pickups never expire, so it is a debt rather than a loss, and **the chart marks
+the spot** in rust orange until you have been back to it.
+
+What does **not** drop is anything you *built*. The tanks, the blades, the
+scanner, the fins, the visor: an upgrade is progress, and progress should not be
+lost to one bad swim.
+
+The marker needed a small state machine to work at all, which is the sort of
+thing you only find by testing: you die *on top of* your own drop, so a plain
+"am I near it" test wiped the marker on the very next frame. It now has to see
+you leave before returning can clear it. Tested end to end: twelve materials and
+six items dropped, both upgrades kept with the tank and blade still applied,
+respawned 412 m away, swum back, and every single item recovered.
 
 ## Nothing goes extinct either
 

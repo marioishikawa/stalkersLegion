@@ -127,7 +127,11 @@
       // like crossing nothing - but nothing for two thousand metres is a long
       // time, and this is what you find in the middle of it.
       id: 'coldreef', name: 'The Cold Reef',
-      populationBoost: 1.8,
+      // Was 1.8 when exactly one species lived here and the place still had to
+      // feel like somewhere. It has five now and an eighth of the sea floor,
+      // so the boost is doing nothing but costing frames - and still leaves it
+      // nearly twice the plain's 0.4.
+      populationBoost: 0.75,
       floorColor: new THREE.Color(0.52, 0.40, 0.42),
       waterColor: new THREE.Color(0.06, 0.13, 0.20),
       fogDensity: 0.034,
@@ -225,7 +229,7 @@
     // Eighteen seamounts out past the shelf break, scattered to the rim. The
     // count tracks the map: every time the world doubles, an unbroken abyssal
     // plain is what you get if this does not.
-    for (let i = 0; i < 88; i++) {
+    for (let i = 0; i < 118; i++) {
       const angle = SL.hash(i, 11, SEED) * Math.PI * 2;
       const radius = SL.lerp(410, 1780, SL.hash(i, 22, SEED));
       const width = SL.lerp(34, 62, SL.hash(i, 44, SEED));
@@ -524,7 +528,7 @@
     // Crystal country is meant to be somewhere you find, not the floor of half
     // the ocean - so the mineral noise has to run well above average for it.
     if (depth < 56) return mineral > 0.24 ? byId.crystal : byId.boulders;
-    if (depth < 76) return mineral > 0.34 ? byId.crystal : byId.abyss;
+    if (depth < 76) return mineral > 0.22 ? byId.crystal : byId.abyss;
 
     // The plain, and the coral growing in patches across it.
     //
@@ -535,7 +539,7 @@
     // a dedicated noise lookup here put nearly two seconds on the dive. The
     // reef is a place, and a place is allowed to be a threshold on noise that
     // was already computed.
-    if (region > 0.36) return byId.coldreef;
+    if (region > 0.18) return byId.coldreef;
     return byId.abyss;
   }
 

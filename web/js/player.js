@@ -376,12 +376,58 @@
       if (this.health <= 0) { this.health = 0; this.die(); }
     }
 
+    /**
+     * Dying, and what it costs.
+     *
+     * Everything you were carrying goes on the floor where you died - every
+     * scrap of material and every medkit, beacon, bait pod and repellent - and
+     * waits there for you to come back and pick it up. Pickups never expire,
+     * so it is a debt rather than a loss, and the chart marks the spot.
+     *
+     * What does NOT drop is anything you BUILT. The tanks, the blades, the
+     * scanner, the fins, the visor: an upgrade is progress, and progress is
+     * not something to lose to one bad swim. Lose the trip, keep the dive.
+     */
     die() {
       if (this.dead) return;
       this.dead = true;
       this.sprinting = false;
       this.game.audio.death();
       if (this.carriedScrap) { this.carriedScrap.drop(new THREE.Vector3()); this.carriedScrap = null; }
+
+      this.dropCarriedKit();
+    }
+
+    dropCarriedKit() {
+      const at = this.position.clone();
+      let dropped = 0;
+
+      for (const type of Object.keys(SL.Crafting.inventory)) {
+        const held = SL.Crafting.inventory[type] | 0;
+        if (held <= 0) continue;
+        SL.Pickup.burst(this.game, type, at, held);
+        SL.Crafting.inventory[type] = 0;
+        dropped += held;
+      }
+
+      for (const type of Object.keys(SL.Crafting.stacks)) {
+        const held = SL.Crafting.stacks[type] | 0;
+        if (held <= 0 || !SL.Pickup.TYPES[type]) continue;
+        SL.Pickup.burst(this.game, type, at, held);
+        SL.Crafting.stacks[type] = 0;
+        dropped += held;
+      }
+
+      this.game.hud.refreshFabricator();
+
+      if (!dropped) { this.game.deathDrop = null; return; }
+
+      // The chart remembers where, because "come back for it" is only a
+      // mechanic if you can find the place again.
+      this.game.deathDrop = at;
+      this.game.deathDropArmed = false;
+      this.game.hud.toast(dropped + ' item' + (dropped === 1 ? '' : 's')
+        + ' dropped at ' + Math.round(SL.WATER_LEVEL - at.y) + ' m — marked on the chart');
     }
 
     swing() {

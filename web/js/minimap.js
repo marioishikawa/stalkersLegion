@@ -92,6 +92,11 @@
         this.marker(this.project(beacon.position.x, beacon.position.z), '#67e8d8', 2.5);
       }
 
+      // Where you died, and what you left there.
+      if (game.deathDrop) {
+        this.marker(this.project(game.deathDrop.x, game.deathDrop.z), '#c4551f', 3);
+      }
+
       // Leviathans, once the tracker exists.
       if (SL.Crafting.built.tracker) {
         for (const apex of game.leviathans()) {

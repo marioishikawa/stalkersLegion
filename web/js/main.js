@@ -33,6 +33,10 @@
       this.glowLevs = [];
       this.diamondLevs = [];
       this.sharks = [];
+      /** Where the diver last died and left their kit, for the chart. */
+      this.deathDrop = null;
+      /** Set once they have swum away from it, so returning can clear it. */
+      this.deathDropArmed = false;
       this.carniLevs = [];
       this.crabers = [];
       this.kelpers = [];
@@ -148,6 +152,8 @@
       this.glowLevs.length = 0;
       this.diamondLevs.length = 0;
       this.sharks.length = 0;
+      this.deathDrop = null;
+      this.deathDropArmed = false;
       this.carniLevs.length = 0;
       this.crabers.length = 0;
       // The surface patch lives in worldGroup and is rebuilt with it.
@@ -510,6 +516,17 @@
 
       for (let i = this.scrap.length - 1; i >= 0; i--) this.scrap[i].update(dt);
       for (let i = this.pickups.length - 1; i >= 0; i--) this.pickups[i].update(dt);
+
+      // The drop marker clears itself once you have been back to it - but you
+      // have to have LEFT first, which is the whole of this little state
+      // machine. You die on top of your own drop, so a plain "am I near it"
+      // test wiped the marker on the very next frame, before the corpse had
+      // finished sinking.
+      if (this.deathDrop) {
+        const far = this.player.position.distanceToSquared(this.deathDrop) >= 36;
+        if (far && !this.player.dead) this.deathDropArmed = true;
+        else if (!far && this.deathDropArmed) { this.deathDrop = null; this.deathDropArmed = false; }
+      }
       for (let i = this.crystals.length - 1; i >= 0; i--) this.crystals[i].update(dt);
       for (const beacon of this.beacons) beacon.update(dt);
       // Nests tick everywhere, not just where you are looking - a species

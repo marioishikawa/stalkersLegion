@@ -489,6 +489,66 @@
                spineSegments: 16, radialSegments: 9 }
     }),
 
+    fish('lacefish', 'Lacefish', 'coldreef', 'ribbon', {
+      note: 'Trails through the cold coral like something come loose from it. ' +
+            'Almost transparent, and lit faintly along the edges, which is ' +
+            'the only reason you ever see one.',
+      backColor: C(0.72, 0.60, 0.70), bellyColor: C(0.94, 0.88, 0.92), finColor: C(0.86, 0.66, 0.80),
+      eyeColor: C(0.20, 0.08, 0.16), glow: 0.4,
+      maxHealth: 18, cruiseSpeed: 1.1, sprintSpeed: 3.0, turnRate: 1.8,
+      schoolSize: 4, groups: 6, altitude: 4, wagRate: 2.8,
+      shape: { length: 0.62, height: 0.22, width: 0.03, bellyPosition: 0.34,
+               noseSharpness: 0.5, crossSection: 1.6, tailHeight: 0.18,
+               tailSweep: 0.26, tailFork: 0.15, dorsalFin: 0.16, ventralFin: 0.13,
+               sideFin: 0.06, eyeSize: 0.030, spineSegments: 18 }
+    }),
+    fish('polypfish', 'Polyp Fish', 'coldreef', 'bulb', {
+      note: 'Short, round and covered in stubby growths it did not grow. It ' +
+            'lives among the coral heads and looks enough like one of them to ' +
+            'be missed by most things.',
+      backColor: C(0.78, 0.46, 0.50), bellyColor: C(0.96, 0.84, 0.82), finColor: C(0.62, 0.30, 0.36),
+      eyeColor: C(0.08, 0.03, 0.04),
+      maxHealth: 28, cruiseSpeed: 0.9, sprintSpeed: 2.4, turnRate: 2.0,
+      schoolSize: 3, groups: 6, altitude: 1.8, wagRate: 3.0,
+      drops: { quartz: [1, 1] },
+      shape: { length: 0.34, height: 0.38, width: 0.32, bellyPosition: 0.40,
+               noseSharpness: 0.15, crossSection: 2.8, tailHeight: 0.18,
+               tailSweep: 0.14, tailFork: 0.2, dorsalFin: 0.10, ventralFin: 0.07,
+               sideFin: 0.14, eyeSize: 0.055, eyeRing: true, backSpikes: 6,
+               spineSegments: 14, radialSegments: 11 }
+    }),
+    fish('deepgrazer', 'Deep Grazer', 'coldreef', 'diamond', {
+      alsoIn: ['abyss'],
+      note: 'Works the coral in slow sweeps, head down, and does not look up ' +
+            'for anything. The most ordinary animal in the deep, and there ' +
+            'are a great many of them.',
+      backColor: C(0.40, 0.44, 0.52), bellyColor: C(0.84, 0.86, 0.88), finColor: C(0.52, 0.56, 0.64),
+      eyeColor: C(0.06, 0.07, 0.09),
+      maxHealth: 22, cruiseSpeed: 1.4, sprintSpeed: 3.6, turnRate: 2.4,
+      // Common, not infinite: it also ranges over the plain, which is more
+      // than half the map, so every group here is a group everywhere.
+      schoolSize: 8, groups: 4, altitude: 2.6, wagRate: 5.0,
+      shape: { length: 0.36, height: 0.30, width: 0.12, bellyPosition: 0.42,
+               noseSharpness: 0.45, tailHeight: 0.26, tailSweep: 0.20,
+               tailFork: 0.45, dorsalFin: 0.14, sideFin: 0.11, eyeSize: 0.042,
+               stripes: 2 }
+    }),
+    fish('thicketeel', 'Thicket Eel', 'coldreef', 'eel', {
+      note: 'Lives in the coral rather than over it: a head in a gap and two ' +
+            'metres of body somewhere behind it. Comes out at the exact ' +
+            'moment you have decided it will not.',
+      backColor: C(0.34, 0.26, 0.34), bellyColor: C(0.70, 0.62, 0.60), finColor: C(0.46, 0.34, 0.44),
+      eyeColor: C(0.88, 0.76, 0.22), glow: 0.2,
+      maxHealth: 36, cruiseSpeed: 1.0, sprintSpeed: 4.2, turnRate: 1.6,
+      schoolSize: 1, groups: 5, altitude: 1.4, wagRate: 2.0,
+      shape: { length: 2.0, height: 0.075, width: 0.06, bellyPosition: 0.30,
+               noseSharpness: 0.5, crossSection: 2.0, tailHeight: 0.09,
+               tailSweep: 0.16, tailFork: 0, dorsalFin: 0.05, ventralFin: 0,
+               sideFin: 0.04, eyeSize: 0.024, mouthLine: 0.012,
+               bodySegments: 6, bodySwing: 0.26,
+               spineSegments: 22, radialSegments: 8 }
+    }),
+
     // ------------------------------------------------------------ The Vent Field
     fish('smokerfin', 'Smokerfin', 'vents', 'torpedo', {
       note: 'Soot-black with a seam of heat down each flank. It holds station ' +
