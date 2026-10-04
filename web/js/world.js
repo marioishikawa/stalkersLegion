@@ -705,6 +705,35 @@
     }
   }
 
+  /**
+   * Where one school of a species starts.
+   *
+   * Uniform across the biome, unless the species lives on the high ground.
+   * The Red Turtle's country is the seamount tops - 3.4% of the sea floor is
+   * Coral Seamount, and the flanks below the tops are most of that 3.4% - so
+   * a uniform draw put the turtles down the sides, where there is nothing to
+   * see them against and no reason for a diver to be. The tops, which the
+   * animal's own note claims and which a diver heads for because they are
+   * shallow, lit and the shortest climb to air, came up empty.
+   */
+  function schoolPoint(species, biome) {
+    const tries = species.spawnsHigh || 0;
+    if (!tries) return SL.Biomes.randomPointIn(biome);
+
+    let best = null;
+    let highest = -1e9;
+    for (let i = 0; i < tries; i++) {
+      const point = SL.Biomes.randomPointIn(biome);
+      if (!point) continue;
+      const floor = SL.Biomes.floorHeightAt(point.x, point.z);
+      // The highest water, not the highest ground: a top that breaks the
+      // surface is a rock, and the school still has to fit above the floor.
+      if (floor > SL.WATER_LEVEL - 4) continue;
+      if (floor > highest) { highest = floor; best = point; }
+    }
+    return best || SL.Biomes.randomPointIn(biome);
+  }
+
   function spawnCreatures(game) {
     // What a healthy sea looks like, species by species: whatever this world
     // started with. The nests measure themselves against it when deciding how
@@ -742,7 +771,7 @@
 
           const point = nest
             ? { x: nest.position.x + SL.randRange(-4, 4), z: nest.position.z + SL.randRange(-4, 4) }
-            : SL.Biomes.randomPointIn(biome);
+            : schoolPoint(species, biome);
           if (!point) continue;
 
           const floor = SL.Biomes.floorHeightAt(point.x, point.z);

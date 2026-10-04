@@ -322,12 +322,19 @@
       eyeColor: C(0.08, 0.03, 0.02),
       maxHealth: 85, cruiseSpeed: 1.2, sprintSpeed: 3.6, turnRate: 1.4,
       // Its two homes are the two smallest sunlit biomes in the game - the
-      // seamount tops are 3% of the sea floor and the islet's reef flat is
-      // half a per cent - so the group count that gives the green turtle
-      // twenty gave this one nine, scattered over tops you have to go looking
-      // for. It reads as extinct. Same animal, same rarity per reef, more
-      // reefs with one on them.
-      senseRadius: 14, schoolSize: 1, groups: 3.2, altitude: 3, wagRate: 2.2,
+      // Coral Seamount is 3.4% of the sea floor and the islet's reef flat is
+      // 0.79% - so the group count that gives the green turtle twenty gave
+      // this one nine, and it read as extinct.
+      //
+      // Raising the group count was the wrong lever and made it worse: more
+      // reefs with one turtle on them is more reefs you swim to and find
+      // nothing. Dropped onto six random seamounts, the nearest red turtle was
+      // between 69 m and 563 m away - never once in sight. So the same animals
+      // travel in pods now, and `spawnsHigh` puts those pods on the tops the
+      // note claims rather than down the flanks: a reef either has turtles on
+      // it, in which case you can see all four, or it does not.
+      spawnsHigh: 12,
+      senseRadius: 14, schoolSize: 4, groups: 0.45, altitude: 3, wagRate: 2.2,
       breathSeconds: 110, voice: 'blow',
       shape: TURTLE
     }),

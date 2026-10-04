@@ -68,6 +68,47 @@
       add(lev.species.name, 'leviathan', () => besideCreature(lev), [short]);
     }
 
+    // --- Anything still missing from the databank -----------------------------
+    //
+    // "Where is the Red Turtle" is the hardest question in this game to answer
+    // by swimming. Its reef tops are 3.4% of the sea floor, scattered across
+    // eleven square kilometres, and a turtle is visible from about 40 m.
+    // Measured over three worlds and thirty-six likely spots - random coral
+    // and the shallowest tops in each world - exactly one had a turtle in
+    // sight. No population that keeps the animal rare fixes that; it is a
+    // navigation problem, and this is the box that solves navigation problems.
+    //
+    // So a species you have not catalogued is a place, and the list of them is
+    // the list of what you still have to find. Catalogue it and it drops off.
+    const alreadyOffered = {};
+    for (const place of places) alreadyOffered[place.name] = true;
+
+    const missing = {};
+    for (const creature of game.creatures()) {
+      if (creature.dead || !creature.species) continue;
+      const species = creature.species;
+      // Leviathans are already above, under their own names.
+      if (alreadyOffered[species.name]) continue;
+      if (species.uncatalogued || SL.Index.has(species.id)) continue;
+      missing[species.id] = species;
+    }
+
+    for (const id of Object.keys(missing)) {
+      const species = missing[id];
+      add(species.name, 'not yet catalogued', () => {
+        // Found when you press Enter rather than when the box opened: a school
+        // moves, and the nearest one may have been eaten in the meantime.
+        let best = null;
+        let bestDistance = Infinity;
+        for (const creature of game.creatures()) {
+          if (creature.dead || creature.species !== species) continue;
+          const distance = creature.position.distanceToSquared(game.player.position);
+          if (distance < bestDistance) { bestDistance = distance; best = creature; }
+        }
+        return best ? besideCreature(best) : null;
+      }, [species.id]);
+    }
+
     // --- Biomes ---------------------------------------------------------------
     const BIOME_ALIASES = {
       shallows: ['shallows', 'safe'],
@@ -262,7 +303,7 @@
         !want || place.keys.some((k) => k.indexOf(want) >= 0 || want.indexOf(k) >= 0));
 
       this.el.list.innerHTML = '';
-      for (const place of shown.slice(0, 40)) {
+      for (const place of shown.slice(0, 80)) {
         const row = document.createElement('button');
         row.type = 'button';
         row.className = 'travel__row';

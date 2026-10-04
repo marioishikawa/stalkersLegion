@@ -187,6 +187,18 @@
         this.glowLevs, this.carniLevs, this.diamondLevs);
     }
 
+    /**
+     * Every wild animal in the world, in one list.
+     *
+     * The bonded stalker is left out on purpose: it is not out there to be
+     * found, it is at your shoulder.
+     */
+    creatures() {
+      return this.fish.concat(this.stalkers, this.kings, this.whales, this.puffers,
+        this.kelperLevs, this.kelpers, this.carnis, this.carniLevs, this.glowLevs,
+        this.diamondLevs, this.sharks, this.crabers);
+    }
+
     /** Generates a world from a seed. The same seed always gives the same ocean. */
     build(seed) {
       const started = performance.now();
