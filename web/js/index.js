@@ -302,11 +302,23 @@
 
     has(id) { return !!this.scanned[id]; },
 
-    get count() { return Object.keys(this.scanned).length; },
-    get total() { return SL.Species.list.length; },
+    /**
+     * How many cards are filled, and how many there are.
+     *
+     * Counted against the catalogue rather than against what has been
+     * scanned, so a species that is no longer catalogued - the bonded stalker,
+     * which older worlds may have on record - cannot push the count past the
+     * total and read as "64 of 63".
+     */
+    get count() { return SL.Species.catalogue.filter((s) => this.scanned[s.id]).length; },
+    get total() { return SL.Species.catalogue.length; },
 
     /** Records a species. Returns false if it was already known. */
     record(id) {
+      // Not everything that can be scanned has a card. The bonded stalker is
+      // the reward for filling the databank and is kept out of it.
+      const species = SL.Species.byId[id];
+      if (species && species.uncatalogued) return false;
       if (this.scanned[id]) return false;
       this.scanned[id] = Date.now();
 
@@ -327,7 +339,7 @@
 
     build() {
       this.list.innerHTML = '';
-      this.cards = SL.Species.list.map((species) => {
+      this.cards = SL.Species.catalogue.map((species) => {
         const card = document.createElement('article');
         card.className = 'entry';
 

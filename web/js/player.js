@@ -661,12 +661,6 @@
       for (const c of this.game.sharks) if (!c.dead) consider(c);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c);
       for (const c of this.game.crabers) if (!c.dead) consider(c);
-      // The bonded stalker. It is a species in the databank like any other and
-      // it was the only one nothing could scan - which, since finishing a
-      // world means cataloguing every species, made the world unfinishable by
-      // anyone who got that far. It is also the one creature you are given
-      // rather than find, so nobody notices until the very end.
-      for (const c of this.game.pets) if (!c.dead) consider(c);
 
       if (!best) { this.scanTarget = null; this.scanProgress = 0; return; }
 

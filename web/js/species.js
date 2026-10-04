@@ -1003,7 +1003,12 @@
 
     // ---------------------------------------------------- The bonded stalker
     fish('petstalker', 'Bonded Stalker', 'kelp', 'eel', {
-      // Never spawns on its own - awarded for finishing the databank.
+      // Never spawns on its own - awarded for finishing the databank, which
+      // is also why it is not in it. A reward that is also a requirement is a
+      // circle: the card could only be filled after the thing it gates was
+      // already earned, and until then it sat in the grid as a creature no
+      // amount of diving would ever turn up.
+      uncatalogued: true,
       diet: 'carnivore', groups: 0,
       note: 'Follows at your shoulder and goes after whatever comes for you. ' +
             'Paler than its kin, and it will not bite the hand that catalogued it.',
@@ -1070,6 +1075,16 @@
 
   SL.Species = {
     list: SPECIES,
+
+    /**
+     * The species the databank keeps cards for.
+     *
+     * Everything that lives out there, which is everything except the bonded
+     * stalker - that one is handed to you for finishing this list, so it can
+     * hardly be on it.
+     */
+    catalogue: SPECIES.filter((s) => !s.uncatalogued),
+
     byId,
     stalker: byId.stalker,
     kingStalker: byId.kingstalker,

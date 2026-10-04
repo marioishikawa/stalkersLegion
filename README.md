@@ -698,6 +698,8 @@ Eight silhouette families drive the body: `torpedo`, `disc`, `ribbon`, `boxy`,
 * **Bonded Stalker** — catalogue every fish in the databank and one of them
   bonds to you. It keeps station off your shoulder, goes after anything hunting
   you, and cannot hurt you whatever you do. Killed, it returns 10 seconds later.
+  It has **no card of its own**: it is what the databank pays out, so it is not
+  one of the things the databank asks for.
 * **Glasswhale Leviathan** — **unkillable, and harmless.** 15 m, with a broad baleen mouth that
   opens when it feeds and small dark eyes set behind pale rings. 15 m, and the only thing that eats stalkers. It
   swallows them whole and has **no interest in a diver at all** — it cannot hurt
@@ -748,12 +750,24 @@ where the hoard is.
 Both found by playing rather than by testing, and both the same shape: a species
 that cannot be catalogued is a world that cannot be finished.
 
-**The Bonded Stalker could not be scanned.** It is a databank entry like any
-other, and the one creature you are *given* rather than find — you earn it by
-scanning every fish, which makes it always the last card. `game.pets` was
-missing from the scanner's target list, so every world in the game stopped dead
-at 63 of 64 and nobody could tell why. It was in no target list at all: it
-could not be scanned, it had no focus label, and you swam through it.
+**The Bonded Stalker was a card you could not fill.** It is the one creature
+you are *given* rather than find — you earn it by scanning every fish — and it
+had a card in the databank like anything else. `game.pets` was in no target
+list at all, so it had no focus label, you swam through it, and the scanner
+could not see it: every world in the game stopped dead at 63 of 64.
+
+The first fix was to put `game.pets` in all three lists, which made the card
+fillable. That was the wrong fix. A reward cannot also be a requirement — the
+card could only ever be filled *after* the thing it gated was already in hand,
+and until then it sat in the grid as a creature no amount of diving would turn
+up. So the species carries `uncatalogued: true` and the databank is built from
+`SL.Species.catalogue` rather than `SL.Species.list`: 64 species live out
+there, 63 of them have cards. `Index.record` refuses an uncatalogued id, so
+neither the scanner nor the knife can put it on the books, and `Index.count`
+counts *the catalogue that is scanned* rather than everything scanned — so a
+world saved while the card still existed reads 63 of 63, not 64 of 63. The
+focus label and the collision box stayed: you should still be able to see your
+own stalker's name and bump into it.
 
 **And the Kelper could be lost forever.** Kelpers only existed while the Kelper
 Leviathan was alive to call them, and they delete themselves after seventy

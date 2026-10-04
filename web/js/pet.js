@@ -121,9 +121,14 @@
   }
 
   const Pet = {
-    /** Species the databank counts as "the fish" for the purposes of the bond. */
+    /**
+     * Species the databank counts as "the fish" for the purposes of the bond.
+     *
+     * Drawn from the catalogue, so nothing that has no card can gate the
+     * reward for filling the cards - the bonded stalker least of all.
+     */
     fishSpecies() {
-      return SL.Species.list.filter((s) => !s.leviathan && s.diet !== 'carnivore');
+      return SL.Species.catalogue.filter((s) => !s.leviathan && s.diet !== 'carnivore');
     },
 
     scannedFish() {
