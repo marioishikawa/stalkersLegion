@@ -38,9 +38,11 @@
 
   const Solids = {
     grid: {},
+    /** Coral posts, kept apart so the fish pass never so much as looks. */
+    posts: {},
     count: 0,
 
-    reset() { this.grid = {}; this.count = 0; },
+    reset() { this.grid = {}; this.posts = {}; this.count = 0; },
 
     key(x, z) {
       return Math.floor(x / ROCK_CELL) + ',' + Math.floor(z / ROCK_CELL);
@@ -50,6 +52,21 @@
     add(x, y, z, radius) {
       const key = this.key(x, z);
       (this.grid[key] || (this.grid[key] = [])).push({ x, y, z, r: radius });
+      this.count++;
+    },
+
+    /**
+     * Records one upright post of coral, from `bottom` to `top`.
+     *
+     * Solid to the diver only. Fish are meant to thread a reef, so these go
+     * in their own grid, which only `diverCorrection` reads - there are twice
+     * as many coral posts as boulders, and the fish check rock every frame.
+     */
+    addColumn(x, z, radius, bottom, top) {
+      const key = this.key(x, z);
+      (this.posts[key] || (this.posts[key] = [])).push({
+        column: true, x, z, r: radius, bottom, top
+      });
       this.count++;
     },
 
@@ -95,6 +112,80 @@
       }
 
       return hit ? out : null;
+    },
+
+    /**
+     * The same question for the diver, who is solid against coral as well as
+     * rock, and who has a camera for a head.
+     *
+     * Resolved one obstacle at a time, each push starting from where the last
+     * one left you. The fish version above adds every push up from the same
+     * starting point, which is fine for a fish brushing one rock - but a rock
+     * patch is eight to twenty boulders shouldered against each other, and a
+     * reef is clusters of a dozen coral posts. Summed, three of them each
+     * wanting you half a metre higher threw you a metre and a half in a frame.
+     * In turn, the second one sees you already lifted and asks for nothing.
+     */
+    diverCorrection(position, radius, out) {
+      const cx = Math.floor(position.x / ROCK_CELL);
+      const cz = Math.floor(position.z / ROCK_CELL);
+      let x = position.x, y = position.y, z = position.z;
+      let hit = false;
+
+      for (let gz = cz - 1; gz <= cz + 1; gz++) {
+        for (let gx = cx - 1; gx <= cx + 1; gx++) {
+          const key = gx + ',' + gz;
+
+          const rocks = this.grid[key];
+          if (rocks) {
+            for (let i = 0; i < rocks.length; i++) {
+              const rock = rocks[i];
+              const dx = x - rock.x, dy = y - rock.y, dz = z - rock.z;
+
+              // A boulder is a sphere pushed about by noise, so its bumps
+              // stand up to a quarter of its radius proud of the sphere. A
+              // fish can brush a bump; a camera inside one sees the rock from
+              // within.
+              const minimum = rock.r * 1.12 + radius;
+              const d2 = dx * dx + dy * dy + dz * dz;
+              if (d2 >= minimum * minimum) continue;
+
+              const d = Math.sqrt(d2);
+              if (d < 1e-4) { y += minimum; hit = true; continue; }
+              const push = (minimum - d) / d;
+              x += dx * push; y += dy * push; z += dz * push;
+              hit = true;
+            }
+          }
+
+          const posts = this.posts[key];
+          if (posts) {
+            for (let i = 0; i < posts.length; i++) {
+              const post = posts[i];
+              if (y < post.bottom - radius || y > post.top + radius) continue;
+
+              const dx = x - post.x, dz = z - post.z;
+              const reach = post.r + radius;
+              const d2 = dx * dx + dz * dz;
+              if (d2 >= reach * reach) continue;
+
+              // Out the side or up onto the top, whichever is the shorter way
+              // out - so you can settle on a coral head, and you slide off the
+              // flank of a tall one rather than being lifted over it.
+              const d = Math.sqrt(d2);
+              const sideways = reach - d;
+              const upward = post.top + radius - y;
+              if (upward < sideways) y += upward;
+              else if (d < 1e-4) x += reach;
+              else { x += (dx / d) * sideways; z += (dz / d) * sideways; }
+              hit = true;
+            }
+          }
+        }
+      }
+
+      if (!hit) return null;
+      return out.set(x - position.x, y - position.y, z - position.z);
     }
   };
 

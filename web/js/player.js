@@ -27,6 +27,24 @@
   const _c2 = new THREE.Vector3();
   const _normal = new THREE.Vector3();
   const _up = new THREE.Vector3();
+  const _shove = new THREE.Vector3();
+
+  /** How far the eye is kept off the drawn sea floor. */
+  const FLOOR_CLEARANCE = 0.55;
+
+  /**
+   * The steepest ground you can glide or walk up without trying: tan 60°.
+   * Anything steeper is a wall - you stop against it and have to swim up it.
+   */
+  const MAX_CLIMB = 1.73;
+
+  /** The diver's body, as far as rock and coral are concerned. */
+  const BODY_RADIUS = 0.5;
+
+  /** The drawn floor where the generated one is not available yet. */
+  function surfaceAt(x, z) {
+    return SL.Terrain ? SL.Terrain.surfaceAt(x, z) : SL.Biomes.floorHeightAt(x, z);
+  }
 
   /** Out of the water, metres per second squared. Brisk, not lunar. */
   const GRAVITY = 16;
@@ -902,7 +920,7 @@
 
       // Head above the waterline is a different world: no water to swim
       // against, and something pulling you down.
-      const ground = SL.Biomes.floorHeightAt(this.position.x, this.position.z) + 0.55;
+      const ground = surfaceAt(this.position.x, this.position.z) + FLOOR_CLEARANCE;
       this.inWater = this.position.y < SL.WATER_LEVEL;
       this.grounded = !this.inWater && this.position.y <= ground + 0.08;
 
@@ -957,9 +975,10 @@
           if (input.up) this.velocity.y = JUMP_SPEED;
         }
       }
-      this.position.addScaledVector(this.velocity, dt);
+      this.moveThroughWorld(dt);
 
       this.pushOutOfCreatures(dt);
+      this.keepOutOfScenery();
       this.clampToWorld();
       this.updateOxygen(dt);
 
@@ -1133,11 +1152,78 @@
       }
     }
 
+    /**
+     * One step of movement, with the ground in the way.
+     *
+     * The floor used to be enforced only from below: wherever you ended up,
+     * you were lifted back on top of it. Fine on a gentle slope, where that is
+     * exactly gliding up it - but a seamount wall or a vent chimney rises
+     * metres in a single stride, and being lifted metres in a frame is not
+     * stopping against a wall, it is passing into it and being spat out of the
+     * top. So the horizontal part of the step is tested first. Rising ground
+     * you could reasonably glide up is allowed and the lift does the rest; a
+     * rise steeper than MAX_CLIMB is a wall, and you slide along it, or stop.
+     */
+    moveThroughWorld(dt) {
+      const p = this.position;
+      p.y += this.velocity.y * dt;
+
+      const dx = this.velocity.x * dt;
+      const dz = this.velocity.z * dt;
+      if (dx === 0 && dz === 0) return;
+
+      const x0 = p.x, z0 = p.z;
+      const groundHere = surfaceAt(x0, z0);
+
+      const clear = (sx, sz) => {
+        const ground = surfaceAt(x0 + sx, z0 + sz);
+        // Open water above the ground there: nothing to hit.
+        if (p.y >= ground + FLOOR_CLEARANCE) return true;
+        // Ground in the way, but a slope rather than a wall.
+        return ground - groundHere <= Math.hypot(sx, sz) * MAX_CLIMB + 0.02;
+      };
+
+      if (clear(dx, dz)) { p.x += dx; p.z += dz; return; }
+
+      // A wall. Keep whichever half of the step runs along it.
+      const xFirst = Math.abs(dx) >= Math.abs(dz);
+      if (xFirst && clear(dx, 0)) { p.x += dx; this.velocity.z = 0; return; }
+      if (clear(0, dz)) { p.z += dz; this.velocity.x = 0; return; }
+      if (!xFirst && clear(dx, 0)) { p.x += dx; this.velocity.z = 0; return; }
+
+      this.velocity.x = 0;
+      this.velocity.z = 0;
+    }
+
+    /**
+     * Boulders and coral are solid.
+     *
+     * Both are recorded in SL.Solids as the world is planted - boulders as
+     * spheres, coral as upright posts, one per tube - and the diver is pushed
+     * out of anything they end up inside. Speed into the surface is taken off
+     * as well, so you stop against a rock rather than grinding into it every
+     * frame and being shoved back out.
+     */
+    keepOutOfScenery() {
+      if (!SL.Solids) return;
+      const shove = SL.Solids.diverCorrection(this.position, BODY_RADIUS, _shove);
+      if (!shove) return;
+
+      this.position.add(shove);
+
+      const length = shove.length();
+      if (length < 1e-6) return;
+      shove.divideScalar(length);
+      const into = this.velocity.dot(shove);
+      if (into < 0) this.velocity.addScaledVector(shove, -into);
+    }
+
     clampToWorld() {
       const p = this.position;
 
-      // The sea floor is solid.
-      const floor = SL.Biomes.floorHeightAt(p.x, p.z) + 0.55;
+      // The sea floor is solid - the floor as drawn, so you cannot end up
+      // under a triangle you can see.
+      const floor = surfaceAt(p.x, p.z) + FLOOR_CLEARANCE;
       if (p.y < floor) { p.y = floor; if (this.velocity.y < 0) this.velocity.y = 0; }
 
       // The surface is no longer a ceiling. You can put your head out, and

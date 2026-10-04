@@ -128,6 +128,41 @@
     }
   }
 
+  /**
+   * The solid part of a coral, as upright columns in the plant's own space.
+   *
+   * Read off the same hashes the builders above use, for the same reason as
+   * `boulderRadius`: a coral the diver bumps into must be the coral they can
+   * see. A tube cluster is one column per tube. A fan is a curled sheet on
+   * one side of its foot, so it is one column standing where the sheet is.
+   */
+  SL.coralColumns = (type, seed, scale) => {
+    const columns = [];
+    if (type === 'coralTube') {
+      const tubes = 3 + Math.floor(hash(seed, 1, 17) * 4);
+      for (let i = 0; i < tubes; i++) {
+        const angle = hash(seed, i, 17) * Math.PI * 2;
+        const dist = hash(seed, i + 10, 17) * 0.6 * scale;
+        columns.push({
+          x: Math.cos(angle) * dist,
+          z: Math.sin(angle) * dist,
+          r: SL.lerp(0.14, 0.30, hash(seed, i + 30, 17)) * scale,
+          h: SL.lerp(0.8, 2.6, hash(seed, i + 20, 17)) * scale
+        });
+      }
+    } else if (type === 'coralFan') {
+      const radius = SL.lerp(0.35, 0.85, hash(seed, 1, 13)) * scale;
+      const facing = hash(seed, 3, 13) * Math.PI * 2;
+      columns.push({
+        x: Math.cos(facing) * radius * 0.55,
+        z: Math.sin(facing) * radius * 0.55,
+        r: radius * 0.5,
+        h: radius * 1.1
+      });
+    }
+    return columns;
+  };
+
   /** A lumpy rock: a sphere with its vertices pushed around by noise. */
   /**
    * How big a boulder a seed and a scale will grow.

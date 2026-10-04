@@ -11,6 +11,58 @@
   const CELLS = 32;
 
   /** Emits one square tile of sea floor, sampled from the height field. */
+  // The two terrain grids, shared by the builder and by SL.Terrain below so
+  // that what you collide with is laid out exactly like what you can see.
+  const FINE_CELL = 2.2;
+  const COARSE_CELL = FINE_CELL * 3;  // 6.6 m, so the grids line up
+  const FINE_TILE_COUNT = 12;         // 12 x 12 x 32 x 2.2 m = 845 m across
+  const COARSE_TILE_COUNT = 18;       // 18 x 18 x 32 x 6.6 m = 3,802 m across
+  const FINE_HALF = CELLS * FINE_CELL * FINE_TILE_COUNT * 0.5;
+  const COARSE_HALF = CELLS * COARSE_CELL * COARSE_TILE_COUNT * 0.5;
+
+  /**
+   * The sea floor as it is drawn, rather than as it is defined.
+   *
+   * `floorHeightAt` is a smooth function; the floor on screen is that function
+   * sampled every 2.2 m near home and every 6.6 m beyond, joined with flat
+   * triangles. Between the samples the two disagree - by centimetres on the
+   * shelf, by metres on a chimney or a seamount wall out on the coarse grid -
+   * and the diver used to be kept out of the function, not the triangles.
+   * Wherever the drawn floor bulged above the function, you swam into it and
+   * saw the world from underneath.
+   *
+   * So the diver collides with this instead: the same vertices, the same
+   * diagonal the mesh is cut along (`MeshData.quad` splits each cell from its
+   * low corner to its high corner), and so exactly the surface you can see.
+   */
+  SL.Terrain = {
+    surfaceAt(x, z) {
+      const fine = Math.abs(x) < FINE_HALF && Math.abs(z) < FINE_HALF;
+      const cell = fine ? FINE_CELL : COARSE_CELL;
+      const origin = fine ? -FINE_HALF : -COARSE_HALF;
+
+      const gx = (x - origin) / cell;
+      const gz = (z - origin) / cell;
+      const i = Math.floor(gx);
+      const j = Math.floor(gz);
+      const fx = gx - i;
+      const fz = gz - j;
+
+      const x0 = origin + i * cell, x1 = x0 + cell;
+      const z0 = origin + j * cell, z1 = z0 + cell;
+      const h = SL.Biomes.floorHeightAt;
+
+      const h00 = h(x0, z0);
+      const h11 = h(x1, z1);
+      if (fz >= fx) {
+        const h01 = h(x0, z1);
+        return h00 + fz * (h01 - h00) + fx * (h11 - h01);
+      }
+      const h10 = h(x1, z0);
+      return h00 + fx * (h10 - h00) + fz * (h11 - h10);
+    }
+  };
+
   function buildTile(game, originX, originZ, cellSize) {
     const mesh = new MeshData();
     const verts = CELLS + 1;
@@ -53,10 +105,10 @@
    * hides anything past fifty.
    */
   function buildTerrain(game) {
-    const FINE = 2.2;
-    const COARSE = FINE * 3;          // 6.6 m, so the grids line up
-    const FINE_TILES = 12;            // 12 x 12 x 32 x 2.2 m = 845 m across
-    const COARSE_TILES = 18;          // 18 x 18 x 32 x 6.6 m = 3,802 m across
+    const FINE = FINE_CELL;
+    const COARSE = COARSE_CELL;
+    const FINE_TILES = FINE_TILE_COUNT;
+    const COARSE_TILES = COARSE_TILE_COUNT;
 
     const fineTile = CELLS * FINE;
     const fineHalf = fineTile * FINE_TILES * 0.5;
@@ -294,6 +346,8 @@
           if (scale < 0.25) continue;
 
           const seed = (SL.random() * 1e9) | 0;
+          // Drawn in the same order as before, so the world is unchanged.
+          const yaw = SL.random() * Math.PI * 2;
 
           instances.push({
             type,
@@ -301,10 +355,25 @@
             x: x - center.x,
             y: floorY,
             z: z - center.z,
-            yaw: SL.random() * Math.PI * 2,
+            yaw,
             scale,
             seed
           });
+
+          // Coral is solid to the diver, column by column - each tube of a
+          // cluster is its own post, so you can rest on the short ones and
+          // bump the tall ones. Fish still thread through it: a fish nosing
+          // between coral heads is what a reef looks like.
+          if (SL.coralColumns && SL.Solids && (type === 'coralTube' || type === 'coralFan')) {
+            const cos = Math.cos(yaw), sin = Math.sin(yaw);
+            for (const column of SL.coralColumns(type, seed, scale)) {
+              // The patch turns each plant about +Y by its yaw.
+              SL.Solids.addColumn(
+                x + column.x * cos + column.z * sin,
+                z - column.x * sin + column.z * cos,
+                column.r, floorY - 0.3, floorY + column.h);
+            }
+          }
 
           // Only the rocks are solid. Kelp and grass are meant to be swum
           // through, and a fish threading a sea fan is what a reef looks like.
