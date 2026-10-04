@@ -17,3 +17,7 @@ Saved/
 
 # Web build output
 web/dist/
+
+# Headless-test scaffolding, generated per run
+web/_test.html
+web/_three_test.js
