@@ -258,7 +258,8 @@
     /** Tells the player how to aim when pointer lock was refused. */
     showLookMode(mode) {
       if (mode !== 'drag') { this.el.lookMode.classList.remove('is-visible'); return; }
-      this.el.lookMode.textContent = 'Drag to look  ·  click to swing  ·  Esc to pause';
+      this.el.lookMode.textContent =
+        'Drag to look  ·  click to swing  ·  clicking also tries for normal mouse look';
       this.el.lookMode.classList.add('is-visible');
       clearTimeout(this._lookTimer);
       this._lookTimer = setTimeout(() => this.el.lookMode.classList.remove('is-visible'), 9000);

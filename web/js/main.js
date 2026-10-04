@@ -248,17 +248,40 @@
       const lock = this.canvas.requestPointerLock();
       if (lock && typeof lock.catch === 'function') lock.catch(() => {});
 
-      // If the lock has not engaged shortly after asking, it is not going to -
-      // fall back to drag-look rather than leaving the player unable to aim.
+      // If the lock has not engaged after asking, it is not going to - fall
+      // back to drag-look rather than leaving the player unable to aim.
+      //
+      // Given a long rope deliberately. This changes how the game is played,
+      // so it should only ever fire because the browser really will not hold
+      // the cursor - not because the first frame of a world took a moment, and
+      // never because the window happens not to have focus, which refuses the
+      // lock every time and says nothing about whether it is available.
       clearTimeout(this._lockCheck);
       this._lockCheck = setTimeout(() => {
-        if (document.pointerLockElement !== this.canvas && this.started
-          && !this.fabricatorOpen && !this.indexOpen) {
-          this.useDragLook();
-        }
-      }, 700);
+        if (document.pointerLockElement === this.canvas) return;
+        if (!this.started || this.fabricatorOpen || this.indexOpen) return;
+        if (!document.hasFocus()) return;
+        this.useDragLook();
+      }, 1800);
 
       this.updateCursor();
+    }
+
+    /**
+     * Asks for the cursor back.
+     *
+     * Drag-look is a fallback, not a setting, and it used to be a one-way
+     * door: nothing ever asked for the lock a second time, so a single refused
+     * request - a slow first frame, an unfocused window - changed how the game
+     * was played for the rest of the session. Every click in drag-look now has
+     * another go. A click is a user gesture, which is exactly what the lock
+     * wants; if it engages, `pointerlockchange` puts the mode back, and if it
+     * does not, the drag that started with this click carries on as before.
+     */
+    retryMouseLook() {
+      if (this.lookMode !== 'drag' || !this.started || this.paused) return;
+      const lock = this.canvas.requestPointerLock();
+      if (lock && typeof lock.catch === 'function') lock.catch(() => {});
     }
 
     useDragLook() {
@@ -807,6 +830,7 @@
       if (game.lookMode === 'drag') {
         dragging = true;
         dragDistance = 0;
+        game.retryMouseLook();
         e.preventDefault();
       }
     });
@@ -829,6 +853,9 @@
 
       if (locked) {
         clearTimeout(game._lockCheck);
+        // The click that won the lock back was asking for the cursor, not
+        // swinging at anything.
+        dragging = false;
         game.lookMode = 'pointerlock';
         document.body.classList.remove('is-drag-look');
         game.paused = false;
