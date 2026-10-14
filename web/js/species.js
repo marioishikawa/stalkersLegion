@@ -956,6 +956,46 @@
                backSpikes: 4, antennae: 0.5, legPairs: 4, legScale: 0.42,
                spineSegments: 12, radialSegments: 10 }
     }),
+    fish('starfish', 'Starfishten', 'shallows', 'star', {
+      // A plain five-armed starfish. It lies on the sand and creeps, so like
+      // the crabs it is placed by hand rather than schooled.
+      grounded: true, groups: 0,
+      diet: 'scavenger',
+      note: 'A starfish. Five arms, no face, and no hurry: it creeps across ' +
+            'the sand of the Safe Shallows a few metres a minute and spends ' +
+            'most of its life lying still. Touch it and it draws its arms in.',
+      backColor: C(0.92, 0.42, 0.16), bellyColor: C(0.98, 0.76, 0.50), finColor: C(1.0, 0.88, 0.66),
+      maxHealth: 12, cruiseSpeed: 0.06, sprintSpeed: 0.1, turnRate: 0.3,
+      senseRadius: 4, schoolSize: 1, altitude: 0, wagRate: 0,
+      // Tip to tip, then how thick and how broad an arm is, in fractions of
+      // that - the body builder and the databank card both draw from these.
+      shape: { length: 0.5, height: 0.06, arms: 5, armWidth: 0.24, discRadius: 0.3,
+               spineSegments: 7, radialSegments: 8 }
+    }),
+    fish('stiltcrab', 'Stilt Crab', 'abyss', 'boxy', {
+      // Like the crabs of the shallows it walks rather than swims, so it is
+      // placed by hand. The same animal code; its own legs and its own ground.
+      alsoIn: ['vents'],
+      grounded: true, groups: 0,
+      diet: 'scavenger',
+      note: 'A small shell carried a metre off the sea floor on eight very ' +
+            'long legs, and covered in thorns it never uses - it has nothing ' +
+            'to bite with. It picks its way across the abyssal plain and around ' +
+            'the vent chimneys, and backs off from anything that comes close.',
+      backColor: C(0.80, 0.46, 0.34), bellyColor: C(0.96, 0.86, 0.76), finColor: C(0.86, 0.60, 0.46),
+      eyeColor: C(0.05, 0.04, 0.04),
+      maxHealth: 30, cruiseSpeed: 0.75, sprintSpeed: 3.4, turnRate: 2.2,
+      senseRadius: 12, schoolSize: 1, altitude: 0.6, wagRate: 1.4,
+      biteDamage: 0,
+      drops: { titanium: [1, 2] },
+      shape: { length: 0.55, height: 0.24, width: 0.42, bellyPosition: 0.50,
+               noseSharpness: 0.3, crossSection: 3.2, tailHeight: 0.04,
+               tailSweep: 0.06, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.06, eyeRing: true, eyePosition: 0.14,
+               backSpikes: 7, shellSpikes: 14, antennae: 0.7,
+               legPairs: 4, legScale: 1.7, legStyle: 'jointed', legStance: 0.85,
+               spineSegments: 12, radialSegments: 10 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -1105,6 +1145,8 @@
     carniLeviathan: byId.carnilev,
     craber: byId.craber,
     crober: byId.crober,
+    starfish: byId.starfish,
+    stiltcrab: byId.stiltcrab,
     glowLeviathan: byId.glowlev,
     diamondLeviathan: byId.diamondlev,
     // Only ordinary prey spawns from the biome roster; the predators and the

@@ -22,6 +22,15 @@
     hide: 'sitting very still'
   };
 
+  /**
+   * The floor as drawn. A crab stands on what you can see - out on the coarse
+   * grid of the abyssal plain the smooth floor and the drawn one can be metres
+   * apart, which is a crab walking on air or wading through mud.
+   */
+  function groundAt(x, z) {
+    return SL.Terrain ? SL.Terrain.surfaceAt(x, z) : SL.Biomes.floorHeightAt(x, z);
+  }
+
   /** How close anything gets before it runs. */
   const SPOOK_RANGE = 9;
 
@@ -30,7 +39,7 @@
     // and the Crober, which is the same animal in blue. Nothing else about
     // them differs, so nothing else about them is written twice.
     constructor(game, x, z, species) {
-      const y = SL.Biomes.floorHeightAt(x, z);
+      const y = groundAt(x, z);
       super(game, species || SL.Species.craber, x, y, z);
 
       this.home = new THREE.Vector3(x, y, z);
@@ -53,7 +62,22 @@
     }
 
     get stateLabel() { return LABELS[this.state] || ''; }
-    get legHeight() { return this.bodyLength * 0.22; }
+    get legHeight() { return this.bodyLength * (this.species.shape.legStance || 0.22); }
+
+    /**
+     * Whether a point is ground this crab will walk on.
+     *
+     * The Craber and Crober live on the sand of the Safe Shallows; the Stilt
+     * Crab walks the abyssal plain and the vent field. Every check that used
+     * to say "shallows" asks this instead, so each keeps to its own country.
+     */
+    walksOn(x, z) {
+      if (!this.homes) {
+        const S = this.species;
+        this.homes = [S.biome].concat(S.alsoIn || []).map((id) => SL.Biomes.byId[id]);
+      }
+      return this.homes.indexOf(SL.Biomes.biomeAt(x, z)) >= 0;
+    }
 
     enterState(state) {
       if (this.state === state) return;
@@ -73,7 +97,7 @@
         const x = this.home.x + Math.cos(angle) * radius;
         const z = this.home.z + Math.sin(angle) * radius;
 
-        if (SL.Biomes.biomeAt(x, z) !== SL.Biomes.byId.shallows) continue;
+        if (!this.walksOn(x, z)) continue;
 
         this.target.set(x, 0, z);
         return;
@@ -97,7 +121,7 @@
       p.z += step.z * dt;
 
       // Glued to the floor, which is the point of it.
-      const ground = SL.Biomes.floorHeightAt(p.x, p.z);
+      const ground = groundAt(p.x, p.z);
       p.y = SL.damp(p.y, ground + this.legHeight, 12, dt);
 
       const speed = Math.hypot(step.x, step.z);
@@ -110,9 +134,9 @@
 
       // Lean with the slope so it does not stand proud of a dune.
       const ahead = this.bodyLength * 0.6;
-      const front = SL.Biomes.floorHeightAt(p.x + Math.sin(this.heading) * ahead,
+      const front = groundAt(p.x + Math.sin(this.heading) * ahead,
         p.z + Math.cos(this.heading) * ahead);
-      const back = SL.Biomes.floorHeightAt(p.x - Math.sin(this.heading) * ahead,
+      const back = groundAt(p.x - Math.sin(this.heading) * ahead,
         p.z - Math.cos(this.heading) * ahead);
 
       this.object.rotation.set(0, 0, 0);
@@ -155,7 +179,7 @@
 
           // It will not bolt out of its own biome.
           const next = _tmp.set(this.position.x + x * 3, 0, this.position.z + z * 3);
-          if (SL.Biomes.biomeAt(next.x, next.z) !== SL.Biomes.byId.shallows) {
+          if (!this.walksOn(next.x, next.z)) {
             this.sidleSign = -this.sidleSign;
           }
 
@@ -179,7 +203,7 @@
 
           // Off the sand somehow - a bolt carried it over the line, or the
           // ground shifted under it. Home is always in the shallows.
-          if (SL.Biomes.biomeAt(this.position.x, this.position.z) !== SL.Biomes.byId.shallows) {
+          if (!this.walksOn(this.position.x, this.position.z)) {
             _away.set(this.home.x - this.position.x, 0, this.home.z - this.position.z);
             if (_away.lengthSq() > 0.01) {
               return _away.normalize().multiplyScalar(S.cruiseSpeed * 1.6);

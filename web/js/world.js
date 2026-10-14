@@ -889,6 +889,68 @@
         game.stalkers.push(stalker);
       }
     }
+
+    // Last, so the dice everything above was dealt with are unchanged and an
+    // existing world keeps the same fish in the same places.
+    scatterStarfish(game);
+    scatterStiltCrabs(game);
+  }
+
+  /**
+   * Stilt Crabs, on the abyssal plain and around the vent chimneys.
+   *
+   * The plain is the biggest biome in the game and has the fewest things
+   * standing on it; a crab a metre tall picking its way across the mud is
+   * something to see out there. The vent field is where real crabs like this
+   * gather, on the warm ground round the chimneys.
+   */
+  function scatterStiltCrabs(game) {
+    const species = SL.Species.stiltcrab;
+    if (!SL.Craber || !species) return;
+
+    for (const id of [species.biome].concat(species.alsoIn || [])) {
+      const biome = SL.Biomes.byId[id];
+      if (!biome) continue;
+      const count = Math.max(4, Math.round(2 * areaFactorOf(biome)));
+
+      for (let i = 0; i < count; i++) {
+        let point = null;
+        for (let attempt = 0; attempt < 8 && !point; attempt++) {
+          const candidate = SL.Biomes.randomPointIn(biome);
+          if (candidate && SL.Biomes.biomeAt(candidate.x, candidate.z) === biome) point = candidate;
+        }
+        if (!point) continue;
+        game.crabers.push(new SL.Craber(game, point.x, point.z, species));
+      }
+    }
+  }
+
+  /**
+   * Starfish, on the sand of the Safe Shallows and nowhere else.
+   *
+   * They share the crabs' list - both walk the floor, both are culled like
+   * small fish, and both are scanned and bumped into the same way.
+   */
+  function scatterStarfish(game) {
+    if (!SL.Starfish || !SL.Species.starfish) return;
+
+    const shallows = SL.Biomes.byId.shallows;
+    const count = Math.round(9 * areaFactorOf(shallows));
+
+    for (let i = 0; i < count; i++) {
+      let point = null;
+      for (let attempt = 0; attempt < 8 && !point; attempt++) {
+        const candidate = SL.Biomes.randomPointIn(shallows);
+        if (!candidate) break;
+        // In the shallows, and under water: not stranded on the beach.
+        if (SL.Biomes.biomeAt(candidate.x, candidate.z) !== shallows) continue;
+        if (SL.Biomes.floorHeightAt(candidate.x, candidate.z) > SL.WATER_LEVEL - 1.5) continue;
+        point = candidate;
+      }
+      if (!point) continue;
+
+      game.crabers.push(new SL.Starfish(game, point.x, point.z));
+    }
   }
 
   /**

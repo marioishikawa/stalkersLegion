@@ -37,6 +37,7 @@
    * single uniform scale, so the proportions stay the animal's real ones.
    */
   function drawFish(ctx, species, known) {
+    if (species.profile === 'star') { drawStar(ctx, species, known); return; }
     const S = species.shape;
     const steps = 44;
 
@@ -59,7 +60,12 @@
     const ventralPeak = S.ventralFin > 0.02
       ? SL.profileAt(species.profile, 0.6, S.bellyPosition).h * S.height + S.ventralFin
       : 0;
-    const legDrop = S.legPairs > 0 ? S.legScale * 1.1 : 0;
+    // Long jointed legs splay fore and aft and stand the body up off the
+    // floor, so the card makes room for them on both axes.
+    const jointed = S.legStyle === 'jointed' && S.legPairs > 0;
+    const legSpan = jointed ? S.legScale * 0.42 : 0;
+    const kneeRise = jointed ? S.legScale * 0.22 : 0;
+    const legDrop = jointed ? (S.legStance || 0.4) : (S.legPairs > 0 ? S.legScale * 1.1 : 0);
 
     /**
      * A serpent is drawn in an S.
@@ -73,15 +79,15 @@
     const waveAmp = S.bodySegments > 1 ? 0.11 : 0;
     const wave = (t) => (waveAmp ? Math.sin(t * Math.PI * 1.8) * waveAmp : 0);
 
-    const halfExtent = Math.max(maxHalf, S.tailHeight, dorsalPeak, ventralPeak, legDrop, 0.02)
-      + waveAmp;
-    const totalLength = 1 + S.tailSweep;
+    const halfExtent = Math.max(maxHalf, S.tailHeight, dorsalPeak, ventralPeak, legDrop,
+      maxHalf + kneeRise, 0.02) + waveAmp;
+    const totalLength = 1 + S.tailSweep + legSpan * 2;
 
     const scale = Math.min((CARD_W - 16) / totalLength, (CARD_H - 14) / (halfExtent * 2));
     const originX = (CARD_W - totalLength * scale) / 2;
     const midY = CARD_H / 2;
 
-    const px = (t) => originX + t * scale;
+    const px = (t) => originX + (t + legSpan) * scale;
     /** `t` is where along the body this point sits, and rides the curve. */
     const py = (v, t) => midY + (v + (t === undefined ? 0 : wave(t))) * scale;
 
@@ -131,8 +137,25 @@
       ctx.fill();
     }
 
+    // Long legs: up to a knee above the shell, then down to the floor.
+    if (jointed) {
+      ctx.strokeStyle = known ? shade(fin, 0.8) : flat;
+      ctx.lineWidth = Math.max(1.5, scale * 0.03);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < S.legPairs; i++) {
+        const t = SL.lerp(0.25, 0.7, S.legPairs > 1 ? i / (S.legPairs - 1) : 0.5);
+        const lean = S.legPairs > 1 ? SL.lerp(-1, 1, i / (S.legPairs - 1)) : 0;
+        ctx.moveTo(px(t), py(0, t));
+        ctx.lineTo(px(t + lean * legSpan * 0.5), py(-halfAt(t) - kneeRise, t));
+        ctx.lineTo(px(t + lean * legSpan), py(legDrop, t));
+      }
+      ctx.stroke();
+    }
+
     // Legs, for the things that have them.
-    if (S.legPairs > 0) {
+    if (S.legPairs > 0 && !jointed) {
       ctx.strokeStyle = known ? shade(fin, 0.8) : flat;
       ctx.lineWidth = Math.max(1.5, scale * 0.018);
       ctx.lineCap = 'round';
@@ -244,6 +267,69 @@
       ctx.lineTo(px(-S.antennae * 0.45), py(-S.antennae * 0.05, 0));
       ctx.stroke();
     }
+  }
+
+  /**
+   * A starfish, from above - side on it would be a line.
+   *
+   * Drawn from the same numbers as the body: the arm count, how broad an arm
+   * is, and the size of the middle, with the row of pale bumps down each arm.
+   */
+  function drawStar(ctx, species, known) {
+    const S = species.shape;
+    const arms = Math.max(3, Math.round(S.arms || 5));
+    const cx = CARD_W / 2, cy = CARD_H / 2;
+    const reach = CARD_H * 0.44;
+    const inner = reach * Math.max(S.armWidth * 1.15, S.discRadius * 0.9);
+    const flat = 'rgba(125, 148, 154, 0.22)';
+
+    // Slightly rotated so one arm points up, as a starfish is usually pictured.
+    const point = (i, radius) => {
+      const angle = -Math.PI / 2 + (i / (arms * 2)) * Math.PI * 2;
+      return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
+    };
+
+    ctx.beginPath();
+    for (let i = 0; i < arms * 2; i++) {
+      const [x, y] = point(i, i % 2 === 0 ? reach : inner);
+      if (i === 0) ctx.moveTo(x, y);
+      else {
+        // Rounded between arms, so it reads as soft rather than as a badge.
+        const [mx, my] = point(i - 0.5, (i % 2 === 0 ? reach : inner) * 0.5 + (i % 2 === 0 ? inner : reach) * 0.5);
+        ctx.quadraticCurveTo(mx, my, x, y);
+      }
+    }
+    const [mx, my] = point(arms * 2 - 0.5, (reach + inner) * 0.5);
+    const [x0, y0] = point(0, reach);
+    ctx.quadraticCurveTo(mx, my, x0, y0);
+    ctx.closePath();
+
+    if (!known) { ctx.fillStyle = flat; ctx.fill(); return; }
+
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach);
+    gradient.addColorStop(0, shade(species.backColor, 0.9));
+    gradient.addColorStop(0.55, shade(species.backColor, 1));
+    gradient.addColorStop(1, shade(species.bellyColor, 1));
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = shade(species.backColor, 0.55);
+    ctx.stroke();
+
+    // The bumps down each arm, and one in the middle.
+    ctx.fillStyle = shade(species.finColor, 1);
+    for (let a = 0; a < arms; a++) {
+      for (let k = 1; k <= 3; k++) {
+        const t = k / 4.2;
+        const [x, y] = point(a * 2, reach * t);
+        ctx.beginPath();
+        ctx.arc(x, y, reach * 0.055 * (1.25 - t), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, reach * 0.06, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   const Index = {

@@ -96,8 +96,77 @@
     return { w: SL.clamp(w, 0.02, 1), h: SL.clamp(h, 0.02, 1) };
   }
 
+  /**
+   * A starfish, which shares nothing with a fish but the colours.
+   *
+   * Built lying flat, centred on its middle with its underside at y = 0, so it
+   * can be set straight down on the sand: five tapering arms lofted out from
+   * the centre with their tips curled up a little, a low dome where they meet,
+   * and a row of pale bumps down the top of each arm. One rigid piece, no tail
+   * and no jaw - it has neither.
+   */
+  function buildStar(species) {
+    const S = species.shape;
+    const length = Math.max(0.05, S.length);
+    const reach = length * 0.5;
+    const thick = length * S.height;
+    const arms = Math.max(3, Math.round(S.arms || 5));
+    const body = new MeshData();
+    const rings = SL.clamp(S.spineSegments || 7, 4, 16);
+
+    for (let a = 0; a < arms; a++) {
+      const angle = (a / arms) * Math.PI * 2;
+      const dx = Math.sin(angle), dz = Math.cos(angle);
+
+      const spine = [], widths = [], heights = [], colours = [];
+      for (let r = 0; r < rings; r++) {
+        const t = r / (rings - 1);
+        const half = thick * SL.lerp(1, 0.35, t);
+        // Tips lift off the sand, the way a living one's do.
+        spine.push(new THREE.Vector3(dx * t * reach, half + Math.pow(t, 3) * thick * 1.4, dz * t * reach));
+        widths.push(reach * S.armWidth * SL.lerp(1, 0.2, Math.pow(t, 0.85)));
+        heights.push(half);
+        colours.push(species.backColor.clone().lerp(species.bellyColor, t * 0.25));
+      }
+      Geo.loft(body, spine, widths, heights, colours, S.radialSegments || 8, 2.4,
+        species.bellyColor, 0.9);
+
+      // The bumps down the back of the arm.
+      for (let k = 1; k <= 3; k++) {
+        const t = k / 4.2;
+        const half = thick * SL.lerp(1, 0.35, t);
+        Geo.sphere(body, dx * t * reach, half * 1.9 + Math.pow(t, 3) * thick * 1.4, dz * t * reach,
+          reach * 0.04 * (1.25 - t), 6, species.finColor);
+      }
+    }
+
+    // A low dome over the middle, where the arms meet.
+    const dome = new MeshData();
+    Geo.sphere(dome, 0, 0, 0, reach * S.discRadius, 10, species.backColor);
+    body.append(dome, new THREE.Matrix4().makeTranslation(0, thick, 0)
+      .multiply(new THREE.Matrix4().makeScale(1, (thick * 1.1) / (reach * S.discRadius), 1)));
+    Geo.sphere(body, 0, thick * 2.05, 0, reach * 0.05, 6, species.finColor);
+
+    body.computeNormals();
+    const geometry = body.toGeometry();
+    return {
+      body: geometry,
+      segments: [{ geometry, span: 0 }],
+      rootOffset: new THREE.Vector3(0, 0, 0),
+      tailSegment: 0,
+      jawSegment: 0,
+      tail: new MeshData().toGeometry(),
+      jaw: null,
+      tailPivot: new THREE.Vector3(),
+      jawPivot: null,
+      length,
+      radius: reach
+    };
+  }
+
   /** Builds the three geometries and the pivots that animate them. */
   function build(species) {
+    if (species.profile === 'star') return buildStar(species);
     const S = species.shape;
     const body = new MeshData();
     const tailMesh = new MeshData();
@@ -257,8 +326,65 @@
       }
     }
 
+    // --- Long jointed legs, for the things that stand on stilts --------------
+    //
+    // A paddle is a triangle, and a triangle a metre long is a sail. A leg that
+    // long has to be a leg: a thin tube out and up to a knee above the shell,
+    // then a longer one down to a foot planted on the sea floor. `legStance`
+    // is how high the body is carried, in body lengths, and the feet are put
+    // exactly that far below it - the creature carries itself at the same
+    // height, so they meet the sand.
+    const jointed = S.legStyle === 'jointed';
+    if (jointed) {
+      const legLength = length * (S.legScale || 1);
+      const stance = length * (S.legStance || 0.4);
+      const thick = length * 0.045;
+      const pairs = S.legPairs || 0;
+      for (let i = 0; i < pairs; i++) {
+        const t = SL.lerp(0.25, 0.7, pairs > 1 ? i / (pairs - 1) : 0.5);
+        const r = ringAt(t);
+        // Fanned out round the shell like the spokes of a wheel - the front
+        // pairs reach well forward, the back ones well back - so eight legs
+        // read as eight legs from any side rather than two bundles of stilts.
+        const lean = pairs > 1 ? SL.lerp(1, -1, i / (pairs - 1)) : 0;
+        for (const side of [1, -1]) {
+          const root = V(side * halfWidths[r] * 0.85, 0, spine[r].z);
+          const knee = V(side * (halfWidths[r] + legLength * 0.42), halfHeights[r] + legLength * 0.22,
+            spine[r].z + lean * legLength * 0.3);
+          const foot = V(side * (halfWidths[r] + legLength * (0.85 - Math.abs(lean) * 0.3)), -stance,
+            spine[r].z + lean * legLength * 0.62);
+          const mesh = pieceFor(spine[r].z).mesh;
+          const colour = species.finColor;
+          Geo.loft(mesh, [root, knee], [thick, thick * 0.8], [thick, thick * 0.8],
+            [colour, colour], 6, 2, colour, 0);
+          Geo.loft(mesh, [knee, foot], [thick * 0.8, thick * 0.3], [thick * 0.8, thick * 0.3],
+            [colour, colour.clone().multiplyScalar(0.75)], 6, 2, colour, 0);
+          Geo.sphere(mesh, knee.x, knee.y, knee.z, thick * 1.1, 6, colour);
+          // A harmless thorn on every knee.
+          Geo.cone(mesh, knee.x, knee.y + thick * 0.6, knee.z, thick * 0.55, thick * 3.2, 5,
+            colour, species.bellyColor);
+        }
+      }
+    }
+
+    // --- Spikes on the shell ---------------------------------------------------
+    //
+    // Upright thorns scattered over the top of the carapace. All show: the
+    // animal that carries them has nothing to bite with.
+    for (let i = 0; i < (S.shellSpikes || 0); i++) {
+      // Golden-angle placement, so they spread evenly without a random draw.
+      const a = i * 2.39996;
+      const spread = Math.sqrt((i + 0.5) / S.shellSpikes);
+      const t = SL.clamp(0.5 + Math.cos(a) * spread * 0.3, 0.15, 0.85);
+      const r = ringAt(t);
+      const x = Math.sin(a) * spread * halfWidths[r] * 0.75;
+      const y = halfHeights[r] * Math.sqrt(Math.max(0, 1 - Math.pow(x / Math.max(halfWidths[r], 1e-4), 2))) * 0.92;
+      Geo.cone(pieceFor(spine[r].z).mesh, x, y, spine[r].z, length * 0.022, length * 0.1, 5,
+        species.finColor, species.bellyColor);
+    }
+
     // --- Legs: small paired paddles under the thorax ---------------------------
-    for (let i = 0; i < (S.legPairs || 0); i++) {
+    for (let i = 0; i < (jointed ? 0 : (S.legPairs || 0)); i++) {
       const t = SL.lerp(0.28, 0.62, S.legPairs > 1 ? i / (S.legPairs - 1) : 0.5);
       const r = ringAt(t);
       const legLength = length * (S.legScale || 0.11);
