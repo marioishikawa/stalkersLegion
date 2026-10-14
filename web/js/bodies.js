@@ -164,9 +164,192 @@
     };
   }
 
+  /**
+   * The shape of a seahorse, in fractions of its height, centred on its middle.
+   *
+   * Shared by the body builder and the databank card, so the animal and its
+   * picture are the same animal. y is up and z is forward - the way the snout
+   * points. The torso is a stack of rings with a side-to-side half-width `w`
+   * and a front-to-back half-depth `d` (seahorses are flat-sided and deep);
+   * the tail is a curl of round beads; the head sits on top with the snout
+   * running forward off it.
+   */
+  SL.seahorseLayout = function (S) {
+    const belly = S.belly || 1;
+    return {
+      torso: [
+        { y: 0.36, z: -0.05, w: 0.045, d: 0.055 },
+        { y: 0.25, z: -0.02, w: 0.068, d: 0.092 },
+        { y: 0.10, z: 0.04, w: 0.074 * Math.sqrt(belly), d: 0.105 * belly },
+        { y: -0.02, z: 0.02, w: 0.056, d: 0.076 },
+        { y: -0.12, z: -0.03, w: 0.040, d: 0.050 }
+      ],
+      tail: [
+        { y: -0.12, z: -0.03, r: 0.040 },
+        { y: -0.22, z: -0.07, r: 0.033 },
+        { y: -0.31, z: -0.08, r: 0.027 },
+        { y: -0.38, z: -0.05, r: 0.021 },
+        { y: -0.42, z: 0.00, r: 0.016 },
+        { y: -0.42, z: 0.05, r: 0.012 },
+        { y: -0.38, z: 0.08, r: 0.009 },
+        { y: -0.34, z: 0.065, r: 0.006 },
+        { y: -0.33, z: 0.035, r: 0.004 }
+      ],
+      head: { y: 0.40, z: 0.0, r: 0.075 },
+      snoutFrom: { y: 0.385, z: 0.05 },
+      snoutTip: { y: 0.37, z: 0.05 + (S.snout || 0.12) },
+      // A tube, but a stout one: thin, it reads as a stick held in the mouth.
+      snoutRadius: 0.032,
+      // The fin on its back, between the belly and the base of the tail.
+      fin: { top: 0.12, bottom: -0.05, z: -0.06, reach: 0.075 }
+    };
+  };
+
+  /**
+   * A seahorse: upright, built head-up with the snout pointing forward.
+   *
+   * Nothing about it lofts like a fish. The torso is one loft down a nearly
+   * vertical spine; the tail is a chain of overlapping beads, because a loft
+   * round a curl that tight twists itself inside out - and because a
+   * seahorse's tail is a chain of bony rings anyway. The fin on its back is
+   * the "tail" as far as the animation is concerned: it is the part that
+   * flutters, and fluttering it is how a seahorse swims.
+   */
+  function buildSeahorse(species) {
+    const S = species.shape;
+    const H = Math.max(0.05, S.length);
+    const L = SL.seahorseLayout(S);
+    const body = new MeshData();
+    const fin = new MeshData();
+    const V = (y, z, x) => new THREE.Vector3((x || 0) * H, y * H, z * H);
+    const back = species.backColor;
+    const pale = species.bellyColor;
+    const band = back.clone().multiplyScalar(0.72);
+
+    // --- Torso, with the darker rings real ones have ---------------------------
+    const spine = [], widths = [], depths = [], colours = [];
+    const steps = 4;
+    for (let i = 0; i < L.torso.length - 1; i++) {
+      const a = L.torso[i], b = L.torso[i + 1];
+      for (let k = 0; k < steps; k++) {
+        const t = k / steps;
+        spine.push(V(SL.lerp(a.y, b.y, t), SL.lerp(a.z, b.z, t)));
+        widths.push(SL.lerp(a.w, b.w, t) * H);
+        depths.push(SL.lerp(a.d, b.d, t) * H);
+        colours.push((spine.length % 3 === 0) ? band : back);
+      }
+    }
+    const last = L.torso[L.torso.length - 1];
+    spine.push(V(last.y, last.z)); widths.push(last.w * H); depths.push(last.d * H); colours.push(back);
+    Geo.loft(body, spine, widths, depths, colours, S.radialSegments || 10, 2.2, pale, 0.6);
+
+    // --- Tail: beads round the curl -------------------------------------------
+    for (let i = 0; i < L.tail.length - 1; i++) {
+      const a = L.tail[i], b = L.tail[i + 1];
+      const beads = 3;
+      for (let k = 0; k < beads; k++) {
+        const t = k / beads;
+        const r = SL.lerp(a.r, b.r, t);
+        Geo.sphere(body, 0, SL.lerp(a.y, b.y, t) * H, SL.lerp(a.z, b.z, t) * H,
+          r * H * 1.15, 8, (i + k) % 2 ? back : band);
+      }
+    }
+
+    // --- Head, snout, crown and eyes ------------------------------------------
+    const head = new MeshData();
+    Geo.sphere(head, 0, 0, 0, L.head.r * H, 12, back);
+    body.append(head, new THREE.Matrix4().makeTranslation(0, L.head.y * H, L.head.z * H)
+      .multiply(new THREE.Matrix4().makeScale(0.75, 0.9, 1.15)));
+
+    const sr = L.snoutRadius * H;
+    Geo.loft(body,
+      [V(L.snoutFrom.y, L.snoutFrom.z), V((L.snoutFrom.y + L.snoutTip.y) / 2, (L.snoutFrom.z + L.snoutTip.z) / 2),
+        V(L.snoutTip.y, L.snoutTip.z)],
+      [sr * 0.9, sr * 0.6, sr * 0.75], [sr, sr * 0.65, sr * 0.8],
+      [back, back, band], 8, 2, pale, 0.4);
+
+    // The coronet: a little crown of points on top of the head.
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
+      Geo.cone(body, Math.cos(a) * 0.02 * H, (L.head.y + 0.055) * H, (L.head.z - 0.01 + Math.sin(a) * 0.02) * H,
+        0.012 * H, 0.05 * H, 5, back, pale);
+    }
+
+    const eyeR = (S.eyeSize || 0.028) * H;
+    for (const side of [1, -1]) {
+      const ex = side * L.head.r * 0.72 * H;
+      const ey = (L.head.y + 0.01) * H;
+      const ez = (L.head.z + 0.03) * H;
+      Geo.sphere(body, ex, ey, ez, eyeR * 1.35, 8, pale);
+      Geo.sphere(body, ex + side * eyeR * 0.5, ey, ez, eyeR, 8, species.eyeColor);
+    }
+
+    // Small fins behind the head, one each side.
+    for (const side of [1, -1]) {
+      const root = V(0.31, -0.02, side * 0.05);
+      Geo.fin(body, root, V(0.27, -0.03, side * 0.05),
+        V(0.30, -0.08, side * 0.11), species.finColor);
+    }
+
+    // Pale spots, for the species that have them, and knobs for the knobbly.
+    const seeded = (i, k) => SL.hash(i, k, species.id.length * 977 + 13);
+    for (let i = 0; i < (S.spots || 0); i++) {
+      const ring = L.torso[1 + Math.floor(seeded(i, 1) * 3)];
+      const angle = seeded(i, 2) * Math.PI * 2;
+      Geo.sphere(body, Math.cos(angle) * ring.w * 0.95 * H, (ring.y + (seeded(i, 3) - 0.5) * 0.1) * H,
+        (ring.z + Math.sin(angle) * ring.d * 0.95) * H, 0.011 * H, 6, pale);
+    }
+    for (let i = 0; i < (S.knobs || 0); i++) {
+      const ring = L.torso[Math.floor(seeded(i, 4) * L.torso.length)];
+      const angle = seeded(i, 5) * Math.PI * 2;
+      Geo.sphere(body, Math.cos(angle) * ring.w * H, ring.y * H,
+        (ring.z + Math.sin(angle) * ring.d) * H, 0.022 * H, 6, species.finColor);
+    }
+
+    // --- The fin on its back, built round its own pivot -----------------------
+    const f = L.fin;
+    const finMid = (f.top + f.bottom) / 2;
+    const backAt = (y) => {
+      // Where the back of the torso is at this height.
+      for (let i = 0; i < L.torso.length - 1; i++) {
+        const a = L.torso[i], b = L.torso[i + 1];
+        if (y <= a.y && y >= b.y) {
+          const t = (a.y - y) / (a.y - b.y);
+          return SL.lerp(a.z - a.d, b.z - b.d, t);
+        }
+      }
+      return f.z;
+    };
+    const pivot = V(finMid, backAt(finMid));
+    const rootTop = V(f.top, backAt(f.top) + 0.01).sub(pivot);
+    const rootBottom = V(f.bottom, backAt(f.bottom) + 0.01).sub(pivot);
+    Geo.quadPoly(fin, rootTop, rootBottom,
+      rootBottom.clone().add(V(-0.01, -f.reach)), rootTop.clone().add(V(0.01, -f.reach * 0.8)),
+      species.finColor, true);
+
+    body.computeNormals();
+    fin.computeNormals();
+    const geometry = body.toGeometry();
+
+    return {
+      body: geometry,
+      segments: [{ geometry, span: 0 }],
+      rootOffset: new THREE.Vector3(0, 0, 0),
+      tailSegment: 0,
+      jawSegment: 0,
+      tail: fin.toGeometry(),
+      jaw: null,
+      tailPivot: pivot,
+      jawPivot: null,
+      length: H,
+      radius: H * 0.12
+    };
+  }
+
   /** Builds the three geometries and the pivots that animate them. */
   function build(species) {
     if (species.profile === 'star') return buildStar(species);
+    if (species.profile === 'seahorse') return buildSeahorse(species);
     const S = species.shape;
     const body = new MeshData();
     const tailMesh = new MeshData();

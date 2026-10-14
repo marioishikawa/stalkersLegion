@@ -131,7 +131,11 @@
       // feel like somewhere. It has five now and an eighth of the sea floor,
       // so the boost is doing nothing but costing frames - and still leaves it
       // nearly twice the plain's 0.4.
-      populationBoost: 0.75,
+      // Scaled down by (1880 / 2300)^2 when the map grew to 2,300 m: the new
+      // ring is mostly plain and grew this reef by as much as the plain, so
+      // at 0.75 it put three thousand more fish on the plain's floor and its
+      // share of the cost of every frame with them.
+      populationBoost: 0.75 * 0.668,
       floorColor: new THREE.Color(0.52, 0.40, 0.42),
       waterColor: new THREE.Color(0.06, 0.13, 0.20),
       fogDensity: 0.034,
@@ -176,6 +180,20 @@
       // clowns and had nothing at all working on them.
       scrapDensity: 0.25, stalkerDensity: 0.14,
       flora: ['coralFan', 'seagrass', 'coralTube', 'boulder'], floraDensity: 1.6
+    },
+    {
+      // A broad drowned plateau out past where the old map ended, lifted out
+      // of the deep into green, sunlit water and grown over with seagrass -
+      // which is where seahorses live, holding on to it by their tails.
+      id: 'meadow', name: 'The Seahorse Meadows',
+      populationBoost: 2.2,
+      floorColor: new THREE.Color(0.56, 0.52, 0.30),
+      waterColor: new THREE.Color(0.10, 0.30, 0.22),
+      fogDensity: 0.024,
+      scrapDensity: 0.25, stalkerDensity: 0,
+      // Grass, and plenty of it, with a few kelp stalks and sea fans standing
+      // up out of it.
+      flora: ['seagrass', 'seagrass', 'seagrass', 'kelp', 'coralFan'], floraDensity: 3.2
     }
   ];
 
@@ -224,6 +242,7 @@
   let farBank = null;
   let islet = null;
   let ventField = null;
+  let meadow = null;
 
   function placeFeatures() {
     seamounts = [];
@@ -245,6 +264,22 @@
         // Precomputed so the height field can reject a distant mount without
         // a square root - there are twice as many now and every terrain vertex
         // asks all of them.
+        reachSq: (width * 2.4) * (width * 2.4)
+      });
+    }
+
+    // The ring the map grew into, from 1,880 m out to 2,300 m. Appended after
+    // the original 118 and drawn on their own hash keys, so every older world
+    // keeps every seamount it had and gains these round its new edge.
+    for (let i = 0; i < 30; i++) {
+      const angle = SL.hash(i, 611, SEED) * Math.PI * 2;
+      const radius = SL.lerp(1930, 2240, SL.hash(i, 622, SEED));
+      const width = SL.lerp(34, 62, SL.hash(i, 644, SEED));
+      seamounts.push({
+        x: Math.cos(angle) * radius,
+        z: Math.sin(angle) * radius,
+        rise: SL.lerp(34, 66, SL.hash(i, 633, SEED)) * (i % 3 === 0 ? 1.3 : 0.85),
+        width,
         reachSq: (width * 2.4) * (width * 2.4)
       });
     }
@@ -305,6 +340,38 @@
       rise: 30,
       chimneys: []
     };
+
+    // The Seahorse Meadows: a wide flat-topped plateau in the new outer ring.
+    //
+    // Its bearing is chosen rather than rolled. The trench runs east to west
+    // across the whole map within a few hundred metres of the middle line,
+    // so the meadow is kept well north or south of it - a canyon through the
+    // middle would make it two meadows - and among those bearings it takes the
+    // one furthest from the islet, the far bank and the vent field, so the
+    // long swims all still go somewhere different.
+    {
+      const others = [bankAngle, isletAngle, ventAngle];
+      const apart = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+      let best = 0, bestGap = -1;
+      for (let i = 0; i < 48; i++) {
+        const side = i % 2 ? 1 : -1;
+        const angle = side * Math.PI / 2 + (Math.floor(i / 2) / 23 - 0.5) * 1.6;
+        const gap = Math.min(...others.map((o) => apart(angle, o)));
+        if (gap > bestGap) { bestGap = gap; best = angle; }
+      }
+      meadow = {
+        x: Math.cos(best) * 2020,
+        z: Math.sin(best) * 2020,
+        radius: 240,
+        // From the deep floor out here, about 92 m down, up to about 30 m.
+        rise: 62
+      };
+
+      // None of the new ring's seamounts stands on it: one would put an
+      // eighty-metre peak through the middle of the grass.
+      seamounts = seamounts.filter((mount, i) => i < 118
+        || Math.hypot(mount.x - meadow.x, mount.z - meadow.z) > meadow.radius * 1.5 + mount.width * 2.4);
+    }
 
     // Sixteen chimneys, narrow and steep - the tall ones stand thirty-eight
     // metres off the mound, which out here is most of the way back to the
@@ -395,6 +462,20 @@
     return islet.peakRise * Math.exp(-d * d * 0.85);
   }
 
+  /**
+   * How far the Seahorse Meadows lift the floor at a point, in metres.
+   *
+   * Flat-topped rather than a dome: full height out to 80% of its radius and
+   * falling away over the next 70%, so it is a meadow you swim across rather
+   * than a hill you swim over.
+   */
+  function meadowRise(x, z) {
+    if (!meadow) return 0;
+    const d = Math.hypot(x - meadow.x, z - meadow.z) / meadow.radius;
+    if (d > 1.5) return 0;
+    return meadow.rise * (1 - SL.smoothstep((d - 0.8) / 0.7));
+  }
+
   /** How far the far bank lifts the floor at a point, in metres. */
   function bankRise(x, z) {
     if (!farBank) return 0;
@@ -467,6 +548,7 @@
     y += bankRise(x, z);
     y += isletRise(x, z);
     y += ventRise(x, z);
+    y += meadowRise(x, z);
 
     // The king's basin is gouged below the surrounding floor.
     if (kingBasin) {
@@ -515,6 +597,9 @@
 
     // The islet and its reef flat, which includes the dry part.
     if (isletRise(x, z) > 14) return depth < 22 ? byId.islet : byId.boulders;
+
+    // The meadow's top is the meadow; its flanks are rubble.
+    if (meadowRise(x, z) > 24) return depth < 42 ? byId.meadow : byId.boulders;
 
     // The far bank's shallows are kelp; its flanks are rubble.
     const bank = bankRise(x, z);
@@ -626,7 +711,8 @@
     get farBank() { return farBank; },
     get islet() { return islet; },
     get ventField() { return ventField; },
-    bankRise, isletRise, isletHead, ventRise, ventInfluence,
+    get meadow() { return meadow; },
+    bankRise, isletRise, isletHead, ventRise, ventInfluence, meadowRise,
     trenchInfluence, seamountRise
   };
 })(window.SL);

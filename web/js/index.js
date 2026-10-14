@@ -38,6 +38,7 @@
    */
   function drawFish(ctx, species, known) {
     if (species.profile === 'star') { drawStar(ctx, species, known); return; }
+    if (species.profile === 'seahorse') { drawSeahorse(ctx, species, known); return; }
     const S = species.shape;
     const steps = 44;
 
@@ -329,6 +330,138 @@
     }
     ctx.beginPath();
     ctx.arc(cx, cy, reach * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /**
+   * A seahorse, side on and standing up, from the same layout its body is
+   * built from - torso rings, the curl of the tail, the head and snout, the
+   * crown, the fin on its back.
+   */
+  function drawSeahorse(ctx, species, known) {
+    const S = species.shape;
+    const L = SL.seahorseLayout(S);
+    const flat = 'rgba(125, 148, 154, 0.22)';
+
+    const top = L.head.y + 0.11, bottom = -0.46;
+    const front = L.snoutTip.z + 0.03, rear = -0.17;
+    const scale = Math.min((CARD_H - 12) / (top - bottom), (CARD_W - 16) / (front - rear));
+    const cx = CARD_W / 2 - ((front + rear) / 2) * scale;
+    const cy = CARD_H / 2 + ((top + bottom) / 2) * scale;
+    const X = (z) => cx + z * scale;
+    const Y = (y) => cy - y * scale;
+
+    const back = known ? css(species.backColor) : flat;
+    const fin = known ? css(species.finColor) : flat;
+    const pale = known ? css(species.bellyColor) : flat;
+    const line = known ? shade(species.backColor, 0.45) : 'rgba(125, 148, 154, 0.35)';
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    // The fin on its back, behind everything.
+    const f = L.fin;
+    ctx.fillStyle = fin;
+    ctx.beginPath();
+    ctx.moveTo(X(L.torso[2].z - L.torso[2].d * 0.9), Y(f.top));
+    ctx.lineTo(X(L.torso[2].z - L.torso[2].d - f.reach), Y(f.top - 0.02));
+    ctx.lineTo(X(L.torso[3].z - L.torso[3].d - f.reach * 0.9), Y(f.bottom));
+    ctx.lineTo(X(L.torso[3].z - L.torso[3].d * 0.9), Y(f.bottom));
+    ctx.closePath();
+    ctx.fill();
+
+    // The tail, as the chain of rings it is.
+    for (let i = 0; i < L.tail.length - 1; i++) {
+      const a = L.tail[i], b = L.tail[i + 1];
+      for (let k = 0; k < 3; k++) {
+        const t = k / 3;
+        ctx.fillStyle = known ? ((i + k) % 2 ? back : shade(species.backColor, 0.72)) : flat;
+        ctx.beginPath();
+        ctx.arc(X(SL.lerp(a.z, b.z, t)), Y(SL.lerp(a.y, b.y, t)), SL.lerp(a.r, b.r, t) * 1.15 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // The torso: down the front edge, back up the rear.
+    ctx.beginPath();
+    L.torso.forEach((r, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(r.z + r.d), Y(r.y)));
+    for (let i = L.torso.length - 1; i >= 0; i--) ctx.lineTo(X(L.torso[i].z - L.torso[i].d), Y(L.torso[i].y));
+    ctx.closePath();
+    if (known) {
+      const grad = ctx.createLinearGradient(X(rear), 0, X(0.12), 0);
+      grad.addColorStop(0, shade(species.backColor, 0.85));
+      grad.addColorStop(0.55, back);
+      grad.addColorStop(1, pale);
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = flat;
+    }
+    ctx.fill();
+    if (known) { ctx.strokeStyle = line; ctx.lineWidth = 1.5; ctx.stroke(); }
+
+    // Bony rings across the torso.
+    if (known) {
+      ctx.strokeStyle = shade(species.backColor, 0.65);
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 8; i++) {
+        const y = SL.lerp(L.torso[0].y, L.torso[L.torso.length - 1].y, i / 8);
+        let r = L.torso[0];
+        for (const ring of L.torso) if (ring.y >= y) r = ring;
+        ctx.beginPath();
+        ctx.moveTo(X(r.z - r.d * 0.85), Y(y));
+        ctx.lineTo(X(r.z + r.d * 0.85), Y(y - 0.01));
+        ctx.stroke();
+      }
+    }
+
+    // Head, snout and crown.
+    ctx.fillStyle = back;
+    ctx.beginPath();
+    ctx.ellipse(X(L.head.z), Y(L.head.y), L.head.r * 1.15 * scale, L.head.r * 0.9 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = known ? back : flat;
+    ctx.lineWidth = L.snoutRadius * 1.6 * scale;
+    ctx.beginPath();
+    ctx.moveTo(X(L.snoutFrom.z), Y(L.snoutFrom.y));
+    ctx.lineTo(X(L.snoutTip.z), Y(L.snoutTip.y));
+    ctx.stroke();
+    ctx.fillStyle = back;
+    ctx.beginPath();
+    ctx.moveTo(X(L.head.z - 0.035), Y(L.head.y + 0.05));
+    ctx.lineTo(X(L.head.z - 0.02), Y(L.head.y + 0.105));
+    ctx.lineTo(X(L.head.z), Y(L.head.y + 0.07));
+    ctx.lineTo(X(L.head.z + 0.02), Y(L.head.y + 0.1));
+    ctx.lineTo(X(L.head.z + 0.03), Y(L.head.y + 0.05));
+    ctx.closePath();
+    ctx.fill();
+
+    if (!known) return;
+
+    // Spots and knobs, from the same counts the body uses.
+    ctx.fillStyle = pale;
+    for (let i = 0; i < Math.min(S.spots || 0, 14); i++) {
+      const r = L.torso[1 + (i % 3)];
+      ctx.beginPath();
+      ctx.arc(X(r.z + (SL.hash(i, 7, 3) - 0.5) * r.d * 1.4), Y(r.y + (SL.hash(i, 8, 3) - 0.5) * 0.1),
+        0.011 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = css(species.finColor);
+    for (let i = 0; i < Math.min(S.knobs || 0, 10); i++) {
+      const r = L.torso[i % L.torso.length];
+      const side = i % 2 ? 1 : -1;
+      ctx.beginPath();
+      ctx.arc(X(r.z + side * r.d), Y(r.y), 0.02 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // The eye.
+    ctx.fillStyle = pale;
+    ctx.beginPath();
+    ctx.arc(X(L.head.z + 0.03), Y(L.head.y + 0.01), 0.032 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = css(species.eyeColor);
+    ctx.beginPath();
+    ctx.arc(X(L.head.z + 0.035), Y(L.head.y + 0.01), 0.02 * scale, 0, Math.PI * 2);
     ctx.fill();
   }
 

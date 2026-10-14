@@ -27,7 +27,7 @@
    * catalogue it; you just have to do that with the scanner like anybody else.
    */
   const LEVIATHANS = ['kingstalker', 'redpuff', 'kelperlev', 'glowlev', 'carnilev',
-    'diamondlev'];
+    'diamondlev', 'seahorselev'];
 
   const Quest = {
     /** Leviathan species ids killed in this world. */

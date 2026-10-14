@@ -996,6 +996,60 @@
                legPairs: 4, legScale: 1.7, legStyle: 'jointed', legStance: 0.85,
                spineSegments: 12, radialSegments: 10 }
     }),
+    // ------------------------------------------------- The Seahorse Meadows
+    //
+    // Three seahorses and the thing they are named for. All four are built by
+    // the seahorse builder rather than lofted like fish, and all four swim
+    // upright: they turn to face where they are going and never tip over to
+    // get there.
+    fish('goldenseahorse', 'Golden Seahorse', 'meadow', 'seahorse', {
+      upright: true,
+      note: 'Bright gold, and nearly always in pairs - seahorses keep one ' +
+            'partner and swim with it, tails sometimes linked. It drifts more ' +
+            'than it swims, the little fin on its back a blur.',
+      backColor: C(0.96, 0.70, 0.14), bellyColor: C(1.0, 0.90, 0.56), finColor: C(1.0, 0.84, 0.44),
+      eyeColor: C(0.05, 0.04, 0.02),
+      maxHealth: 10, cruiseSpeed: 0.3, sprintSpeed: 1.1, turnRate: 1.6,
+      senseRadius: 6, schoolSize: 2, groups: 3.0, altitude: 1.2, wagRate: 9,
+      shape: { length: 0.3, belly: 1, snout: 0.12, eyeSize: 0.026, radialSegments: 10 }
+    }),
+    fish('pygmyseahorse', 'Pygmy Seahorse', 'meadow', 'seahorse', {
+      upright: true,
+      note: 'Barely longer than a fingernail is wide, pink, and covered in ' +
+            'knobs that match the sea fans it lives on. Easy to swim straight ' +
+            'past; there are usually three or four in the same place.',
+      backColor: C(0.92, 0.46, 0.58), bellyColor: C(0.98, 0.74, 0.80), finColor: C(0.98, 0.62, 0.72),
+      eyeColor: C(0.06, 0.03, 0.04),
+      maxHealth: 4, cruiseSpeed: 0.18, sprintSpeed: 0.6, turnRate: 1.8,
+      senseRadius: 4, schoolSize: 3, groups: 2.4, altitude: 0.7, wagRate: 12,
+      shape: { length: 0.12, belly: 1.15, snout: 0.08, knobs: 14, eyeSize: 0.03, radialSegments: 8 }
+    }),
+    fish('bigbellyseahorse', 'Big-belly Seahorse', 'meadow', 'seahorse', {
+      upright: true,
+      note: 'The largest of the small ones: half a metre of brown seahorse ' +
+            'with a round, pale-spotted belly that is the brood pouch. It is ' +
+            'the father who carries the eggs.',
+      backColor: C(0.46, 0.35, 0.24), bellyColor: C(0.88, 0.80, 0.62), finColor: C(0.68, 0.56, 0.40),
+      eyeColor: C(0.04, 0.03, 0.02),
+      maxHealth: 16, cruiseSpeed: 0.32, sprintSpeed: 1.0, turnRate: 1.4,
+      senseRadius: 7, schoolSize: 1, groups: 2.6, altitude: 1.6, wagRate: 7,
+      shape: { length: 0.5, belly: 1.55, snout: 0.11, spots: 22, eyeSize: 0.024, radialSegments: 10 }
+    }),
+    fish('seahorselev', 'Seahorse Leviathan', 'meadow', 'seahorse', {
+      leviathan: true, markerColor: '#f0b43c',
+      upright: true, diet: 'carnivore', groups: 0,
+      note: 'Thirteen metres of seahorse, upright over the meadow. It is slow ' +
+            'and it is calm, and it is not to be stood in front of: a ' +
+            'seahorse feeds with a flick of the head faster than anything else ' +
+            'in the sea, and this one does it at your size.',
+      backColor: C(0.86, 0.50, 0.14), bellyColor: C(1.0, 0.86, 0.52), finColor: C(0.98, 0.70, 0.30),
+      eyeColor: C(0.05, 0.03, 0.02), glow: 0.1,
+      maxHealth: 1100, cruiseSpeed: 1.4, sprintSpeed: 3.2, turnRate: 0.9,
+      senseRadius: 22, biteDamage: 38, biteInterval: 4,
+      schoolSize: 1, altitude: 8, wagRate: 4,
+      drops: {},
+      shape: { length: 13, belly: 1.2, snout: 0.13, spots: 30, eyeSize: 0.026, radialSegments: 12 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -1147,6 +1201,7 @@
     crober: byId.crober,
     starfish: byId.starfish,
     stiltcrab: byId.stiltcrab,
+    seahorseLeviathan: byId.seahorselev,
     glowLeviathan: byId.glowlev,
     diamondLeviathan: byId.diamondlev,
     // Only ordinary prey spawns from the biome roster; the predators and the

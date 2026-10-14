@@ -16,7 +16,7 @@
   const FINE_CELL = 2.2;
   const COARSE_CELL = FINE_CELL * 3;  // 6.6 m, so the grids line up
   const FINE_TILE_COUNT = 12;         // 12 x 12 x 32 x 2.2 m = 845 m across
-  const COARSE_TILE_COUNT = 18;       // 18 x 18 x 32 x 6.6 m = 3,802 m across
+  const COARSE_TILE_COUNT = 22;       // 22 x 22 x 32 x 6.6 m = 4,646 m across
   const FINE_HALF = CELLS * FINE_CELL * FINE_TILE_COUNT * 0.5;
   const COARSE_HALF = CELLS * COARSE_CELL * COARSE_TILE_COUNT * 0.5;
 
@@ -126,6 +126,16 @@
         const inside = originX >= -fineHalf && originX + coarseTile <= fineHalf
           && originZ >= -fineHalf && originZ + coarseTile <= fineHalf;
         if (inside) continue;
+
+        // The grid is square and the world is round. A tile whose nearest
+        // corner is well past the edge can never be seen - you are held 8 m
+        // inside the edge, and the fog closes in long before the next tile
+        // out - so it is not built. On a 22-tile ring that is the four
+        // corners' worth of tiles, and most of what growing the map would
+        // otherwise have added to the time it takes to dive.
+        const nearX = Math.max(originX, Math.min(0, originX + coarseTile));
+        const nearZ = Math.max(originZ, Math.min(0, originZ + coarseTile));
+        if (Math.hypot(nearX, nearZ) > SL.WORLD_RADIUS + 160) continue;
 
         buildTile(game, originX, originZ, COARSE);
       }
@@ -476,7 +486,15 @@
     // world grew - the abyssal plain and the boulder slope both pinned at the
     // cap, covering twice the ground with the same number of fish, which is
     // the share-versus-absolute thinning all over again by another route.
-    const ceiling = 14 * Math.pow(SL.WORLD_RADIUS / 1200, 2);
+    //
+    // Pinned to the map as it was at 1,880 m, though. The ring the map grew
+    // into is nearly all abyssal plain, and the plain is exactly the biome
+    // this ceiling holds: scaled to 2,300 m it let the plain take five
+    // thousand more fish and a third more of every frame, in water that is
+    // meant to feel like crossing nothing. Held here, the plain keeps the
+    // same animals over more ground, and every biome under the ceiling -
+    // which is every other biome - is untouched by it.
+    const ceiling = 14 * Math.pow(1880 / 1200, 2);
 
     return SL.clamp(factor * (biome.populationBoost || 1), 0.5, ceiling);
   }
@@ -894,6 +912,27 @@
     // existing world keeps the same fish in the same places.
     scatterStarfish(game);
     scatterStiltCrabs(game);
+    spawnSeahorseLeviathan(game);
+  }
+
+  /**
+   * The Seahorse Leviathan, standing over the middle of its meadow.
+   *
+   * Placed last, after everything else in the world has been dealt its dice,
+   * and through keepUnlessKilled like every leviathan: kill it and it stays
+   * dead in this world, update or no update.
+   */
+  function spawnSeahorseLeviathan(game) {
+    const meadow = SL.Biomes.meadow;
+    const species = SL.Species.seahorseLeviathan;
+    if (!meadow || !species || !SL.SeahorseLeviathan) return;
+
+    const floor = SL.Biomes.floorHeightAt(meadow.x, meadow.z);
+    const y = Math.min(floor + species.shape.length * 0.5 + 3,
+      SL.WATER_LEVEL - species.shape.length * 0.5 - 2);
+    const lev = new SL.SeahorseLeviathan(game, species, meadow.x, y, meadow.z);
+    lev.territory.set(meadow.x, y, meadow.z);
+    keepUnlessKilled(game, game.seahorseLevs, lev);
   }
 
   /**

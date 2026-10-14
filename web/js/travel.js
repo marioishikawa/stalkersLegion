@@ -121,7 +121,9 @@
       kings: ['kings', 'basin', 'kingsbasin'],
       farkelp: ['farkelp', 'reach', 'farforest'],
       abyss: ['abyss', 'abyssal', 'plain'],
-      islet: ['islet', 'island', 'isle', 'beach']
+      islet: ['islet', 'island', 'isle', 'beach'],
+      // Not "seahorse": that one word is the leviathan, which is listed first.
+      meadow: ['meadow', 'meadows', 'seahorsemeadow', 'seahorsemeadows']
     };
 
     for (const biome of SL.Biomes.list) {

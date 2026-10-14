@@ -259,10 +259,33 @@
 
       if (this.velocity.lengthSq() > 1e-6) {
         _look.copy(this.position).add(this.velocity);
-        this.object.lookAt(_look);
+        // Something that swims upright turns to face where it is going but
+        // never tips over to get there - a seahorse rising is still a
+        // seahorse standing up.
+        if (this.species.upright) {
+          _look.y = this.position.y;
+          const dx = _look.x - this.position.x, dz = _look.z - this.position.z;
+          if (dx * dx + dz * dz > 1e-8) this.object.lookAt(_look);
+        } else {
+          this.object.lookAt(_look);
+        }
       }
 
       this.animate(dt);
+    }
+
+    /**
+     * The line its body runs along, in the world: nose to tail for anything
+     * built lying down, head to tail for anything built standing up.
+     *
+     * The knife and the diver both treat a creature as a capsule round this
+     * line. Measured nose to tail on a seahorse, a thirteen-metre animal
+     * standing upright would be a thirteen-metre bar lying across the water
+     * in front of it - solid where it is not, and not where it is.
+     */
+    bodyAxis(out) {
+      if (this.species.upright) return out.set(0, 1, 0).applyQuaternion(this.object.quaternion);
+      return this.object.getWorldDirection(out);
     }
 
     /**
@@ -303,8 +326,10 @@
     updateDeath(dt) {
       this.deathTimer += dt;
 
-      // Roll belly-up and sink, then clean up once out of sight.
-      this.object.rotation.z = SL.damp(this.object.rotation.z, Math.PI, 1.2, dt);
+      // Roll belly-up and sink, then clean up once out of sight. Something
+      // that lived standing up falls on its side instead.
+      this.object.rotation.z = SL.damp(this.object.rotation.z,
+        this.species.upright ? Math.PI / 2 : Math.PI, 1.2, dt);
 
       const p = this.position;
       const floor = SL.Biomes.floorHeightAt(p.x, p.z);
@@ -322,7 +347,7 @@
         this.game.whales, this.game.puffers, this.game.kelperLevs,
         this.game.kelpers, this.game.carnis, this.game.carniLevs,
         this.game.crabers, this.game.glowLevs, this.game.diamondLevs,
-        this.game.sharks, this.game.pets]) {
+        this.game.sharks, this.game.pets, this.game.seahorseLevs]) {
         const i = list.indexOf(this);
         if (i >= 0) { list.splice(i, 1); return; }
       }

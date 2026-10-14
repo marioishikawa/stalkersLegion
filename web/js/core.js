@@ -12,9 +12,10 @@ window.SL = window.SL || {};
 
   SL.WATER_LEVEL = 0;      // y of the sea surface
   // Metres from the origin to the edge of the map. The terrain grid is a
-  // fixed square reaching 1,900 m along each axis, so this has to stay inside
-  // that - along with the eight metres of slack the diver is allowed past it.
-  SL.WORLD_RADIUS = 1880;
+  // fixed square reaching 2,323 m along each axis (COARSE_TILE_COUNT in
+  // world.js), so this has to stay inside that - along with the eight metres
+  // of slack the diver is allowed past it.
+  SL.WORLD_RADIUS = 2300;
 
   // --- Math -----------------------------------------------------------------
 
