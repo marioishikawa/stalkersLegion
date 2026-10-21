@@ -163,7 +163,9 @@
       scrapDensity: 0.2, stalkerDensity: 0,
       // Heavy on the glow pods, because they are the light down here - the
       // chimneys themselves are basalt and carry none.
-      flora: ['glowPod', 'glowPod', 'coralTube', 'boulder'], floraDensity: 2.4
+      flora: ['glowPod', 'glowPod', 'coralTube', 'boulder'], floraDensity: 2.4,
+      // And here, on the warm ground round the chimneys.
+      simyphitDensity: 0.8
     },
     {
       // The one piece of ground in the game that is out of the water, and the
@@ -193,7 +195,9 @@
       scrapDensity: 0.25, stalkerDensity: 0,
       // Grass, and plenty of it, with a few kelp stalks and sea fans standing
       // up out of it.
-      flora: ['seagrass', 'seagrass', 'seagrass', 'kelp', 'coralFan'], floraDensity: 3.2
+      flora: ['seagrass', 'seagrass', 'seagrass', 'kelp', 'coralFan'], floraDensity: 3.2,
+      // Simyphit grows here, among the grass.
+      simyphitDensity: 1.0
     }
   ];
 

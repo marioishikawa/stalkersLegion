@@ -913,6 +913,67 @@
     scatterStarfish(game);
     scatterStiltCrabs(game);
     spawnSeahorseLeviathan(game);
+    scatterJellies(game);
+    scatterSimyphit(game);
+  }
+
+  /**
+   * Simyphit clusters, in the two far places it grows.
+   *
+   * Placed after everything else so the dice the rest of the world was dealt
+   * are unchanged. They are crystals of a different kind - the knife breaks
+   * them the same way, they are just harder and give up the green stone.
+   */
+  function scatterSimyphit(game) {
+    for (const biome of SL.Biomes.list) {
+      const nodes = Math.round((biome.simyphitDensity || 0) * 14 * areaFactorOf(biome));
+      for (let i = 0; i < nodes; i++) {
+        let point = null;
+        for (let attempt = 0; attempt < 6 && !point; attempt++) {
+          const candidate = SL.Biomes.randomPointIn(biome);
+          if (candidate && SL.Biomes.biomeAt(candidate.x, candidate.z) === biome) point = candidate;
+        }
+        if (!point) continue;
+        game.crystals.push(new SL.Crystal(game, point.x, point.z, (SL.random() * 1e9) | 0, 'simyphit'));
+      }
+    }
+  }
+
+  /**
+   * Jellyfish, in blooms.
+   *
+   * Drifters are not schooled - a bloom has no leader and no formation, just
+   * a handful of jellies in the same patch of water - so they are placed here,
+   * last, after everything else has had its dice.
+   */
+  function scatterJellies(game) {
+    if (!SL.Jelly) return;
+
+    for (const species of SL.Species.list) {
+      if (!species.drifter) continue;
+      for (const id of [species.biome].concat(species.alsoIn || [])) {
+        const biome = SL.Biomes.byId[id];
+        if (!biome) continue;
+
+        const blooms = Math.max(1, Math.round(species.groups * POPULATION * areaFactorOf(biome)));
+        for (let b = 0; b < blooms; b++) {
+          const point = SL.Biomes.randomPointIn(biome);
+          if (!point) continue;
+          const floor = SL.Biomes.floorHeightAt(point.x, point.z);
+          // Not where the water is too shallow to hang in.
+          if (floor > SL.WATER_LEVEL - 3) continue;
+
+          const y = Math.min(floor + species.altitude * SL.randRange(0.8, 1.6), SL.WATER_LEVEL - 2);
+          for (let i = 0; i < species.schoolSize; i++) {
+            const jelly = new SL.Jelly(game, species,
+              point.x + SL.randRange(-5, 5), y + SL.randRange(-1.5, 1.5), point.z + SL.randRange(-5, 5));
+            jelly.territory.set(point.x, y, point.z);
+            game.jellies.push(jelly);
+          }
+          game.startPopulation[species.id] = (game.startPopulation[species.id] || 0) + species.schoolSize;
+        }
+      }
+    }
   }
 
   /**

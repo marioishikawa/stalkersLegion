@@ -140,12 +140,45 @@
       cost: { diamond: 4, titanium: 10, tooth: 8 },
       requires: 'blade3',
       apply(player) { player.knifeDamage = 140; player.knifeReach = 3.2; player.setKnifeTier(3); }
+    },
+
+    // --- Simyphit: the sea-green stone of the far places -----------------------
+    {
+      id: 'stingguard',
+      name: 'Sting Guard',
+      blurb: 'A simyphit weave over the suit. Jellyfish cannot sting you through it.',
+      cost: { simyphit: 3, titanium: 4 },
+      apply(player) { player.stingGuard = true; }
+    },
+    {
+      id: 'simfins',
+      name: 'Simyphit Fins',
+      blurb: 'Swim speed 5.5 → 7. Light, stiff and very quick through the water.',
+      cost: { simyphit: 4, titanium: 4 },
+      requires: 'fins',
+      apply(player) { player.swimSpeed = 7; }
+    },
+    {
+      id: 'deeptank',
+      name: 'Deep Tank',
+      blurb: 'Air 420s → 600s. Ten minutes down, which reaches the new edge of the map and back.',
+      cost: { simyphit: 6, gold: 3, titanium: 4 },
+      requires: 'rebreather',
+      apply(player) { player.maxOxygen = 600; player.oxygen = 600; }
+    },
+    {
+      id: 'simarmour',
+      name: 'Simyphit Armour',
+      blurb: 'Take 80% less damage. Plates of the green stone over the Prism Suit.',
+      cost: { simyphit: 8, diamond: 2, titanium: 6 },
+      requires: 'prismsuit',
+      apply(player) { player.damageResist = 0.8; }
     }
   ];
 
   const Crafting = {
     recipes: RECIPES,
-    inventory: { titanium: 0, tooth: 0, quartz: 0, gold: 0, diamond: 0 },
+    inventory: { titanium: 0, tooth: 0, quartz: 0, gold: 0, diamond: 0, simyphit: 0 },
     /** Consumables held, keyed by recipe stack name. */
     stacks: { medkit: 0, beacon: 0, bait: 0, repel: 0 },
     built: {},

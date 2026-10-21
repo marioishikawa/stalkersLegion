@@ -19,7 +19,8 @@
     scavenger: 'Scavenger',
     carnivore: 'Carnivore',
     mammal: 'Air breather',
-    whale: 'Filter feeder'
+    whale: 'Filter feeder',
+    stinger: 'Stinger'
   };
 
   const _c = new THREE.Color();
@@ -39,6 +40,7 @@
   function drawFish(ctx, species, known) {
     if (species.profile === 'star') { drawStar(ctx, species, known); return; }
     if (species.profile === 'seahorse') { drawSeahorse(ctx, species, known); return; }
+    if (species.profile === 'jelly') { drawJelly(ctx, species, known); return; }
     const S = species.shape;
     const steps = 44;
 
@@ -465,6 +467,93 @@
     ctx.fill();
   }
 
+  /**
+   * A jellyfish, side on: the bell, its frilled arms, and its tentacles
+   * drawn as the long soft curls they are - from the same layout as the body,
+   * so a long-tentacled jelly is a long-tentacled card.
+   */
+  function drawJelly(ctx, species, known) {
+    const S = species.shape;
+    const J = SL.jellyLayout(S);
+    const flat = 'rgba(125, 148, 154, 0.22)';
+    const scale = Math.min((CARD_H - 14) / J.length, (CARD_W - 20) / (J.bell * 2.3));
+    const cx = CARD_W / 2;
+    const Y = (y) => CARD_H / 2 - y * scale;
+    const rainbow = (u) => 'hsl(' + Math.round(u * 360) + ', 85%, 62%)';
+    ctx.lineCap = 'round';
+
+    // Tentacles behind everything.
+    const count = Math.min(S.tentacles || 12, 12);
+    ctx.lineWidth = Math.max(1.2, scale * J.bell * 0.03);
+    for (let i = 0; i < count; i++) {
+      const x0 = cx + (i / (count - 1) - 0.5) * J.bell * 1.7 * scale;
+      ctx.strokeStyle = !known ? flat : (species.rainbow ? rainbow(i / count) : css(species.finColor));
+      ctx.beginPath();
+      ctx.moveTo(x0, Y(J.rim));
+      for (let k = 1; k <= 10; k++) {
+        const t = k / 10;
+        ctx.lineTo(x0 + Math.sin(t * Math.PI * 1.6 + i) * J.bell * 0.12 * t * scale,
+          Y(J.rim - t * J.tentacleLength));
+      }
+      ctx.stroke();
+    }
+
+    // The frilled arms.
+    ctx.fillStyle = !known ? flat : (species.rainbow ? rainbow(0.55) : css(species.bellyColor));
+    for (let i = 0; i < 3; i++) {
+      const x0 = cx + (i - 1) * J.bell * 0.28 * scale;
+      ctx.beginPath();
+      ctx.moveTo(x0 - J.bell * 0.08 * scale, Y(J.rim));
+      for (let k = 0; k <= 8; k++) {
+        const t = k / 8;
+        ctx.lineTo(x0 + (Math.sin(t * 9 + i) * 0.05 - 0.04 * (1 - t)) * J.bell * scale * 1.4,
+          Y(J.rim - t * J.tentacleLength * 0.55));
+      }
+      ctx.lineTo(x0 + J.bell * 0.08 * scale, Y(J.rim));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // The bell: a dome with its rim curled under.
+    ctx.beginPath();
+    ctx.moveTo(cx - J.bell * 0.86 * scale, Y(J.rim - J.bellHeight * 0.08));
+    ctx.bezierCurveTo(cx - J.bell * 1.05 * scale, Y(J.rim + J.bellHeight * 0.75),
+      cx - J.bell * 0.55 * scale, Y(J.top + J.bellHeight * 0.02), cx, Y(J.top));
+    ctx.bezierCurveTo(cx + J.bell * 0.55 * scale, Y(J.top + J.bellHeight * 0.02),
+      cx + J.bell * 1.05 * scale, Y(J.rim + J.bellHeight * 0.75),
+      cx + J.bell * 0.86 * scale, Y(J.rim - J.bellHeight * 0.08));
+    ctx.quadraticCurveTo(cx, Y(J.rim + J.bellHeight * 0.1), cx - J.bell * 0.86 * scale, Y(J.rim - J.bellHeight * 0.08));
+    ctx.closePath();
+
+    if (!known) { ctx.fillStyle = flat; ctx.fill(); return; }
+
+    let fill;
+    if (species.rainbow) {
+      fill = ctx.createLinearGradient(cx - J.bell * scale, 0, cx + J.bell * scale, 0);
+      for (let i = 0; i <= 6; i++) fill.addColorStop(i / 6, rainbow(i / 6));
+    } else {
+      fill = ctx.createLinearGradient(0, Y(J.top), 0, Y(J.rim));
+      fill.addColorStop(0, css(species.bellyColor));
+      fill.addColorStop(1, css(species.backColor));
+    }
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = shade(species.backColor, 0.6);
+    ctx.stroke();
+
+    // The four rings showing through the bell.
+    ctx.strokeStyle = css(species.finColor);
+    ctx.lineWidth = Math.max(1.2, scale * J.bell * 0.05);
+    for (let i = 0; i < 2; i++) {
+      ctx.beginPath();
+      ctx.arc(cx + (i ? 1 : -1) * J.bell * 0.3 * scale, Y(J.rim + J.bellHeight * 0.45), J.bell * 0.12 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
   const Index = {
     /** Species ids the player has scanned, in this world. */
     scanned: {},
@@ -619,12 +708,15 @@
 
         stats.textContent = known
           ? [
-              (species.shape.length < 1
+              (species.profile === 'jelly' ? Math.round(SL.jellyLayout(species.shape).length * 100) + ' cm' :
+              species.shape.length < 1
                 ? Math.round(species.shape.length * 100) + ' cm'
                 : species.shape.length.toFixed(1) + ' m'),
               DIET_LABEL[species.diet] || 'Grazer',
               biome ? biome.name : '',
-              species.biteDamage > 0 ? species.biteDamage + ' dmg bite' : 'Harmless'
+              species.biteDamage > 0
+                ? species.biteDamage + (species.stings ? ' dmg sting' : ' dmg bite')
+                : 'Harmless'
             ].filter(Boolean).join('  ·  ')
           : (hinted ? this.whereabouts(species) : 'Click for where it lives');
         stats.classList.toggle('entry__stats--ask', !known && !hinted);

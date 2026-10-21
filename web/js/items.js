@@ -68,6 +68,21 @@
         return mesh.toGeometry();
       }
     },
+    simyphit: {
+      label: 'Simyphit',
+      build() {
+        // A long six-sided stone, deep green at the root and mint at the tip.
+        const mesh = new MeshData();
+        const deep = new THREE.Color(0.10, 0.62, 0.52);
+        const mint = new THREE.Color(0.60, 1.0, 0.82);
+        Geo.cone(mesh, 0, -0.02, 0, 0.06, 0.22, 6, deep, mint);
+        const lower = new MeshData();
+        Geo.cone(lower, 0, 0, 0, 0.06, 0.07, 6, deep, deep);
+        mesh.append(lower, new THREE.Matrix4().makeRotationX(Math.PI).setPosition(0, -0.02, 0));
+        mesh.computeNormals();
+        return mesh.toGeometry();
+      }
+    },
     tooth: {
       label: 'Stalker Tooth',
       build() {

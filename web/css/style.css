@@ -715,6 +715,7 @@ body.is-drag-look:not(.is-cursor-free) #scene { cursor: crosshair; }
 .resource__swatch--quartz { background: #f28cc4; }
 .resource__swatch--gold { background: #f2c230; }
 .resource__swatch--diamond { background: #d3f0fa; }
+.resource__swatch--simyphit { background: #3fe0b0; }
 
 .resource--kit .resource__count { color: var(--kelp); }
 

@@ -308,6 +308,7 @@
       this.knifeReach = 2.2;
       this.damageResist = 0;
       this.visionBonus = 0;
+      this.stingGuard = false;
       this.lanternBuilt = false;
       this.invulnerable = false;
       this.dead = false;
@@ -420,6 +421,7 @@
       this.setKnifeTier(0);
       this.damageResist = 0;
       this.visionBonus = 0;
+      this.stingGuard = false;
       this.lanternBuilt = false;
       this.invulnerable = false;
       this.swimSpeed = 4.2;
@@ -592,6 +594,7 @@
       for (const c of this.game.glowLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.diamondLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.seahorseLevs) if (!c.dead) considerCreature(c);
+      for (const c of this.game.jellies) if (!c.dead) considerCreature(c);
       for (const c of this.game.sharks) if (!c.dead) considerCreature(c);
       for (const c of this.game.carniLevs) if (!c.dead) considerCreature(c);
       for (const c of this.game.crabers) if (!c.dead) considerCreature(c);
@@ -678,6 +681,7 @@
       for (const c of this.game.glowLevs) if (!c.dead) consider(c);
       for (const c of this.game.diamondLevs) if (!c.dead) consider(c);
       for (const c of this.game.seahorseLevs) if (!c.dead) consider(c);
+      for (const c of this.game.jellies) if (!c.dead) consider(c);
       for (const c of this.game.sharks) if (!c.dead) consider(c);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c);
       for (const c of this.game.crabers) if (!c.dead) consider(c);
@@ -885,6 +889,7 @@
       for (const c of this.game.glowLevs) if (!c.dead) consider(c.species.name, c.position, 60);
       for (const c of this.game.diamondLevs) if (!c.dead) consider(c.species.name, c.position, 52);
       for (const c of this.game.seahorseLevs) if (!c.dead) consider(c.species.name, c.position, 52);
+      for (const c of this.game.jellies) if (!c.dead) consider(c.species.name, c.position, 12);
       for (const c of this.game.sharks) if (!c.dead) consider(c.species.name, c.position, 40);
       for (const c of this.game.carniLevs) if (!c.dead) consider(c.species.name, c.position, 50);
       for (const c of this.game.crabers) if (!c.dead) consider(c.species.name, c.position, 12);
@@ -1065,6 +1070,7 @@
       for (const c of this.game.glowLevs) resolve(c);
       for (const c of this.game.diamondLevs) resolve(c);
       for (const c of this.game.seahorseLevs) resolve(c);
+      for (const c of this.game.jellies) resolve(c);
       for (const c of this.game.sharks) resolve(c);
       for (const c of this.game.carniLevs) resolve(c);
       for (const c of this.game.crabers) resolve(c);

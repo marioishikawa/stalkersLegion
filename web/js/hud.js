@@ -19,7 +19,7 @@
         'biomeName', 'focus', 'warning', 'warningText', 'hitMarker', 'damageFlash',
         'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
         'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName',
-        'quartzCount', 'goldCount', 'diamondCount', 'medkitCount', 'resources',
+        'quartzCount', 'goldCount', 'diamondCount', 'simyphitCount', 'medkitCount', 'resources',
         'beaconCount', 'baitCount', 'repelCount', 'minimap', 'chartLegend',
         'scan', 'scanFill', 'scanLabel']) {
         this.el[id] = document.getElementById(id);
@@ -87,6 +87,7 @@
       this.el.quartzCount.textContent = inventory.quartz;
       this.el.goldCount.textContent = inventory.gold;
       this.el.diamondCount.textContent = inventory.diamond;
+      this.el.simyphitCount.textContent = inventory.simyphit || 0;
       this.el.medkitCount.textContent = SL.Crafting.stacks.medkit;
       this.el.beaconCount.textContent = SL.Crafting.stacks.beacon;
       this.el.baitCount.textContent = SL.Crafting.stacks.bait;

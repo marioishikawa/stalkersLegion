@@ -996,6 +996,59 @@
                legPairs: 4, legScale: 1.7, legStyle: 'jointed', legStance: 0.85,
                spineSegments: 12, radialSegments: 10 }
     }),
+    // ----------------------------------------------------------- Jellyfish
+    //
+    // Drifters, so the school spawner leaves them alone and the world builder
+    // places them in blooms. All of them sting for 5 if touched.
+    fish('moonjelly', 'Moon Jelly', 'shallows', 'jelly', {
+      alsoIn: ['kelp'], drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
+      note: 'The plain one: a clear, pale bell with four rings showing through ' +
+            'it and a fringe of short tentacles. It drifts in loose blooms over ' +
+            'the shallows. Harmless-looking, and it stings all the same.',
+      backColor: C(0.80, 0.90, 0.98), bellyColor: C(0.96, 0.98, 1.0), finColor: C(0.98, 0.78, 0.90),
+      maxHealth: 6, cruiseSpeed: 0.22, sprintSpeed: 0.6, turnRate: 3,
+      senseRadius: 2, biteDamage: 5, schoolSize: 5, groups: 0.7, altitude: 3, wagRate: 2.2,
+      shape: { bell: 0.24, bellHeight: 0.7, tentacleLength: 0.38, tentacles: 16 }
+    }),
+    fish('rosejelly', 'Rose Jelly', 'plateau', 'jelly', {
+      alsoIn: ['coral'], drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
+      note: 'Pink right through, with long pink tentacles and frilled arms ' +
+            'trailing under it. Pretty, and it stings.',
+      backColor: C(0.98, 0.50, 0.70), bellyColor: C(1.0, 0.80, 0.88), finColor: C(1.0, 0.62, 0.80),
+      maxHealth: 7, cruiseSpeed: 0.2, sprintSpeed: 0.6, turnRate: 3,
+      senseRadius: 2, biteDamage: 5, schoolSize: 4, groups: 0.8, altitude: 4, wagRate: 2.0,
+      shape: { bell: 0.26, bellHeight: 0.85, tentacleLength: 0.85, tentacles: 12 }
+    }),
+    fish('amberjelly', 'Amber Jelly', 'boulders', 'jelly', {
+      alsoIn: ['farkelp'], drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
+      note: 'An orange sea nettle: a deep amber bell and very long tentacles, ' +
+            'so it reaches a good deal further below itself than it looks.',
+      backColor: C(0.98, 0.56, 0.16), bellyColor: C(1.0, 0.82, 0.50), finColor: C(0.96, 0.66, 0.30),
+      maxHealth: 9, cruiseSpeed: 0.2, sprintSpeed: 0.6, turnRate: 3,
+      senseRadius: 2, biteDamage: 5, schoolSize: 3, groups: 0.6, altitude: 5, wagRate: 1.7,
+      shape: { bell: 0.3, bellHeight: 0.8, tentacleLength: 1.7, tentacles: 10 }
+    }),
+    fish('violetjelly', 'Violet Jelly', 'trench', 'jelly', {
+      alsoIn: ['abyss', 'coldreef'], drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
+      note: 'Purple, and it glows: the deep is dark and this is one of the few ' +
+            'lights in it. Easy to see coming, which helps, because it stings.',
+      backColor: C(0.62, 0.30, 0.96), bellyColor: C(0.86, 0.70, 1.0), finColor: C(0.76, 0.52, 1.0),
+      glow: 0.6,
+      maxHealth: 8, cruiseSpeed: 0.18, sprintSpeed: 0.5, turnRate: 3,
+      senseRadius: 2, biteDamage: 5, schoolSize: 4, groups: 0.35, altitude: 8, wagRate: 1.6,
+      shape: { bell: 0.28, bellHeight: 0.9, tentacleLength: 1.0, tentacles: 12 }
+    }),
+    fish('rainbowjelly', 'Rainbow Jelly', 'meadow', 'jelly', {
+      alsoIn: ['islet'], drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
+      rainbow: true,
+      note: 'Every colour at once: the bell runs through the rainbow all the way ' +
+            'round, and every tentacle is a different shade. The prettiest thing ' +
+            'in the sunlit water, and it stings exactly as hard as the plain one.',
+      backColor: C(0.90, 0.40, 0.80), bellyColor: C(0.98, 0.90, 0.60), finColor: C(0.50, 0.85, 0.95),
+      maxHealth: 7, cruiseSpeed: 0.22, sprintSpeed: 0.6, turnRate: 3,
+      senseRadius: 2, biteDamage: 5, schoolSize: 4, groups: 1.0, altitude: 4, wagRate: 2.1,
+      shape: { bell: 0.26, bellHeight: 0.8, tentacleLength: 0.9, tentacles: 14 }
+    }),
     // ------------------------------------------------- The Seahorse Meadows
     //
     // Three seahorses and the thing they are named for. All four are built by
@@ -1208,6 +1261,6 @@
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(
       (s) => (s.biome === biomeId || (s.alsoIn && s.alsoIn.indexOf(biomeId) >= 0))
-        && s.diet !== 'carnivore' && s.diet !== 'whale' && !s.grounded)
+        && s.diet !== 'carnivore' && s.diet !== 'whale' && !s.grounded && !s.drifter)
   };
 })(window.SL);

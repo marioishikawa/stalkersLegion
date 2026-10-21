@@ -42,7 +42,9 @@
       this.object = new THREE.Group();
       this.object.position.set(x, y, z);
 
-      const material = species.glow > 0.35 ? game.materials.glow : game.materials.surface;
+      const material = species.translucent
+        ? (species.glow > 0.35 ? game.materials.jellyGlow : game.materials.jelly)
+        : (species.glow > 0.35 ? game.materials.glow : game.materials.surface);
 
       // Most bodies are a single mesh. A serpentine one comes back as a chain
       // of links, each parented to the one ahead of it, so yawing a joint
@@ -347,7 +349,7 @@
         this.game.whales, this.game.puffers, this.game.kelperLevs,
         this.game.kelpers, this.game.carnis, this.game.carniLevs,
         this.game.crabers, this.game.glowLevs, this.game.diamondLevs,
-        this.game.sharks, this.game.pets, this.game.seahorseLevs]) {
+        this.game.sharks, this.game.pets, this.game.seahorseLevs, this.game.jellies]) {
         const i = list.indexOf(this);
         if (i >= 0) { list.splice(i, 1); return; }
       }

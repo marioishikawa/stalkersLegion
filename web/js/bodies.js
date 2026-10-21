@@ -346,8 +346,133 @@
     };
   }
 
+  /**
+   * The shape of a jellyfish, in metres, centred on its middle.
+   *
+   * Shared by the body builder, the creature (which stings from these
+   * numbers) and the databank card. The bell sits on top and the tentacles
+   * hang below it; the whole animal is centred on its own middle, so the
+   * capsule the knife and the diver use covers bell and tentacles both.
+   */
+  SL.jellyLayout = function (S) {
+    const bell = S.bell || 0.22;
+    const bellHeight = bell * (S.bellHeight || 0.8);
+    const tentacleLength = S.tentacleLength || bell * 2;
+    const length = bellHeight + tentacleLength;
+    const top = length / 2;
+    return { bell, bellHeight, tentacleLength, length, top, rim: top - bellHeight, bottom: -length / 2 };
+  };
+
+  /**
+   * A jellyfish: a bell, tentacles round its rim, and frilled arms under it.
+   *
+   * The bell is lathed - a profile spun round the vertical - into a dome with
+   * a curled-under rim, and it is the body, which pulses. The tentacles and
+   * arms are the "tail" as far as the animation is concerned: one mesh hung
+   * from the middle of the rim that sways behind the bell. A rainbow species
+   * gets its colours from hue round the bell and down it instead of one coat.
+   */
+  function buildJelly(species) {
+    const S = species.shape;
+    const J = SL.jellyLayout(S);
+    const body = new MeshData();
+    const tail = new MeshData();
+    const segments = 18;
+    const hue = (u, v) => new THREE.Color().setHSL((u + v * 0.35) % 1, 0.85, 0.62);
+
+    // --- The bell -------------------------------------------------------------
+    // (radius, height) up the profile from the rim to the crown, as fractions.
+    const profile = [
+      [0.86, -0.08], [0.98, 0.04], [1.0, 0.22], [0.94, 0.46],
+      [0.80, 0.68], [0.58, 0.86], [0.30, 0.97], [0.0, 1.0]
+    ];
+    const base = body.count;
+    for (let r = 0; r < profile.length; r++) {
+      const [pr, py] = profile[r];
+      for (let k = 0; k <= segments; k++) {
+        const a = (k / segments) * Math.PI * 2;
+        const colour = species.rainbow
+          ? hue(k / segments, r / profile.length)
+          : species.backColor.clone().lerp(species.bellyColor, 1 - r / (profile.length - 1));
+        body.vertex(Math.cos(a) * pr * J.bell, J.rim + py * J.bellHeight, Math.sin(a) * pr * J.bell,
+          0, 1, 0, colour);
+      }
+    }
+    for (let r = 0; r < profile.length - 1; r++) {
+      for (let k = 0; k < segments; k++) {
+        const a = base + r * (segments + 1) + k;
+        const b = a + segments + 1;
+        body.quad(a, b, b + 1, a + 1);
+      }
+    }
+
+    // Inside the bell, the four pale rings a moon jelly is known by.
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      Geo.sphere(body, Math.cos(a) * J.bell * 0.3, J.rim + J.bellHeight * 0.45, Math.sin(a) * J.bell * 0.3,
+        J.bell * 0.13, 6, species.finColor);
+    }
+
+    // --- Tentacles and arms, round their own pivot under the bell -------------
+    const pivotY = J.rim;
+    const count = S.tentacles || 12;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      const rootR = J.bell * 0.92;
+      const spine = [], widths = [], colours = [];
+      const rings = 6;
+      for (let k = 0; k < rings; k++) {
+        const t = k / (rings - 1);
+        // A slow curl, so they hang like something in water, not like string.
+        const sway = Math.sin(t * Math.PI * 1.5 + i) * J.bell * 0.12 * t;
+        const r = rootR * SL.lerp(1, 0.75, t);
+        spine.push(new THREE.Vector3(Math.cos(a) * r + Math.cos(a + 1.6) * sway,
+          -t * J.tentacleLength, Math.sin(a) * r + Math.sin(a + 1.6) * sway));
+        widths.push(J.bell * 0.022 * SL.lerp(1, 0.35, t));
+        colours.push(species.rainbow ? hue(i / count, t) : species.finColor);
+      }
+      Geo.loft(tail, spine, widths, widths, colours, 4, 2, colours[0], 0);
+    }
+
+    // Four frilled arms from the middle, shorter and broader than the tentacles.
+    const arms = S.oralArms === undefined ? 4 : S.oralArms;
+    for (let i = 0; i < arms; i++) {
+      const a = (i / arms) * Math.PI * 2 + 0.4;
+      const spine = [], w = [], h = [], colours = [];
+      const rings = 6;
+      for (let k = 0; k < rings; k++) {
+        const t = k / (rings - 1);
+        const frill = Math.sin(t * Math.PI * 3 + i) * J.bell * 0.06;
+        spine.push(new THREE.Vector3(Math.cos(a) * (J.bell * 0.12 + frill), -t * J.tentacleLength * 0.55,
+          Math.sin(a) * (J.bell * 0.12 + frill)));
+        w.push(J.bell * 0.09 * SL.lerp(1, 0.4, t));
+        h.push(J.bell * 0.025);
+        colours.push(species.rainbow ? hue(i / arms + 0.5, t) : species.bellyColor);
+      }
+      Geo.loft(tail, spine, w, h, colours, 6, 2, colours[0], 0);
+    }
+
+    body.computeNormals();
+    tail.computeNormals();
+    const geometry = body.toGeometry();
+    return {
+      body: geometry,
+      segments: [{ geometry, span: 0 }],
+      rootOffset: new THREE.Vector3(0, 0, 0),
+      tailSegment: 0,
+      jawSegment: 0,
+      tail: tail.toGeometry(),
+      jaw: null,
+      tailPivot: new THREE.Vector3(0, pivotY, 0),
+      jawPivot: null,
+      length: J.length,
+      radius: J.bell
+    };
+  }
+
   /** Builds the three geometries and the pivots that animate them. */
   function build(species) {
+    if (species.profile === 'jelly') return buildJelly(species);
     if (species.profile === 'star') return buildStar(species);
     if (species.profile === 'seahorse') return buildSeahorse(species);
     const S = species.shape;

@@ -33,6 +33,7 @@
       this.glowLevs = [];
       this.diamondLevs = [];
       this.seahorseLevs = [];
+      this.jellies = [];
       this.sharks = [];
       /** Where the diver last died and left their kit, for the chart. */
       this.deathDrop = null;
@@ -97,6 +98,19 @@
         halo: new THREE.MeshBasicMaterial({
           color: 0x6ee8ff, transparent: true, opacity: 0.16, depthWrite: false,
           side: THREE.BackSide, blending: THREE.AdditiveBlending
+        }),
+
+        // Jellyfish: lit, and see-through, so a bell reads as glass with the
+        // water behind it rather than as a painted dome. No depth write, so a
+        // bloom of them layers over itself instead of cutting holes.
+        jelly: new THREE.MeshLambertMaterial({
+          vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.6,
+          depthWrite: false
+        }),
+        // The same, glowing, for the deep one that makes its own light.
+        jellyGlow: new THREE.MeshBasicMaterial({
+          vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.75,
+          depthWrite: false
         })
       };
 
@@ -155,6 +169,7 @@
       this.glowLevs.length = 0;
       this.diamondLevs.length = 0;
       this.seahorseLevs.length = 0;
+      this.jellies.length = 0;
       this.sharks.length = 0;
       this.deathDrop = null;
       this.deathDropArmed = false;
@@ -198,7 +213,7 @@
     creatures() {
       return this.fish.concat(this.stalkers, this.kings, this.whales, this.puffers,
         this.kelperLevs, this.kelpers, this.carnis, this.carniLevs, this.glowLevs,
-        this.diamondLevs, this.sharks, this.crabers, this.seahorseLevs);
+        this.diamondLevs, this.sharks, this.crabers, this.seahorseLevs, this.jellies);
     }
 
     /** Generates a world from a seed. The same seed always gives the same ocean. */
@@ -504,6 +519,14 @@
       for (const lev of this.seahorseLevs) {
         lev.object.visible = lev.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
         lev.update(dt);
+      }
+
+      // Jellies are small and slow, so they are culled like the crabs.
+      for (const jelly of this.jellies) {
+        const near = jelly.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ;
+        jelly.object.visible = near;
+        if (near || jelly.dead) jelly.update(dt);
+        else if ((this.frame & 3) === 0) jelly.update(dt * 4);
       }
 
       // The forest keeps a thief or two in it whether or not the leviathan

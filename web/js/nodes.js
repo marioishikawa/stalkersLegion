@@ -11,21 +11,43 @@
 
   const { MeshData, Geo } = SL;
 
+  /**
+   * The two kinds of cuttable cluster.
+   *
+   * Quartz is the pink crystal of the caverns. Simyphit is the sea-green stone
+   * of the far places - the Seahorse Meadows and the Vent Field - harder to
+   * cut, and the one material the newest kit is made of.
+   */
+  const KINDS = {
+    quartz: {
+      integrity: 70,
+      base: new THREE.Color(0.62, 0.16, 0.42),
+      tips: [new THREE.Color(1.0, 0.62, 0.86), new THREE.Color(0.86, 0.72, 1.0)]
+    },
+    simyphit: {
+      integrity: 120,
+      base: new THREE.Color(0.04, 0.34, 0.30),
+      tips: [new THREE.Color(0.42, 1.0, 0.74), new THREE.Color(0.60, 0.94, 1.0)]
+    }
+  };
+
   class Crystal {
-    constructor(game, x, z, seed) {
+    constructor(game, x, z, seed, kind) {
       this.game = game;
       this.dead = false;
-      this.integrity = 70;
+      this.kind = KINDS[kind] ? kind : 'quartz';
+      this.integrity = KINDS[this.kind].integrity;
       this.shake = 0;
 
-      this.object = new THREE.Mesh(Crystal.geometryFor(seed), game.materials.glow);
+      this.object = new THREE.Mesh(Crystal.geometryFor(seed, this.kind), game.materials.glow);
       this.object.position.set(x, SL.Biomes.floorHeightAt(x, z), z);
       this.object.rotation.y = SL.random() * Math.PI * 2;
       this.restRotation = this.object.rotation.clone();
       game.addToWorld(this.object);
     }
 
-    static geometryFor(seed) {
+    static geometryFor(seed, kind) {
+      const K = KINDS[kind] || KINDS.quartz;
       const mesh = new MeshData();
       const shards = 3 + Math.floor(SL.hash(seed, 1, 61) * 5);
 
@@ -35,10 +57,10 @@
         const height = SL.lerp(0.7, 2.4, SL.hash(seed, i + 20, 61));
         const radius = SL.lerp(0.10, 0.26, SL.hash(seed, i + 30, 61));
 
-        // Pink through to a pale magenta tip.
-        const base = new THREE.Color(0.62, 0.16, 0.42);
-        const tip = new THREE.Color(1.0, 0.62, 0.86).lerp(
-          new THREE.Color(0.86, 0.72, 1.0), SL.hash(seed, i + 40, 61));
+        // Pink to pale magenta for quartz; deep sea-green to bright mint for
+        // simyphit.
+        const base = K.base;
+        const tip = K.tips[0].clone().lerp(K.tips[1], SL.hash(seed, i + 40, 61));
 
         const shard = new MeshData();
         Geo.cone(shard, 0, 0, 0, radius, height, 6, base, tip);
@@ -65,6 +87,11 @@
       this.game.audio.crystal();
 
       if (this.integrity <= 0) {
+        if (this.kind === 'simyphit') {
+          SL.Pickup.burst(this.game, 'simyphit', this.position, SL.randInt(1, 3));
+          this.destroy();
+          return true;
+        }
         SL.Pickup.burst(this.game, 'quartz', this.position, SL.randInt(2, 4));
         // Crystal country hides the occasional better stone.
         if (SL.random() < 0.22) SL.Pickup.burst(this.game, 'diamond', this.position, 1);
