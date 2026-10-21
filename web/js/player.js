@@ -28,6 +28,7 @@
   const _normal = new THREE.Vector3();
   const _up = new THREE.Vector3();
   const _shove = new THREE.Vector3();
+  const _before = new THREE.Vector3();
 
   /** How far the eye is kept off the drawn sea floor. */
   const FLOOR_CLEARANCE = 0.55;
@@ -438,9 +439,17 @@
       this.oxygen = this.maxOxygen;
       this.timeSinceDamage = 999;
       this.velocity.set(0, 0, 0);
-      this.position.set(0, SL.WATER_LEVEL - 1.2, 0);
-      this.yaw = 0;
-      this.pitch = -0.35;
+      // You wake in the wreck, on the sand by the console, facing the breach.
+      if (SL.Wreck) {
+        const spawn = SL.Wreck.spawnPoint();
+        this.position.copy(spawn.position);
+        this.yaw = spawn.yaw;
+        this.pitch = -0.05;
+      } else {
+        this.position.set(0, SL.WATER_LEVEL - 1.2, 0);
+        this.yaw = 0;
+        this.pitch = -0.35;
+      }
       if (this.carriedScrap) { this.carriedScrap.drop(new THREE.Vector3()); this.carriedScrap = null; }
     }
 
@@ -983,10 +992,12 @@
           if (input.up) this.velocity.y = JUMP_SPEED;
         }
       }
+      _before.copy(this.position);
       this.moveThroughWorld(dt);
 
       this.pushOutOfCreatures(dt);
       this.keepOutOfScenery();
+      this.keepOutOfWreck();
       this.clampToWorld();
       this.updateOxygen(dt);
 
@@ -1221,6 +1232,24 @@
 
       this.position.add(shove);
 
+      const length = shove.length();
+      if (length < 1e-6) return;
+      shove.divideScalar(length);
+      const into = this.velocity.dot(shove);
+      if (into < 0) this.velocity.addScaledVector(shove, -into);
+    }
+
+    /**
+     * The wreck's hull is solid both ways: from outside you cannot get in
+     * except through the breach, and from inside you cannot get out except
+     * through it either. Which side you are on is where you were before this
+     * frame's move.
+     */
+    keepOutOfWreck() {
+      if (!SL.Wreck) return;
+      const shove = SL.Wreck.collide(this.position, _before, BODY_RADIUS, _shove);
+      if (!shove) return;
+      this.position.add(shove);
       const length = shove.length();
       if (length < 1e-6) return;
       shove.divideScalar(length);

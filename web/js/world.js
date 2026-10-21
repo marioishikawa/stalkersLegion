@@ -359,6 +359,10 @@
           // Drawn in the same order as before, so the world is unchanged.
           const yaw = SL.random() * Math.PI * 2;
 
+          // Nothing grows through the wreck. Skipped after every draw this
+          // plant would have made, so the rest of the garden is unchanged.
+          if (SL.Wreck && SL.Wreck.covers(x, z, 0.6)) continue;
+
           instances.push({
             type,
             // Patch-local, with each plant's foot on the sea floor.
@@ -689,8 +693,12 @@
           // Nothing nests where it would be left high and dry.
           if (SL.Biomes.floorHeightAt(point.x, point.z) > SL.WATER_LEVEL - 2.5) continue;
 
-          game.nests.push(new SL.Nest(game, species, point.x, point.z,
-            (SL.random() * 1e9) | 0));
+          // Or inside the wreck, where its keepers could never reach it. The
+          // seed is drawn first either way, so later nests are unchanged.
+          const nestSeed = (SL.random() * 1e9) | 0;
+          if (SL.Wreck && SL.Wreck.covers(point.x, point.z, 2)) continue;
+
+          game.nests.push(new SL.Nest(game, species, point.x, point.z, nestSeed));
         }
       }
     }
@@ -915,6 +923,7 @@
     spawnSeahorseLeviathan(game);
     scatterJellies(game);
     scatterSimyphit(game);
+    if (SL.Wreck) SL.Wreck.populate(game);
   }
 
   /**

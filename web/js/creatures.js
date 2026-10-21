@@ -185,6 +185,16 @@
         }
       }
 
+      // The wreck. Nothing that swims gets in - not through the walls, and
+      // not through the breach either: to a swimmer the whole hull is solid.
+      if (SL.Wreck) {
+        const margin = Math.max(this.radius, this.bodyLength * 0.4) + 0.3;
+        if (SL.Wreck.keepOut(p, margin, _rock)) {
+          p.add(_rock);
+          desired.addScaledVector(_rock.normalize(), speed * 1.4);
+        }
+      }
+
       // Surface: fish are held under it, but an air breather on its way up is
       // allowed through - that is the whole point of the climb.
       if (p.y > ceiling && this.state !== 'surfacing') {

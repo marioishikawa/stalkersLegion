@@ -15,6 +15,8 @@
   'use strict';
 
   const _tmp = new THREE.Vector3();
+  const _prev = new THREE.Vector3();
+  const _wall = new THREE.Vector3();
 
   const LABELS = {
     creep: 'creeping along',
@@ -61,6 +63,14 @@
 
     /** Somewhere a little way off, and always on the sand of the shallows. */
     pickTarget() {
+      // Very occasionally, near the wreck, in through the breach.
+      const route = SL.Wreck && SL.Wreck.routeFor(this);
+      if (route) {
+        this.target.set(route[0].x, 0, route[0].z);
+        this.route = route.slice(1);
+        return;
+      }
+      this.route = null;
       const shallows = SL.Biomes.byId.shallows;
       for (let attempt = 0; attempt < 12; attempt++) {
         const angle = SL.random() * Math.PI * 2;
@@ -97,7 +107,11 @@
         const dz = this.target.z - p.z;
         const gap = Math.hypot(dx, dz);
 
-        if (gap < 0.2 || this.stateTimer > 90) {
+        if (gap < 0.2 && this.route && this.route.length) {
+          const next = this.route.shift();
+          this.target.set(next.x, 0, next.z);
+          this.stateTimer = 0;
+        } else if (gap < 0.2 || this.stateTimer > (this.route ? 600 : 90)) {
           this.enterState('rest');
           this.restFor = SL.randRange(15, 45);
         } else {
@@ -108,8 +122,13 @@
 
           // The sand ends somewhere. It stops there and thinks again.
           if (SL.Biomes.biomeAt(nx, nz) === SL.Biomes.byId.shallows) {
+            _prev.copy(p);
             p.x = nx;
             p.z = nz;
+            if (SL.Wreck) {
+              const push = SL.Wreck.collide(p, _prev, this.bodyLength * 0.4, _wall);
+              if (push) { p.x += push.x; p.z += push.z; }
+            }
             // A starfish has no front; it turns as slowly as it does anything.
             this.heading = SL.dampAngle(this.heading, Math.atan2(dx, dz), 0.15, dt);
           } else {

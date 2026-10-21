@@ -163,8 +163,9 @@
     }
 
     // --- Where you started, and straight up and down --------------------------
-    add('Home', 'where the dive began',
-      () => arriveAt(0, 0, 2), ['start', 'spawn', 'origin', 'zero']);
+    add('Home', 'the wreck, where the dive began',
+      () => (SL.Wreck ? SL.Wreck.spawnPoint().position.clone() : arriveAt(0, 0, 2)),
+      ['start', 'spawn', 'origin', 'zero', 'wreck', 'submarine', 'sub', 'base']);
 
     add('The Surface', 'straight up from here', () => {
       const p = game.player.position;

@@ -229,6 +229,7 @@
 
       SL.World.buildLighting(this);
       SL.World.buildTerrain(this);
+      if (SL.Wreck) SL.Wreck.build(this);
       SL.World.buildWaterSurface(this);
       if (!this.sky) SL.World.buildSky(this);
       const plants = SL.World.scatterFlora(this);

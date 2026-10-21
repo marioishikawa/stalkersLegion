@@ -569,6 +569,11 @@
     y += SL.fbm(x, z, 4, 0.032, 2.0, 0.5, SEED) * relief * 2.4;
     y += SL.fbm(x, z, 3, 0.21, 2.3, 0.45, SEED + 977) * relief * 0.7;
 
+    // The crater the wreck lies in: flat sand twelve metres down, blended back
+    // up into the shelf. After the relief, so the sand inside the hull is a
+    // level floor rather than dunes poking up through it.
+    if (r < 44 && SL.Wreck) y = SL.Wreck.craterFloor(x, z, y);
+
     // Everything is held under the surface - except the islet, whose peak is
     // allowed through by exactly as much as it rises. Written as a lifted cap
     // rather than a branch so the shoreline is smooth instead of stepped.
@@ -577,6 +582,10 @@
 
   /** Which biome the sea floor at this point belongs to. */
   function biomeAt(x, z) {
+    // The wreck's crater is sand, and sand is the Safe Shallows - whatever its
+    // depth would otherwise make it. Checked first, because it is cheap.
+    if (SL.Wreck && SL.Wreck.inCrater(x, z)) return byId.shallows;
+
     const y = floorHeightAt(x, z);
     const depth = -y;
 

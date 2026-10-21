@@ -15,6 +15,8 @@
 
   const _tmp = new THREE.Vector3();
   const _away = new THREE.Vector3();
+  const _prev = new THREE.Vector3();
+  const _wall = new THREE.Vector3();
 
   const LABELS = {
     potter: 'pottering about',
@@ -91,6 +93,16 @@
 
     /** Somewhere else on the sand. Never off the sand. */
     pickTarget() {
+      // Now and then, near the wreck, the way in through the breach - and
+      // from inside, mostly the way back out.
+      const route = SL.Wreck && SL.Wreck.routeFor(this);
+      if (route) {
+        this.target.set(route[0].x, 0, route[0].z);
+        this.route = route.slice(1);
+        return;
+      }
+      this.route = null;
+
       for (let attempt = 0; attempt < 14; attempt++) {
         const angle = SL.random() * Math.PI * 2;
         const radius = SL.randRange(2, this.rangeRadius);
@@ -117,8 +129,16 @@
 
       const step = this.steer(dt);
       const p = this.position;
+      _prev.copy(p);
       p.x += step.x * dt;
       p.z += step.z * dt;
+
+      // The wreck's walls stop a crab the way they stop you: the breach is
+      // the only way through.
+      if (SL.Wreck) {
+        const push = SL.Wreck.collide(p, _prev, this.bodyLength * 0.4, _wall);
+        if (push) { p.x += push.x; p.z += push.z; }
+      }
 
       // Glued to the floor, which is the point of it.
       const ground = groundAt(p.x, p.z);
@@ -214,7 +234,15 @@
           const dz = this.target.z - this.position.z;
           const gap = Math.hypot(dx, dz);
 
-          if (gap < 1 || this.stateTimer > 16) {
+          // On a route through the breach: straight on to the next point.
+          if (gap < 1 && this.route && this.route.length) {
+            const next = this.route.shift();
+            this.target.set(next.x, 0, next.z);
+            this.stateTimer = 0;
+            return _tmp.set(0, 0, 0);
+          }
+
+          if (gap < 1 || this.stateTimer > (this.route ? 40 : 16)) {
             this.stateTimer = 0;
             this.pickTarget();
             // It stops a lot, and changes which way round it walks.
