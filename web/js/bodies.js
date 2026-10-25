@@ -479,6 +479,8 @@
     const body = new MeshData();
     const tailMesh = new MeshData();
     const jawMesh = new MeshData();
+    // Teeth that only show when the mouth opens, for the species that want it.
+    const teethMesh = new MeshData();
 
     const rings = SL.clamp(S.spineSegments, 5, 40);
     const length = Math.max(0.04, S.length);
@@ -856,19 +858,32 @@
           V(halfW * 0.35, -jawLen * 0.12, jawLen), V(-halfW * 0.35, -jawLen * 0.12, jawLen),
           jawColor, true);
 
-        const toothColor = new THREE.Color(0.92, 0.90, 0.82);
+        // Ivory by default. A species can give its own palette, one colour
+        // per tooth in turn - a rustjaw's are stained grey and brown from the
+        // metal it chews, and no two quite the same.
+        const ivory = new THREE.Color(0.92, 0.90, 0.82);
+        const palette = (S.toothColors || []).map((c) => new THREE.Color(c[0], c[1], c[2]));
+        // And they can be kept in their own mesh, shown only while the mouth
+        // is open: a lower jaw's teeth point up, and at the front of a head
+        // that narrows to a snout they poke out through the face when it is
+        // shut, which reads as something stuck in its mouth.
+        const into = S.hiddenTeeth ? teethMesh : jawMesh;
         const teeth = 6;
         for (let i = 0; i < teeth; i++) {
           const t = i / (teeth - 1);
           const z = SL.lerp(jawLen * 0.9, jawLen * 0.1, t);
           const w = SL.lerp(halfW * 0.4, halfW * 0.9, t);
-          const len = jawLen * 0.22 * SL.lerp(1, 0.6, t);
+          let k = 0;
           for (const side of [1, -1]) {
-            Geo.fin(jawMesh,
+            const colour = palette.length ? palette[(i * 2 + k) % palette.length] : ivory;
+            // A little uneven, too, when they are not ivory.
+            const len = jawLen * 0.22 * SL.lerp(1, 0.6, t) * (palette.length ? 0.8 + ((i * 7 + k * 3) % 5) * 0.09 : 1);
+            Geo.fin(into,
               V(side * w, 0, z - len * 0.3),
               V(side * w, 0, z + len * 0.3),
               V(side * w * 0.9, len, z),
-              toothColor);
+              colour);
+            k++;
           }
         }
       }
@@ -876,6 +891,7 @@
 
     tailMesh.computeNormals();
     if (!jawMesh.isEmpty) jawMesh.computeNormals();
+    if (!teethMesh.isEmpty) teethMesh.computeNormals();
 
     // The loft grows nose-at-origin toward +Z, but Object3D.lookAt() points an
     // object's +Z at its target - so a body used as built swims tail-first.
@@ -921,6 +937,7 @@
       jawSegment: jawPiece,
       tail: tailMesh.toGeometry(),
       jaw: jawMesh.isEmpty ? null : jawMesh.toGeometry(),
+      teeth: teethMesh.isEmpty ? null : teethMesh.toGeometry(),
       tailPivot,
       jawPivot,
       length,
@@ -935,7 +952,7 @@
       const built = build(species);
       // Shared across every individual of the species and across worlds, so
       // world teardown must not dispose these.
-      for (const geometry of [built.tail, built.jaw].concat(built.segments.map((s) => s.geometry))) {
+      for (const geometry of [built.tail, built.jaw, built.teeth].concat(built.segments.map((s) => s.geometry))) {
         if (geometry) geometry.userData.shared = true;
       }
       cache[species.id] = built;

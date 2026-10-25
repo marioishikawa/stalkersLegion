@@ -378,7 +378,7 @@ kbd {
 
 .resource__swatch { width: 9px; height: 9px; }
 .resource__swatch--titanium { background: #9fb3c0; }
-.resource__swatch--tooth { background: #e0d7bc; }
+.resource__swatch--tooth { background: #8c7a64; }
 
 .resource__label {
   font: var(--label);

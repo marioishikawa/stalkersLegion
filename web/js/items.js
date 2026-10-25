@@ -85,12 +85,26 @@
     },
     tooth: {
       label: 'Rustjaw Tooth',
-      build() {
-        // A curved ivory spike.
+      // A rustjaw's teeth are stained by the metal it chews - greys and
+      // browns, never ivory - and no two are quite alike, so each one that
+      // drops is one of a few.
+      variants: 4,
+      build(variant) {
+        const looks = [
+          [[0.40, 0.28, 0.18], [0.62, 0.58, 0.52]],   // dark brown root, grey tip
+          [[0.48, 0.46, 0.42], [0.70, 0.67, 0.60]],   // grey all over
+          [[0.52, 0.36, 0.22], [0.64, 0.50, 0.36]],   // brown, rusted through
+          [[0.36, 0.34, 0.32], [0.58, 0.48, 0.38]]    // dark grey, brown tip
+        ];
+        const [root, tip] = looks[(variant || 0) % looks.length].map((c) => new THREE.Color(c[0], c[1], c[2]));
         const mesh = new MeshData();
-        const ivory = new THREE.Color(0.92, 0.89, 0.78);
-        const root = new THREE.Color(0.72, 0.66, 0.54);
-        Geo.cone(mesh, 0, -0.08, 0, 0.045, 0.22, 7, root, ivory);
+        // A fang with a hook in it: a thick base, and a narrower point leant
+        // over on top of it, with a darker band where it broke from the jaw.
+        Geo.cone(mesh, 0, -0.08, 0, 0.045, 0.15, 7, root, root.clone().lerp(tip, 0.6));
+        const point = new MeshData();
+        Geo.cone(point, 0, 0, 0, 0.03, 0.13 + (variant || 0) * 0.012, 7, root.clone().lerp(tip, 0.5), tip);
+        mesh.append(point, new THREE.Matrix4().makeRotationZ(0.35 - (variant || 0) * 0.08).setPosition(0, 0.03, 0));
+        Geo.box(mesh, 0, -0.085, 0, 0.05, 0.01, 0.05, root.clone().multiplyScalar(0.7));
         mesh.computeNormals();
         return mesh.toGeometry();
       }
@@ -169,11 +183,16 @@
       this.spin = SL.randRange(0.6, 1.8);
       this.bobOffset = Math.random() * Math.PI * 2;
 
-      if (!geometryCache[type]) {
-        geometryCache[type] = TYPES[type].build();
-        geometryCache[type].userData.shared = true;   // survives world teardown
+      // Some kinds come in a few looks, picked per pickup. Math.random, not
+      // the world's dice: which tooth drops is not part of the world.
+      const def = TYPES[type];
+      const variant = def.variants ? Math.floor(Math.random() * def.variants) : 0;
+      const key = type + ':' + variant;
+      if (!geometryCache[key]) {
+        geometryCache[key] = def.build(variant);
+        geometryCache[key].userData.shared = true;   // survives world teardown
       }
-      this.object = new THREE.Mesh(geometryCache[type], game.materials.glow);
+      this.object = new THREE.Mesh(geometryCache[key], game.materials.glow);
       this.object.position.copy(position);
       game.addToWorld(this.object);
     }

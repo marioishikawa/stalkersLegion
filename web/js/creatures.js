@@ -73,6 +73,14 @@
         this.jawMesh = new THREE.Mesh(built.jaw, game.materials.surface);
         this.jawMesh.position.copy(built.jawPivot);
         (this.segmented ? this.segmentMeshes[built.jawSegment] : this.object).add(this.jawMesh);
+
+        // Teeth kept apart from the jaw ride on it, and show only when the
+        // mouth is open - see animate().
+        if (built.teeth) {
+          this.teethMesh = new THREE.Mesh(built.teeth, game.materials.surface);
+          this.teethMesh.visible = false;
+          this.jawMesh.add(this.teethMesh);
+        }
       }
 
       game.addToWorld(this.object);
@@ -333,6 +341,7 @@
 
       this.tailMesh.rotation.y = Math.sin(this.swimPhase - 0.9) * 0.38 * amp;
       if (this.jawMesh) this.jawMesh.rotation.x = this.jawOpen * 0.55;
+      if (this.teethMesh) this.teethMesh.visible = this.jawOpen > 0.4;
     }
 
     updateDeath(dt) {

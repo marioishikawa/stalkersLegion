@@ -823,6 +823,8 @@
       shape: { length: 2.6, height: 0.115, width: 0.085, bellyPosition: 0.18, noseSharpness: 0.25,
                crossSection: 2.3, tailHeight: 0.20, tailSweep: 0.22, tailFork: 0.25,
                dorsalFin: 0.09, ventralFin: 0.05, sideFin: 0.10, eyeSize: 0.022,
+               hiddenTeeth: true,
+               toothColors: [[0.56, 0.52, 0.46], [0.48, 0.34, 0.22], [0.66, 0.62, 0.54], [0.40, 0.29, 0.20], [0.58, 0.46, 0.34]],
                jawLength: 0.17, backSpikes: 7, spineSegments: 20, radialSegments: 10 }
     }),
 
@@ -843,6 +845,8 @@
                crossSection: 2.4, tailHeight: 0.26, tailSweep: 0.30, tailFork: 0.3,
                dorsalFin: 0.13, ventralFin: 0.07, sideFin: 0.13,
                eyeSize: 0.020, eyeRing: true, mouthLine: 0.006,
+               hiddenTeeth: true,
+               toothColors: [[0.56, 0.52, 0.46], [0.48, 0.34, 0.22], [0.66, 0.62, 0.54], [0.40, 0.29, 0.20], [0.58, 0.46, 0.34]],
                jawLength: 0.20, backSpikes: 12, spineSegments: 24, radialSegments: 11 }
     }),
 
@@ -1198,6 +1202,8 @@
                tailHeight: 0.20, tailSweep: 0.22, tailFork: 0.25,
                dorsalFin: 0.09, ventralFin: 0.05, sideFin: 0.10,
                eyeSize: 0.026, eyeRing: true,
+               hiddenTeeth: true,
+               toothColors: [[0.56, 0.52, 0.46], [0.48, 0.34, 0.22], [0.66, 0.62, 0.54], [0.40, 0.29, 0.20], [0.58, 0.46, 0.34]],
                jawLength: 0.17, backSpikes: 7, spineSegments: 20, radialSegments: 10 }
     }),
 
