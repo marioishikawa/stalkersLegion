@@ -648,7 +648,8 @@
         this.game.hud.showHitMarker(wrecked ? 'Nest wrecked' : 'Egg', wrecked);
       } else if (best instanceof SL.Crystal) {
         const broken = best.bite(this.knifeDamage);
-        this.game.hud.showHitMarker(broken ? 'Crystal broken' : 'Crystal', broken);
+        const name = best.kind === 'simyphit' ? 'Simyphit' : 'Crystal';
+        this.game.hud.showHitMarker(broken ? name + ' broken' : name, broken);
       } else {
         best.bite(this.knifeDamage, _forward);
         this.game.audio.metalBite(0);
@@ -797,6 +798,38 @@
     }
 
     /** Plants a beacon on the sea floor below. */
+    /**
+     * E: throw what you are carrying, work the wreck's hatch, or pick up the
+     * nearest scrap - in that order.
+     *
+     * This went missing in an old refactor, with the E key still calling it,
+     * which is why carrying scrap to bait stalkers stopped working.
+     */
+    interact() {
+      if (this.dead) return;
+
+      if (this.carriedScrap) {
+        this.camera.getWorldDirection(_forward);
+        _tmp.copy(_forward).multiplyScalar(9).add(_right.set(0, 1.2, 0));
+        this.carriedScrap.drop(_tmp.clone());
+        this.carriedScrap = null;
+        this.game.audio.throwScrap();
+        return;
+      }
+
+      if (SL.Wreck && SL.Wreck.nearHatch(this.position)) {
+        SL.Wreck.toggleHatch(this.game);
+        return;
+      }
+
+      const nearby = SL.Scrap.findNearest(this.game, this.position, 3.2);
+      if (nearby) {
+        nearby.carriedBy(this, this.carryPoint, new THREE.Vector3(0, 0, 0));
+        this.carriedScrap = nearby;
+        this.game.audio.pickUp();
+      }
+    }
+
     dropBeacon() {
       if (this.dead) return;
       if (!SL.Crafting.consume('beacon')) {
@@ -855,7 +888,15 @@
     updateOxygen(dt) {
       if (this.invulnerable) { this.oxygen = this.maxOxygen; return; }
 
-      if (this.atSurface) {
+      // The wreck's air plant still runs: inside the hull, the tank fills as
+      // fast as it does at the surface.
+      const inWreck = !!(SL.Wreck && SL.Wreck.isInside(this.position));
+      if (inWreck && !this.inWreck && this.oxygen < this.maxOxygen - 1) {
+        this.game.hud.toast('Inside the wreck — air refilling');
+      }
+      this.inWreck = inWreck;
+
+      if (this.atSurface || inWreck) {
         // Breaking the surface refills fast - the surface is always safety.
         this.oxygen = Math.min(this.maxOxygen, this.oxygen + dt * 28);
         return;
@@ -907,7 +948,11 @@
         consider(n.species.name + ' nest', n.position, 10);
       }
       for (const c of this.game.crystals) {
-        if (!c.dead) consider('Crystal   [knife] for quartz', c.position, 12);
+        // Each cluster says what it gives: the green ones are not quartz.
+        if (!c.dead) {
+          consider(c.kind === 'simyphit' ? 'Simyphit   [knife] for simyphit' : 'Crystal   [knife] for quartz',
+            c.position, 12);
+        }
       }
       for (const s of this.game.scrap) {
         if (s.dead || s.isHeld) continue;

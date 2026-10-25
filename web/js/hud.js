@@ -17,7 +17,7 @@
       this.el = {};
       for (const id of ['healthFill', 'healthValue', 'airFill', 'airValue', 'depthValue',
         'biomeName', 'focus', 'warning', 'warningText', 'hitMarker', 'damageFlash',
-        'deathScreen', 'carryNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
+        'deathScreen', 'carryNote', 'hatchNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
         'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName',
         'quartzCount', 'goldCount', 'diamondCount', 'simyphitCount', 'medkitCount', 'resources',
         'beaconCount', 'baitCount', 'repelCount', 'minimap', 'chartLegend',
@@ -223,6 +223,13 @@
 
       // --- Carried scrap ---------------------------------------------------------
       this.el.carryNote.classList.toggle('is-visible', !!p.carriedScrap && !p.dead);
+
+      // --- The wreck's hatch, when you are at it -----------------------------
+      const atHatch = !p.dead && !p.carriedScrap && SL.Wreck && SL.Wreck.nearHatch(p.position);
+      if (atHatch) {
+        this.el.hatchNote.textContent = SL.Wreck.hatchOpen ? '[E] close the hatch' : '[E] open the hatch';
+      }
+      this.el.hatchNote.classList.toggle('is-visible', !!atHatch);
 
       // --- Damage flash and death ------------------------------------------------
       if (this.damageTimer > 0) {

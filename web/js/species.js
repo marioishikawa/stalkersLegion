@@ -1103,6 +1103,27 @@
       drops: {},
       shape: { length: 13, belly: 1.2, snout: 0.13, spots: 30, eyeSize: 0.026, radialSegments: 12 }
     }),
+    fish('scrapcrab', 'Scrap Crab', 'shallows', 'boxy', {
+      // Lives on the wreck's hull and is placed there by hand.
+      grounded: true, groups: 0,
+      diet: 'scavenger',
+      note: 'A crab that has made itself out of the wreck: a shell grown over ' +
+            'with flakes of plate and rust. It lives on the outside of the ' +
+            'submarine and nowhere else, creeping over the hull, and goes very ' +
+            'still when anything comes near. It will not let go of it.',
+      // Rust over a grey hull, so it shows against the plates it walks on,
+      // with legs and spikes of bright bare metal.
+      backColor: C(0.62, 0.36, 0.17), bellyColor: C(0.80, 0.70, 0.56), finColor: C(0.78, 0.78, 0.74),
+      eyeColor: C(0.95, 0.70, 0.20),
+      maxHealth: 22, cruiseSpeed: 0.35, sprintSpeed: 1.6, turnRate: 3,
+      senseRadius: 4, schoolSize: 1, altitude: 0.2, wagRate: 2,
+      shape: { length: 0.42, height: 0.24, width: 0.52, bellyPosition: 0.50,
+               noseSharpness: 0.2, crossSection: 4.4, tailHeight: 0.05,
+               tailSweep: 0.08, tailFork: 0, dorsalFin: 0, ventralFin: 0,
+               sideFin: 0, eyeSize: 0.07, eyeRing: true, eyePosition: 0.16,
+               backSpikes: 6, shellSpikes: 10, antennae: 0.3, legPairs: 4, legScale: 0.42,
+               legStance: 0.2, spineSegments: 12, radialSegments: 10 }
+    }),
     fish('walkingcarni', 'Walkingcarni', 'islet', 'boxy', {
       diet: 'carnivore', groups: 0,
       note: 'Lives on the islet and walks it. Four legs, a long jaw and very ' +
@@ -1253,6 +1274,7 @@
     craber: byId.craber,
     crober: byId.crober,
     starfish: byId.starfish,
+    scrapcrab: byId.scrapcrab,
     stiltcrab: byId.stiltcrab,
     seahorseLeviathan: byId.seahorselev,
     glowLeviathan: byId.glowlev,

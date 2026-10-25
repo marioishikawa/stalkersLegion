@@ -48,6 +48,7 @@
   const AX = Math.cos(W.yaw), AZ = Math.sin(W.yaw);
 
   const _l = { a: 0, s: 0, y: 0 };
+  const _door = new THREE.Vector3();
   const _p = { a: 0, s: 0, y: 0 };
 
   function toLocal(p, out) {
@@ -65,7 +66,14 @@
     return out;
   }
 
+  /**
+   * The hatch over the breach. Shut, the breach is just more hull; it has to
+   * be most of the way open before anything fits through.
+   */
+  const hatch = { open: false, amount: 0, pivot: null };
+
   function inBreach(l) {
+    if (hatch.amount < 0.8) return false;
     if (Math.abs(l.a - W.door.a) > W.door.half) return false;
     const phi = Math.atan2(l.s, l.y);
     return phi > W.door.phiMin && phi < W.door.phiMax;
@@ -100,6 +108,64 @@
 
   const Wreck = {
     layout: W,
+
+    get hatchOpen() { return hatch.open; },
+
+    /** The hatch starts shut every time a world is built. */
+    resetHatch() { hatch.open = false; hatch.amount = 0; },
+
+    /** Whether the diver is close enough to the hatch to work it, from either side. */
+    nearHatch(position) {
+      const door = toWorld(W.door.a, W.deck - CY + 1.3, R * 0.85, _door);
+      return Math.hypot(position.x - door.x, position.y - door.y, position.z - door.z) < 3.4;
+    },
+
+    toggleHatch(game) {
+      hatch.open = !hatch.open;
+      if (game) {
+        game.audio.metalBite(0);
+        game.hud.toast(hatch.open ? 'Hatch opened' : 'Hatch closed');
+      }
+    },
+
+    /** Swings the hatch towards where it has been told to be. */
+    update(dt) {
+      hatch.amount = SL.clamp(hatch.amount + (hatch.open ? dt : -dt) / 0.7, 0, 1);
+      if (hatch.pivot) {
+        const t = hatch.amount;
+        hatch.pivot.rotation.x = -1.75 * (t * t * (3 - 2 * t));
+      }
+    },
+
+    // --- The hull's outside, for the things that live on it -------------------
+
+    /** The hull's exposed skin, as ranges of `a` and of angle round it. */
+    skin: { aMin: -HALF + 0.6, aMax: HALF - 0.6, phiMax: 112 * DEG },
+
+    /** Whether a spot on the skin is somewhere a crab should go. */
+    skinFree(a, phi) {
+      const D = W.door, T = W.tower;
+      if (Math.abs(a - D.a) < D.half + 0.6 && phi > D.phiMin - 0.2 && phi < D.phiMax + 0.2) return false;
+      if (Math.abs(a - T.a) < T.half + 0.5 && Math.abs(phi) < 22 * DEG) return false;
+      return true;
+    },
+
+    /** A point on the outside of the hull, `lift` metres off the plates. */
+    hullPoint(a, phi, lift, out) {
+      const r = R + lift;
+      return toWorld(a, Math.cos(phi) * r, Math.sin(phi) * r, out);
+    },
+
+    /** Straight out of the hull at an angle round it, in the world. */
+    hullNormal(phi, out) {
+      return out.set(-Math.sin(phi) * AZ, Math.cos(phi), Math.sin(phi) * AX);
+    },
+
+    /** The world direction of travel for a step of (da, darc) over the skin. */
+    hullTangent(phi, da, darc, out) {
+      return out.set(da * AX + darc * (-Math.cos(phi) * AZ), darc * -Math.sin(phi),
+        da * AZ + darc * (Math.cos(phi) * AX));
+    },
 
     /** Height of the crater floor blended into the shelf around it. */
     craterFloor(x, z, y) {
@@ -243,6 +309,8 @@
 
       const home = walker.home || at;
       if (Math.hypot(home.x - W.x, home.z - W.z) > W.craterEdge + 10) return null;
+      // A shut hatch is a wall like any other.
+      if (!hatch.open) return null;
       if (SL.random() > 0.04) return null;
       return [doorOut, doorIn,
         toWorld(SL.randRange(-HALF + 2, HALF - 2), 0, SL.randRange(-1.6, 1.6), new THREE.Vector3())];
@@ -267,6 +335,19 @@
         spots(1, (x, z) => game.crabers.push(new SL.Craber(game, x, z, SL.Species.crober)));
       }
       if (SL.Starfish) spots(2, (x, z) => game.crabers.push(new SL.Starfish(game, x, z)));
+
+      // And the ones that live on the hull itself.
+      if (SL.ScrapCrab && SL.Species.scrapcrab) {
+        for (let i = 0; i < 5; i++) {
+          for (let tries = 0; tries < 20; tries++) {
+            const a = SL.randRange(this.skin.aMin, this.skin.aMax);
+            const phi = SL.randRange(-this.skin.phiMax, this.skin.phiMax);
+            if (!this.skinFree(a, phi)) continue;
+            game.crabers.push(new SL.ScrapCrab(game, a, phi));
+            break;
+          }
+        }
+      }
     },
 
     // --- The hull itself --------------------------------------------------------
@@ -359,6 +440,52 @@
       const group = new THREE.Group();
       group.add(new THREE.Mesh(hull.toGeometry(), game.materials.surface));
       group.add(new THREE.Mesh(lamps.toGeometry(), game.materials.glow));
+
+      // --- The hatch --------------------------------------------------------
+      //
+      // A curved plate a little bigger than the breach, hinged along its top
+      // edge - a line running along the hull - so it lifts up and outward
+      // like an awning when it opens. Built round the hinge, so opening it
+      // is a single rotation about the hull's long axis.
+      const D = W.door;
+      const hingePhi = D.phiMin - 0.06;
+      const hy = Math.cos(hingePhi) * (R + 0.05), hs = Math.sin(hingePhi) * (R + 0.05);
+      const plate = new MeshData();
+      const yellow = new THREE.Color(0.78, 0.58, 0.16);
+      const rim = new THREE.Color(0.44, 0.30, 0.10);
+      const cols = 6, rows = 6;
+      const pb = plate.count;
+      for (let i = 0; i <= rows; i++) {
+        const phi = SL.lerp(hingePhi, D.phiMax + 0.2, i / rows);
+        for (let k = 0; k <= cols; k++) {
+          const a = SL.lerp(D.a - D.half - 0.15, D.a + D.half + 0.15, k / cols);
+          const edge = i === 0 || i === rows || k === 0 || k === cols;
+          plate.vertex(a, Math.cos(phi) * (R + 0.05) - hy, Math.sin(phi) * (R + 0.05) - hs,
+            0, 1, 0, edge ? rim : yellow);
+        }
+      }
+      for (let i = 0; i < rows; i++) {
+        for (let k = 0; k < cols; k++) {
+          const p = pb + i * (cols + 1) + k, q = p + cols + 1;
+          plate.quad(p, q, q + 1, p + 1);
+        }
+      }
+      // A wheel to turn, on both faces, and the hinge pins along the top.
+      const midPhi = (D.phiMin + D.phiMax) / 2;
+      for (const off of [0.18, -0.12]) {
+        const r = R + 0.05 + off;
+        Geo.box(plate, D.a, Math.cos(midPhi) * r - hy, Math.sin(midPhi) * r - hs, 0.32, 0.05, 0.05, rim);
+        Geo.box(plate, D.a, Math.cos(midPhi) * r - hy, Math.sin(midPhi) * r - hs, 0.05, 0.32, 0.05, rim);
+      }
+      for (const a of [D.a - D.half + 0.3, D.a + D.half - 0.3]) Geo.box(plate, a, 0, 0, 0.2, 0.09, 0.09, rim);
+      plate.computeNormals();
+
+      hatch.pivot = new THREE.Group();
+      hatch.pivot.position.set(0, hy, hs);
+      hatch.pivot.add(new THREE.Mesh(plate.toGeometry(), game.materials.surface));
+      group.add(hatch.pivot);
+      this.resetHatch();
+      this.update(0);
 
       // A light inside, warm and not very bright: someone left it on.
       const light = new THREE.PointLight(0xffd9a0, 1.2, 15, 1.6);

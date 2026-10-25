@@ -87,39 +87,47 @@
 
         open.addEventListener('click', () => this.enter(world));
 
-        // A world someone finished is not a world to lose to a stray click.
+        // A world someone finished can be deleted too - but it is not a world
+        // to lose to a stray click, so it asks twice instead of once.
+        let done = null;
         if (world.completed) {
-          const done = document.createElement('span');
+          done = document.createElement('span');
           done.className = 'world__done';
-          done.title = 'Finished worlds are kept';
+          done.title = 'You finished this world';
           done.textContent = 'complete';
-          row.appendChild(open);
-          row.appendChild(done);
-          list.appendChild(row);
-          continue;
         }
 
+        const asks = world.completed
+          ? ['delete?', 'it is complete — sure?']
+          : ['delete?'];
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'world__delete';
         remove.title = 'Delete this world';
         remove.textContent = '×';
+        let step = 0;
+        let timer = null;
         remove.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if (remove.dataset.confirm !== 'yes') {
+          if (step < asks.length) {
+            remove.textContent = asks[step];
             remove.dataset.confirm = 'yes';
-            remove.textContent = 'delete?';
-            setTimeout(() => {
+            step++;
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              step = 0;
               remove.dataset.confirm = '';
               remove.textContent = '×';
             }, 3000);
             return;
           }
+          clearTimeout(timer);
           await SL.Saves.remove(world.id);
           await this.refresh();
         });
 
         row.appendChild(open);
+        if (done) row.appendChild(done);
         row.appendChild(remove);
         list.appendChild(row);
       }

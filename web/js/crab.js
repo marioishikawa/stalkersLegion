@@ -260,4 +260,154 @@
   }
 
   SL.Craber = Craber;
+
+  // ---------------------------------------------------------------------------
+
+  const _n = new THREE.Vector3();
+  const _f = new THREE.Vector3();
+  const _r = new THREE.Vector3();
+  const _basis = new THREE.Matrix4();
+
+  const SCRAP_LABELS = {
+    cling: 'clinging to the hull',
+    creep: 'creeping over the plates',
+    freeze: 'holding very still',
+    scuttle: 'scuttling round the hull'
+  };
+
+  /**
+   * The Scrap Crab: a crab that lives on the wreck, and only on the wreck.
+   *
+   * It walks the outside of the hull - up the sides, over the top, round the
+   * curve - and never lets go of it. Its position is not a point in the water
+   * at all but a place on the plates, a distance along the hull and an angle
+   * round it, so there is no way for it to come off: everything about where
+   * it is and which way up it stands is worked out from that each frame.
+   *
+   * Something coming close makes it hold very still. Something hitting it
+   * makes it scuttle round to the far side of the hull.
+   */
+  class ScrapCrab extends SL.Creature {
+    constructor(game, a, phi) {
+      const at = SL.Wreck.hullPoint(a, phi, 0.1, new THREE.Vector3());
+      super(game, SL.Species.scrapcrab, at.x, at.y, at.z);
+      this.a = a;
+      this.phi = phi;
+      this.targetA = a;
+      this.targetPhi = phi;
+      this.state = 'cling';
+      this.stateTimer = SL.randRange(0, 12);
+      this.restFor = SL.randRange(6, 20);
+      this.facing = new THREE.Vector3(1, 0, 0);
+      this.scuttle = SL.random() * Math.PI * 2;
+      this.fallSpeed = 0;
+      this.place(0);
+    }
+
+    get stateLabel() { return SCRAP_LABELS[this.state] || ''; }
+    get legHeight() { return this.bodyLength * (this.species.shape.legStance || 0.22); }
+
+    enterState(state) {
+      if (this.state === state) return;
+      this.state = state;
+      this.stateTimer = 0;
+    }
+
+    /** Hit, it runs round to the far side of the hull. */
+    onHurt() {
+      this.targetPhi = SL.clamp(-this.phi + SL.randRange(-0.3, 0.3), -SL.Wreck.skin.phiMax, SL.Wreck.skin.phiMax);
+      this.targetA = SL.clamp(this.a + SL.randRange(-3, 3), SL.Wreck.skin.aMin, SL.Wreck.skin.aMax);
+      this.enterState('scuttle');
+    }
+    provoke() { this.onHurt(); }
+
+    onDeath(killer) {
+      // It is half made of the wreck.
+      if (killer === this.game.player) SL.Pickup.burst(this.game, 'titanium', this.position, SL.randInt(1, 2));
+    }
+
+    /** Somewhere else on the plates. */
+    pickSpot() {
+      const skin = SL.Wreck.skin;
+      for (let tries = 0; tries < 12; tries++) {
+        const a = SL.clamp(this.a + SL.randRange(-5, 5), skin.aMin, skin.aMax);
+        const phi = SL.clamp(this.phi + SL.randRange(-0.9, 0.9), -skin.phiMax, skin.phiMax);
+        if (!SL.Wreck.skinFree(a, phi)) continue;
+        this.targetA = a; this.targetPhi = phi;
+        return;
+      }
+    }
+
+    /** Puts the body on the plates, standing out from them, facing its way. */
+    place(speed) {
+      SL.Wreck.hullPoint(this.a, this.phi, this.legHeight, this.object.position);
+      SL.Wreck.hullNormal(this.phi, _n);
+      // Keep facing its last direction of travel, laid flat against the hull.
+      _f.copy(this.facing).addScaledVector(_n, -this.facing.dot(_n));
+      if (_f.lengthSq() < 1e-6) _f.set(0, 0, 1).addScaledVector(_n, -_n.z);
+      _f.normalize();
+      _r.crossVectors(_n, _f).normalize();
+      _basis.makeBasis(_r, _n, _f);
+      this.object.quaternion.setFromRotationMatrix(_basis);
+
+      // The scuttling bob, straight out from the plates.
+      this.scuttle += 0.016 * (5 + speed * 3);
+      this.object.position.addScaledVector(_n, Math.sin(this.scuttle) * 0.01 * Math.min(speed * 4, 3));
+    }
+
+    update(dt) {
+      if (this.dead) {
+        // Lets go, at last, and falls to the sand.
+        this.deathTimer += dt;
+        const p = this.position;
+        const floor = SL.Terrain ? SL.Terrain.surfaceAt(p.x, p.z) : SL.Biomes.floorHeightAt(p.x, p.z);
+        if (p.y > floor + 0.1) { this.fallSpeed += 3 * dt; p.y = Math.max(floor + 0.1, p.y - this.fallSpeed * dt); }
+        this.object.rotation.z = SL.damp(this.object.rotation.z, Math.PI, 1.4, dt);
+        if (this.deathTimer > 12) this.destroy();
+        return;
+      }
+
+      this.stateTimer += dt;
+      const S = this.species;
+      const player = this.game.player;
+      const near = !player.dead && player.position.distanceTo(this.position) < 4;
+
+      let speed = 0;
+      if (this.state === 'scuttle') {
+        speed = S.sprintSpeed;
+        if (this.stateTimer > 6) this.enterState('cling');
+      } else if (near) {
+        this.enterState('freeze');
+      } else if (this.state === 'freeze') {
+        if (this.stateTimer > 2) this.enterState('cling');
+      } else if (this.state === 'cling') {
+        if (this.stateTimer > this.restFor) {
+          this.pickSpot();
+          this.enterState('creep');
+        }
+      } else {
+        speed = S.cruiseSpeed;
+      }
+
+      if (speed > 0) {
+        const R = SL.Wreck.layout.radius;
+        const da = this.targetA - this.a;
+        const darc = (this.targetPhi - this.phi) * R;
+        const gap = Math.hypot(da, darc);
+        if (gap < 0.08) {
+          if (this.state === 'creep') { this.restFor = SL.randRange(6, 22); this.enterState('cling'); }
+        } else {
+          const step = Math.min(gap, speed * dt);
+          this.a += (da / gap) * step;
+          this.phi += (darc / gap) * step / R;
+          SL.Wreck.hullTangent(this.phi, da, darc, this.facing).normalize();
+        }
+      }
+
+      this.place(speed);
+      this.jawOpen = SL.damp(this.jawOpen, this.state === 'freeze' ? 0 : 0.2, 3, dt);
+    }
+  }
+
+  SL.ScrapCrab = ScrapCrab;
 })(window.SL);

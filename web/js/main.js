@@ -522,6 +522,8 @@
         lev.update(dt);
       }
 
+      if (SL.Wreck) SL.Wreck.update(dt);
+
       // Jellies are small and slow, so they are culled like the crabs.
       for (const jelly of this.jellies) {
         const near = jelly.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ;
