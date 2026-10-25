@@ -44,7 +44,7 @@
 
         const cost = Object.entries(recipe.cost)
           .map(([type, n]) => n + ' ' + (SL.Pickup.TYPES[type]
-            ? SL.Pickup.TYPES[type].label.replace('Stalker ', '')
+            ? SL.Pickup.TYPES[type].label.replace('Rustjaw ', '')
             : type))
           .join('  ·  ');
 

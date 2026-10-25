@@ -36,7 +36,7 @@
     patrol: 'cruising',
     hunt: 'hunting',
     feed: 'feeding',
-    spar: 'squaring up to a stalker',
+    spar: 'squaring up to a rustjaw',
     attack: 'coming for you',
     veerOff: 'circling back',
     retreat: 'breaking off'
@@ -215,7 +215,7 @@
             rival.provoke(this);
             this.enterState('spar');
             if (this.game.distanceToPlayer(p) < 55) {
-              this.game.hud.toast('A shark goes for a stalker');
+              this.game.hud.toast('A shark goes for a rustjaw');
             }
             return;
           }

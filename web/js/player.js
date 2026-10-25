@@ -881,7 +881,7 @@
       }
 
       this.game.audio.crystal();
-      this.game.hud.toast(scared ? 'Repelled ' + scared + ' stalker' + (scared === 1 ? '' : 's')
+      this.game.hud.toast(scared ? 'Repelled ' + scared + ' rustjaw' + (scared === 1 ? '' : 's')
         : 'Charge spent — nothing close enough');
     }
 

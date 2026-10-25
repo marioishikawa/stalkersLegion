@@ -983,7 +983,7 @@
             this.tribute = false;
 
             if (delivered && this.game.distanceToPlayer(p) < 60) {
-              this.game.hud.toast('A stalker adds to the hoard');
+              this.game.hud.toast('A rustjaw adds to the hoard');
             }
             this.enterState('patrol');
             return this.steerTo(this.patrolTarget, S.cruiseSpeed);

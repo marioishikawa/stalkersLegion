@@ -119,7 +119,7 @@
       this.threat = threat;
       this.aggro = 26;
       this.enterState('enraged');
-      this.game.hud.toast('The Stalker Leviathan has noticed you');
+      this.game.hud.toast('The Rustjaw Leviathan has noticed you');
     }
 
     onHurt(damage, source) {
@@ -131,7 +131,7 @@
       SL.Pickup.burst(this.game, 'tooth', this.position, 14);
       SL.Pickup.burst(this.game, 'titanium', this.position, 8);
       SL.Pickup.burst(this.game, 'gold', this.position, 4);
-      this.game.hud.toast('The Stalker Leviathan is dead');
+      this.game.hud.toast('The Rustjaw Leviathan is dead');
     }
 
     desiredVelocity(dt) {
@@ -222,7 +222,7 @@
 
   const WHALE_LABELS = {
     drift: 'drifting',
-    hunt: 'hunting stalkers',
+    hunt: 'hunting rustjaws',
     swallow: 'feeding',
     clash: 'fighting the king',
     withdraw: 'withdrawing'
@@ -349,7 +349,7 @@
             this.prey = null;
             this.enterState('swallow');
             if (this.game.distanceToPlayer(this.position) < 70) {
-              this.game.hud.toast('The Glasswhale took a stalker');
+              this.game.hud.toast('The Glasswhale took a rustjaw');
             }
             return _tmp.set(0, 0, 0);
           }

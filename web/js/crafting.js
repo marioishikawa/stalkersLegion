@@ -27,14 +27,14 @@
     {
       id: 'blade2',
       name: 'Serrated Blade',
-      blurb: 'Knife 28 → 52 damage, and swings faster. Three hits to a stalker.',
+      blurb: 'Knife 28 → 52 damage, and swings faster. Three hits to a rustjaw.',
       cost: { titanium: 4, tooth: 2 },
       apply(player) { player.knifeDamage = 52; player.swingDuration = 0.36; player.setKnifeTier(1); }
     },
     {
       id: 'suit',
       name: 'Plated Dive Suit',
-      blurb: 'Take 40% less damage. A stalker bite stops being a third of you.',
+      blurb: 'Take 40% less damage. A rustjaw bite stops being a third of you.',
       cost: { titanium: 6, tooth: 3 },
       apply(player) { player.damageResist = 0.4; }
     },
@@ -49,7 +49,7 @@
     {
       id: 'blade3',
       name: 'Tooth-Edged Blade',
-      blurb: 'Knife 52 → 84 damage and longer reach. Two hits to a stalker.',
+      blurb: 'Knife 52 → 84 damage and longer reach. Two hits to a rustjaw.',
       cost: { titanium: 8, tooth: 6 },
       requires: 'blade2',
       apply(player) { player.knifeDamage = 84; player.knifeReach = 2.9; player.setKnifeTier(2); }
@@ -120,7 +120,7 @@
     {
       id: 'bait',
       name: 'Bait Pod',
-      blurb: 'Throw with B. Every stalker that hears it goes there, not at you.',
+      blurb: 'Throw with B. Every rustjaw that hears it goes there, not at you.',
       cost: { titanium: 2, tooth: 1 },
       consumable: true,
       stack: 'bait'
@@ -128,7 +128,7 @@
     {
       id: 'repel',
       name: 'Repel Charge',
-      blurb: 'Press V. Drives every stalker within 25 m off you for a while.',
+      blurb: 'Press V. Drives every rustjaw within 25 m off you for a while.',
       cost: { quartz: 3, tooth: 2 },
       consumable: true,
       stack: 'repel'

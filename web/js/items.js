@@ -84,7 +84,7 @@
       }
     },
     tooth: {
-      label: 'Stalker Tooth',
+      label: 'Rustjaw Tooth',
       build() {
         // A curved ivory spike.
         const mesh = new MeshData();

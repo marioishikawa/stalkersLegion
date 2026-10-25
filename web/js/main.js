@@ -705,12 +705,12 @@
     tame(game) {
       game.petDismissed = false;
       if (game.pets.length) {
-        game.hud.toast('CHEAT — your stalker is already with you');
+        game.hud.toast('CHEAT — your rustjaw is already with you');
         return;
       }
       game.petRespawn = 0;
       SL.Pet.spawn(game);
-      game.hud.toast('CHEAT — a stalker has bonded to you');
+      game.hud.toast('CHEAT — a rustjaw has bonded to you');
     },
     // And the undo, for when you would rather dive alone. It stays gone until
     // you type `tame` again - including across a save, and including the
@@ -718,8 +718,8 @@
     untame(game) {
       const had = SL.Pet.dismiss(game);
       game.hud.toast(had
-        ? 'CHEAT — your stalker has gone'
-        : 'CHEAT — no stalker will bond to you');
+        ? 'CHEAT — your rustjaw has gone'
+        : 'CHEAT — no rustjaw will bond to you');
     }
   };
 

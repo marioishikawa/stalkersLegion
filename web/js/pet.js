@@ -46,7 +46,7 @@
     onHurt() {}
 
     onDeath() {
-      this.game.hud.toast('Your stalker was killed — it will be back');
+      this.game.hud.toast('Your rustjaw was killed — it will be back');
       this.game.petRespawn = RESPAWN_SECONDS;
     }
 
@@ -163,7 +163,7 @@
       if (this.scannedFish() < fish.length) return;
 
       this.spawn(game);
-      game.hud.toast('DATABANK COMPLETE — a stalker has bonded to you');
+      game.hud.toast('DATABANK COMPLETE — a rustjaw has bonded to you');
       game.audio.craft();
     },
 
@@ -180,7 +180,7 @@
         game.petRespawn -= dt;
         if (game.petRespawn <= 0 && !game.pets.length) {
           this.spawn(game);
-          game.hud.toast('Your stalker is back');
+          game.hud.toast('Your rustjaw is back');
         }
       }
     }

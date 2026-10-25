@@ -794,7 +794,7 @@
       diet: 'carnivore',
       note: 'Here for the Glimmerfin, and it will cross its whole range for ' +
             'one. It has no interest in scrap and none in you - but it will ' +
-            'pick a fight with a stalker that gets in the way, and anything ' +
+            'pick a fight with a rustjaw that gets in the way, and anything ' +
             'that cuts it has its full attention.',
       backColor: C(0.30, 0.34, 0.38), bellyColor: C(0.92, 0.93, 0.90), finColor: C(0.24, 0.28, 0.32),
       eyeColor: C(0.04, 0.04, 0.05),
@@ -809,7 +809,7 @@
                eyeSize: 0.016, eyePosition: 0.12, mouthLine: 0.014,
                jawLength: 0.15, spineSegments: 20, radialSegments: 11 }
     }),
-    fish('stalker', 'Stalker', 'kelp', 'eel', {
+    fish('stalker', 'Rustjaw', 'kelp', 'eel', {
       note: "Obsessed with scrap metal. Chews it, hauls it, and bites whatever interrupts.",
       diet: 'carnivore',
       backColor: C(0.22, 0.26, 0.20), bellyColor: C(0.62, 0.60, 0.46), finColor: C(0.30, 0.34, 0.24),
@@ -827,7 +827,7 @@
     }),
 
     // ------------------------------------------------------- The Stalker King
-    fish('kingstalker', 'Stalker Leviathan', 'kings', 'eel', {
+    fish('kingstalker', 'Rustjaw Leviathan', 'kings', 'eel', {
       note: "Sits on a hoard its subjects drag out to it. Ignores divers until struck.",
       leviathan: true, markerColor: '#e08a2c',
       // Three times a stalker in every dimension, sitting on a hoard of scrap
@@ -1177,7 +1177,7 @@
     }),
 
     // ---------------------------------------------------- The bonded stalker
-    fish('petstalker', 'Bonded Stalker', 'kelp', 'eel', {
+    fish('petstalker', 'Bonded Rustjaw', 'kelp', 'eel', {
       // Never spawns on its own - awarded for finishing the databank, which
       // is also why it is not in it. A reward that is also a requirement is a
       // circle: the card could only be filled after the thing it gates was
@@ -1222,7 +1222,7 @@
 
     // ------------------------------------------------------------- The Whale
     fish('whale', 'Glasswhale Leviathan', 'abyss', 'bulb', {
-      note: "Eats stalkers whole. Has no concept of a diver as prey, never " +
+      note: "Eats rustjaws whole. Has no concept of a diver as prey, never " +
             "harms one, and cannot be harmed by one - the knife will not land " +
             "on it. The only animal down here that is simply left alone.",
       leviathan: true, markerColor: '#5fb8e8',
