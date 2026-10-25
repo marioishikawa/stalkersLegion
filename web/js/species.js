@@ -1068,14 +1068,14 @@
     }),
     fish('pygmyseahorse', 'Pygmy Seahorse', 'meadow', 'seahorse', {
       upright: true,
-      note: 'Barely longer than a fingernail is wide, pink, and covered in ' +
-            'knobs that match the sea fans it lives on. Easy to swim straight ' +
-            'past; there are usually three or four in the same place.',
+      note: 'The smallest seahorse in the meadow - about the length of a ' +
+            'finger - pink, and covered in knobs that match the sea fans it ' +
+            'lives on. Easy to swim past; there are usually three in one place.',
       backColor: C(0.92, 0.46, 0.58), bellyColor: C(0.98, 0.74, 0.80), finColor: C(0.98, 0.62, 0.72),
       eyeColor: C(0.06, 0.03, 0.04),
       maxHealth: 4, cruiseSpeed: 0.18, sprintSpeed: 0.6, turnRate: 1.8,
       senseRadius: 4, schoolSize: 3, groups: 2.4, altitude: 0.7, wagRate: 12,
-      shape: { length: 0.12, belly: 1.15, snout: 0.08, knobs: 14, eyeSize: 0.03, radialSegments: 8 }
+      shape: { length: 0.18, belly: 1.15, snout: 0.08, knobs: 14, eyeSize: 0.03, radialSegments: 8 }
     }),
     fish('bigbellyseahorse', 'Big-belly Seahorse', 'meadow', 'seahorse', {
       upright: true,
