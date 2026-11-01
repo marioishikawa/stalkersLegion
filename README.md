@@ -1,4 +1,4 @@
-# Stalkers Legion
+# Rustjaw Legion
 
 An open-ocean survival game in the spirit of Subnautica. You start at the
 surface with a survival knife and ninety seconds of air. Below you are thirteen

@@ -253,7 +253,7 @@
         scrap: this.scrap.length,
         ms: Math.round(performance.now() - started)
       };
-      console.log('[Stalkers Legion] ocean generated in ' + this.stats.ms + 'ms:',
+      console.log('[Rustjaw Legion] ocean generated in ' + this.stats.ms + 'ms:',
         this.stats.fish + ' fish,', this.stats.stalkers + ' stalkers,',
         this.stats.scrap + ' scrap,', plants + ' plants');
     }

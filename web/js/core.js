@@ -1,5 +1,5 @@
 /**
- * Stalkers Legion - shared namespace, math helpers and the noise field.
+ * Rustjaw Legion - shared namespace, math helpers and the noise field.
  *
  * This is a direct port of Source/StalkersLegion/.../SLProcMesh.cpp, with one
  * change: the Unreal build works in centimetres with Z up, and this one works
