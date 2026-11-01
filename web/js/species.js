@@ -809,6 +809,27 @@
                eyeSize: 0.016, eyePosition: 0.12, mouthLine: 0.014,
                jawLength: 0.15, spineSegments: 20, radialSegments: 11 }
     }),
+    fish('megalodon', 'Megalodon Leviathan', 'abyss', 'torpedo', {
+      leviathan: true, markerColor: '#9fb4c8',
+      diet: 'carnivore', groups: 0,
+      note: 'A shark eighteen metres long, patrolling the open water over the ' +
+            'abyssal plain. It notices you from a long way off and comes in to ' +
+            'circle; when the circling stops, it charges. Get out of the line ' +
+            'of it - it turns wide at that speed - or cut it as it comes in.',
+      backColor: C(0.25, 0.29, 0.33), bellyColor: C(0.88, 0.88, 0.84), finColor: C(0.19, 0.23, 0.27),
+      eyeColor: C(0.03, 0.03, 0.04),
+      maxHealth: 1500, cruiseSpeed: 3.0, sprintSpeed: 9.5, turnRate: 1.0,
+      senseRadius: 60, biteDamage: 45, biteInterval: 4,
+      schoolSize: 1, altitude: 22, wagRate: 1.6,
+      shape: { length: 18, height: 0.16, width: 0.11, bellyPosition: 0.32,
+               noseSharpness: 0.75, crossSection: 2.2,
+               tailHeight: 0.24, tailSweep: 0.24, tailFork: 0.72,
+               dorsalFin: 0.15, ventralFin: 0.06, sideFin: 0.18,
+               eyeSize: 0.012, eyePosition: 0.12, mouthLine: 0.014,
+               // Teeth that show only when it opens up - which is when it charges.
+               hiddenTeeth: true, toothColors: [[0.96, 0.95, 0.90], [0.90, 0.88, 0.82]],
+               jawLength: 0.16, spineSegments: 22, radialSegments: 12 }
+    }),
     fish('stalker', 'Rustjaw', 'kelp', 'eel', {
       note: "Obsessed with scrap metal. Chews it, hauls it, and bites whatever interrupts.",
       diet: 'carnivore',
@@ -1283,6 +1304,7 @@
     scrapcrab: byId.scrapcrab,
     stiltcrab: byId.stiltcrab,
     seahorseLeviathan: byId.seahorselev,
+    megalodon: byId.megalodon,
     glowLeviathan: byId.glowlev,
     diamondLeviathan: byId.diamondlev,
     // Only ordinary prey spawns from the biome roster; the predators and the

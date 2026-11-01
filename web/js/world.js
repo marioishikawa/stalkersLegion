@@ -924,6 +924,8 @@
     scatterJellies(game);
     scatterSimyphit(game);
     if (SL.Wreck) SL.Wreck.populate(game);
+    // Last of all, so every creature placed before it keeps its place.
+    spawnMegalodon(game);
   }
 
   /**
@@ -946,6 +948,40 @@
         game.crystals.push(new SL.Crystal(game, point.x, point.z, (SL.random() * 1e9) | 0, 'simyphit'));
       }
     }
+  }
+
+  /**
+   * The Megalodon, patrolling open water over the abyssal plain.
+   *
+   * Its ground is chosen, not rolled: out at 1,650 m, well north or south of
+   * the trench, on the bearing furthest from the far bank, the islet, the
+   * vent field and the meadow - so it is a place of its own to find rather
+   * than a hazard dropped on top of one of the others. Placed through
+   * keepUnlessKilled, so once dead it stays dead in this world.
+   */
+  function spawnMegalodon(game) {
+    const species = SL.Species.megalodon;
+    if (!species || !SL.MegalodonLeviathan) return;
+
+    const others = [SL.Biomes.farBank, SL.Biomes.islet, SL.Biomes.ventField, SL.Biomes.meadow]
+      .filter(Boolean).map((f) => Math.atan2(f.z, f.x));
+    const apart = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+    let best = null, bestGap = -1;
+    for (let i = 0; i < 72; i++) {
+      const angle = (i / 72) * Math.PI * 2;
+      if (Math.abs(Math.sin(angle)) < 0.55) continue;      // clear of the trench
+      const x = Math.cos(angle) * 1650, z = Math.sin(angle) * 1650;
+      if (SL.Biomes.biomeAt(x, z).id !== 'abyss') continue;
+      const gap = others.length ? Math.min(...others.map((o) => apart(angle, o))) : 1;
+      if (gap > bestGap) { bestGap = gap; best = { x, z }; }
+    }
+    if (!best) return;
+
+    const floor = SL.Biomes.floorHeightAt(best.x, best.z);
+    const y = Math.min(floor + species.altitude, SL.WATER_LEVEL - 14);
+    const lev = new SL.MegalodonLeviathan(game, species, best.x, y, best.z);
+    lev.territory.set(best.x, y, best.z);
+    keepUnlessKilled(game, game.megalodons, lev);
   }
 
   /**

@@ -98,12 +98,6 @@
       apply(player) { player.lanternBuilt = true; player.upgradeLight(); }
     },
     {
-      id: 'scanner',
-      name: 'Scanner',
-      blurb: 'Hold X on a creature to catalogue it. Press I to read the databank.',
-      cost: { titanium: 3, quartz: 2, gold: 1 }
-    },
-    {
       id: 'beacon',
       name: 'Marker Beacon',
       blurb: 'Drop one with G. It lights the spot and pins it to your chart.',
@@ -186,7 +180,12 @@
     reset() {
       for (const key of Object.keys(this.inventory)) this.inventory[key] = 0;
       for (const key of Object.keys(this.stacks)) this.stacks[key] = 0;
-      this.built = {};
+      // The scanner is part of the kit you start with. Cataloguing is what
+      // the game is for, and it used to cost gold - which only comes from
+      // deep water - so for the first long stretch of a dive the only way to
+      // put anything in the databank was to kill it. Finding things is the
+      // game; being allowed to look at them should not be.
+      this.built = { scanner: true };
     },
 
     add(type, amount) {

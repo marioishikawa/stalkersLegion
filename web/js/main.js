@@ -33,6 +33,7 @@
       this.glowLevs = [];
       this.diamondLevs = [];
       this.seahorseLevs = [];
+      this.megalodons = [];
       this.jellies = [];
       this.sharks = [];
       /** Where the diver last died and left their kit, for the chart. */
@@ -169,6 +170,7 @@
       this.glowLevs.length = 0;
       this.diamondLevs.length = 0;
       this.seahorseLevs.length = 0;
+      this.megalodons.length = 0;
       this.jellies.length = 0;
       this.sharks.length = 0;
       this.deathDrop = null;
@@ -201,7 +203,7 @@
     /** Every leviathan in the world, in the one list the chart wants. */
     leviathans() {
       return this.kings.concat(this.whales, this.puffers, this.kelperLevs,
-        this.glowLevs, this.carniLevs, this.diamondLevs, this.seahorseLevs);
+        this.glowLevs, this.carniLevs, this.diamondLevs, this.seahorseLevs, this.megalodons);
     }
 
     /**
@@ -213,7 +215,7 @@
     creatures() {
       return this.fish.concat(this.stalkers, this.kings, this.whales, this.puffers,
         this.kelperLevs, this.kelpers, this.carnis, this.carniLevs, this.glowLevs,
-        this.diamondLevs, this.sharks, this.crabers, this.seahorseLevs, this.jellies);
+        this.diamondLevs, this.sharks, this.crabers, this.seahorseLevs, this.jellies, this.megalodons);
     }
 
     /** Generates a world from a seed. The same seed always gives the same ocean. */
@@ -518,6 +520,11 @@
       }
 
       for (const lev of this.seahorseLevs) {
+        lev.object.visible = lev.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
+        lev.update(dt);
+      }
+
+      for (const lev of this.megalodons) {
         lev.object.visible = lev.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE;
         lev.update(dt);
       }
