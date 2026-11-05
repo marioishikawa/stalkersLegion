@@ -229,6 +229,21 @@
                tailSweep: 0.10, tailFork: 0, dorsalFin: 0.015, ventralFin: 0,
                sideFin: 0.02, eyeSize: 0.022, spineSegments: 20, radialSegments: 7 }
     }),
+    fish('bluefish', 'Blue Fish', 'shallows', 'torpedo', {
+      alsoIn: ['plateau'],
+      note: 'A plain blue fish. Bright blue on top, pale blue underneath, an ' +
+            'ordinary shape and nothing to hide. It swims in small schools and ' +
+            'is one of the first things you will see.',
+      backColor: C(0.12, 0.40, 0.92), bellyColor: C(0.70, 0.84, 0.98), finColor: C(0.36, 0.62, 0.98),
+      eyeColor: C(0.03, 0.04, 0.08),
+      maxHealth: 8, cruiseSpeed: 1.8, sprintSpeed: 4.8, turnRate: 2.8,
+      senseRadius: 9, schoolSize: 6, groups: 3.0, altitude: 2.5, wagRate: 7,
+      shape: { length: 0.22, height: 0.24, width: 0.11, bellyPosition: 0.38,
+               noseSharpness: 0.5, crossSection: 2.1,
+               tailHeight: 0.30, tailSweep: 0.24, tailFork: 0.4,
+               dorsalFin: 0.12, ventralFin: 0.05, sideFin: 0.12,
+               eyeSize: 0.06, eyeRing: true, spineSegments: 14, radialSegments: 10 }
+    }),
     fish('bluelong', 'Blue Longfish', 'kelp', 'ribbon', {
       alsoIn: ['plateau'],
       note: 'A metre and a half of blue ribbon with a fish at one end. It ' +
@@ -1083,6 +1098,20 @@
     //
     // Drifters, so the school spawner leaves them alone and the world builder
     // places them in blooms. All of them sting for 5 if touched.
+    fish('sunjelly', 'Sun Jelly Leviathan', 'boulders', 'jelly', {
+      leviathan: true, markerColor: '#ff9a2e',
+      drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
+      groups: 0,
+      note: 'A jellyfish five metres across, glowing orange, drifting with its ' +
+            'bell just under the sunlit surface and twenty metres of tentacles ' +
+            'trailing beneath it. Its bell is safe to touch. Its tentacles are ' +
+            'not, and even a Sting Guard only takes the edge off them.',
+      backColor: C(1.0, 0.52, 0.10), bellyColor: C(1.0, 0.82, 0.42), finColor: C(1.0, 0.62, 0.22),
+      glow: 0.6,
+      maxHealth: 900, cruiseSpeed: 0.6, sprintSpeed: 1.0, turnRate: 0.6,
+      senseRadius: 2, biteDamage: 14, schoolSize: 1, altitude: 20, wagRate: 0.9,
+      shape: { bell: 2.6, bellHeight: 0.7, tentacleLength: 20, tentacles: 36, oralArms: 6 }
+    }),
     fish('moonjelly', 'Moon Jelly', 'shallows', 'jelly', {
       alsoIn: ['kelp'], drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger',
       note: 'The plain one: a clear, pale bell with four rings showing through ' +

@@ -203,7 +203,8 @@
     /** Every leviathan in the world, in the one list the chart wants. */
     leviathans() {
       return this.kings.concat(this.whales, this.puffers, this.kelperLevs,
-        this.glowLevs, this.carniLevs, this.diamondLevs, this.seahorseLevs, this.megalodons);
+        this.glowLevs, this.carniLevs, this.diamondLevs, this.seahorseLevs, this.megalodons,
+        this.jellies.filter((j) => j.species.leviathan));
     }
 
     /**
@@ -534,7 +535,10 @@
       // Jellies are small and slow, so they are culled like the crabs.
       for (const jelly of this.jellies) {
         const near = jelly.position.distanceToSquared(playerPos) <= NEAR_DISTANCE_SQ;
-        jelly.object.visible = near;
+        // The leviathan is seen from as far as any other leviathan.
+        jelly.object.visible = jelly.species.leviathan
+          ? jelly.position.distanceToSquared(playerPos) < 9 * CULL_DISTANCE * CULL_DISTANCE
+          : near;
         if (near || jelly.dead) jelly.update(dt);
         else if ((this.frame & 3) === 0) jelly.update(dt * 4);
       }

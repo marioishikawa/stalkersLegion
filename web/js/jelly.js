@@ -91,6 +91,15 @@
         .setY(lift);
     }
 
+    /**
+     * Where it stings: the line from the crown of the bell to the ends of the
+     * tentacles, the bell's width at the top and a little less at the bottom.
+     */
+    stingZone() {
+      const L = this.layout;
+      return { from: L.top, to: L.bottom, wide: L.bell, narrow: L.bell * 0.85 };
+    }
+
     /** The bell pulses; the tentacles trail and sway after it. */
     animate(dt) {
       this.sway += dt;
@@ -107,27 +116,29 @@
 
       this.stingCooldown = Math.max(0, this.stingCooldown - dt);
       const player = this.game.player;
-      // The Sting Guard is exactly what it says.
-      if (this.stingCooldown > 0 || player.dead || player.stingGuard) return;
+      if (this.stingCooldown > 0 || player.dead) return;
+      // The Sting Guard is exactly what it says - for an ordinary jelly. A
+      // leviathan's sting is too much for it, and it only takes the edge off.
+      if (player.stingGuard && !this.species.leviathan) return;
 
       // Cheap reject first: almost every jelly is nowhere near the diver.
       const reach = this.layout.length * 0.5 + this.layout.bell + DIVER_RADIUS;
       if (this.position.distanceToSquared(player.position) > reach * reach) return;
 
-      // Touching it means coming within the bell's width of the line that
-      // runs from the crown of its bell to the ends of its tentacles.
+      // Touching it means coming within its width of the line its stinging
+      // part runs along - see stingZone().
+      const zone = this.stingZone();
       this.bodyAxis(_axis);
-      _a.copy(this.position).addScaledVector(_axis, this.layout.top);
-      _b.copy(this.position).addScaledVector(_axis, this.layout.bottom);
+      _a.copy(this.position).addScaledVector(_axis, zone.from);
+      _b.copy(this.position).addScaledVector(_axis, zone.to);
       _tmp.subVectors(_b, _a);
       const t = SL.clamp(_axis.subVectors(player.position, _a).dot(_tmp) / _tmp.lengthSq(), 0, 1);
       const nearest = _a.addScaledVector(_tmp, t);
-      // Narrower down the tentacles than across the bell.
-      const width = SL.lerp(this.layout.bell, this.layout.bell * 0.85, t) + DIVER_RADIUS;
+      const width = SL.lerp(zone.wide, zone.narrow, t) + DIVER_RADIUS;
       if (nearest.distanceToSquared(player.position) > width * width) return;
 
       this.stingCooldown = STING_COOLDOWN;
-      player.hurt(this.species.biteDamage, this);
+      player.hurt(this.species.biteDamage * (player.stingGuard ? 0.5 : 1), this);
 
       // One toast for a run of stings, not one per jelly in a bloom.
       const now = this.game.time;
@@ -139,4 +150,101 @@
   }
 
   SL.Jelly = Jelly;
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The Sun Jelly Leviathan.
+   *
+   * A jellyfish five metres across, glowing orange, drifting with its bell
+   * just under the sunlit surface and twenty metres of tentacles hanging
+   * down beneath it - the lion's mane jellyfish, which is real, and is the
+   * biggest there is.
+   *
+   * It does not chase and it does not flee; it drifts in a slow loop over
+   * deep water. Only the tentacles sting, and they sting hard. The bell is
+   * solid and safe, so the way to it is from above or from the side, and
+   * the danger is the curtain of tentacles trailing under it as it moves.
+   */
+  class SunJelly extends Jelly {
+    constructor(game, species, x, y, z) {
+      super(game, species, x, y, z);
+      this.driftTarget = new THREE.Vector3(x, y, z);
+      this.pickDrift();
+    }
+
+    get stateLabel() { return this.dead ? '' : 'drifting in the sun'; }
+
+    /**
+     * Not a capsule. The diver's ordinary collision treats an animal as solid
+     * along its whole length, which here would be a wall twenty metres high
+     * where the tentacles are - and tentacles are the thing you swim into and
+     * get stung by. The bell is made solid by update() instead.
+     */
+    get ghost() { return true; }
+
+    stingZone() {
+      const L = this.layout;
+      return { from: L.rim, to: L.bottom, wide: L.bell * 0.85, narrow: L.bell * 0.6 };
+    }
+
+    /** Somewhere over water deep enough for its tentacles to hang clear. */
+    pickDrift() {
+      const need = this.layout.length + 6;
+      for (let tries = 0; tries < 16; tries++) {
+        const angle = SL.random() * Math.PI * 2;
+        const r = SL.randRange(30, 160);
+        const x = this.territory.x + Math.cos(angle) * r;
+        const z = this.territory.z + Math.sin(angle) * r;
+        if (SL.Biomes.floorHeightAt(x, z) > SL.WATER_LEVEL - need) continue;
+        this.driftTarget.set(x, SL.WATER_LEVEL - this.layout.top - 1.5, z);
+        return;
+      }
+      this.driftTarget.copy(this.territory);
+    }
+
+    desiredVelocity(dt) {
+      const S = this.species;
+      this.pulse += dt * S.wagRate;
+      const beat = Math.sin(this.pulse);
+      this.squeeze = beat > 0.55 ? (beat - 0.55) / 0.45 : 0;
+
+      if (this.driftTarget.distanceToSquared(this.position) < 100) this.pickDrift();
+      _tmp.subVectors(this.driftTarget, this.position);
+      const lift = SL.clamp(_tmp.y * 0.2, -0.3, 0.3);
+      _tmp.setY(0);
+      if (_tmp.lengthSq() > 1e-6) _tmp.normalize();
+      return _tmp.multiplyScalar(S.cruiseSpeed * (0.5 + this.squeeze)).setY(lift);
+    }
+
+    update(dt) {
+      super.update(dt);
+      if (this.dead) return;
+
+      // The bell is solid: a soft sphere you are pushed out of.
+      const player = this.game.player;
+      if (player.dead) return;
+      const L = this.layout;
+      this.bodyAxis(_axis);
+      _a.copy(this.position).addScaledVector(_axis, L.rim + L.bellHeight * 0.45);
+      _tmp.subVectors(player.position, _a);
+      const d = _tmp.length();
+      const clear = L.bell * 0.95 + 0.5;
+      if (d < clear && d > 1e-4) {
+        _tmp.multiplyScalar((clear - d) / d);
+        player.position.add(_tmp);
+        const into = player.velocity.dot(_tmp.normalize());
+        if (into < 0) player.velocity.addScaledVector(_tmp, -into);
+      }
+    }
+
+    onDeath() {
+      SL.Pickup.burst(this.game, 'simyphit', this.position, 3);
+      SL.Pickup.burst(this.game, 'gold', this.position, 4);
+      SL.Pickup.burst(this.game, 'quartz', this.position, 6);
+      this.game.hud.toast('The Sun Jelly Leviathan sinks, and its light goes out');
+    }
+  }
+
+  SL.SunJelly = SunJelly;
 })(window.SL);

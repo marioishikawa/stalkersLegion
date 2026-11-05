@@ -1080,7 +1080,9 @@
       const DIVER_MASS = 3;
 
       const resolve = (creature) => {
-        if (creature.dead) return;
+        // Some things are not solid all the way along: they make their own
+        // solid parts (the Sun Jelly's bell, and not its tentacles).
+        if (creature.dead || creature.ghost) return;
 
         const reach = creature.bodyLength * 0.5 + creature.radius + DIVER_RADIUS;
         if (creature.position.distanceToSquared(this.position) > reach * reach) return;

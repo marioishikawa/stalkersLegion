@@ -420,7 +420,8 @@
       const a = (i / count) * Math.PI * 2;
       const rootR = J.bell * 0.92;
       const spine = [], widths = [], colours = [];
-      const rings = 6;
+      // Enough rings that a long tentacle curls rather than kinks.
+      const rings = SL.clamp(Math.round(J.tentacleLength / J.bell * 2.5), 6, 22);
       for (let k = 0; k < rings; k++) {
         const t = k / (rings - 1);
         // A slow curl, so they hang like something in water, not like string.

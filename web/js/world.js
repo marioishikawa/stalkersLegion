@@ -929,6 +929,36 @@
     if (SL.Wreck) SL.Wreck.populate(game);
     // Last of all, so every creature placed before it keeps its place.
     spawnMegalodon(game);
+    spawnSunJelly(game);
+  }
+
+  /**
+   * The Sun Jelly, over the deep part of the boulder slope.
+   *
+   * It needs water deeper than its tentacles are long, and it lives near the
+   * surface, so its ground is found rather than rolled: round the shelf, out
+   * where the slope falls past forty metres, the deepest such spot that is
+   * still boulder slope. No dice, so nothing else in the world moves.
+   */
+  function spawnSunJelly(game) {
+    const species = SL.Species.byId.sunjelly;
+    if (!species || !SL.SunJelly) return;
+    let best = null, bestDepth = 0;
+    for (let i = 0; i < 96; i++) {
+      const angle = (i / 96) * Math.PI * 2;
+      for (const radius of [620, 700, 780]) {
+        const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
+        if (SL.Biomes.biomeAt(x, z).id !== 'boulders') continue;
+        const depth = -SL.Biomes.floorHeightAt(x, z);
+        if (depth > 40 && depth < 70 && depth > bestDepth) { bestDepth = depth; best = { x, z }; }
+      }
+    }
+    if (!best) return;
+    const J = SL.jellyLayout(species.shape);
+    const y = SL.WATER_LEVEL - J.top - 1.5;
+    const lev = new SL.SunJelly(game, species, best.x, y, best.z);
+    lev.territory.set(best.x, y, best.z);
+    keepUnlessKilled(game, game.jellies, lev);
   }
 
   /**
@@ -998,7 +1028,8 @@
     if (!SL.Jelly) return;
 
     for (const species of SL.Species.list) {
-      if (!species.drifter) continue;
+      // The Sun Jelly is a leviathan, placed on its own below.
+      if (!species.drifter || species.leviathan) continue;
       for (const id of [species.biome].concat(species.alsoIn || [])) {
         const biome = SL.Biomes.byId[id];
         if (!biome) continue;
