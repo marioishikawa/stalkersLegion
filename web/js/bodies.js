@@ -762,13 +762,53 @@
       for (let i = 0; i < S.spots; i++) {
         const along = SL.lerp(0.16, 0.88, (i * 0.6180339887) % 1);
         const r = SL.clamp(ringAt(along), 1, rings - 1);
-        // Spread up and down the flank as well as along it.
-        const lift = ((i * 0.3819660113) % 1) * 1.5 - 0.55;
+        // Spread up and down the flank as well as along it. On a sequence
+        // of its own: 0.382 is one minus the 0.618 used along the body, which
+        // tied the two together and laid every spot on one diagonal line.
+        const lift = ((i * 0.7548776662 + 0.31) % 1) * 1.5 - 0.55;
 
         for (const side of [1, -1]) {
           addSphere(side * halfWidths[r] * 0.9, halfHeights[r] * lift, spine[r].z,
             spotRadius, 6, spotColor);
         }
+      }
+    }
+
+    // --- A lure: a rod off the forehead with a light on the end -------------
+    //
+    // Its own mesh, drawn unlit, so the bulb reads as a light in the dark and
+    // the rod as a dark line holding it - and hung from its root so it can
+    // bob. Built in the creature's own frame, the one the body is recentred
+    // into below, where the nose points down +Z.
+    const lureMesh = new MeshData();
+    let lurePivot = null;
+    if (S.lure) {
+      const r = SL.clamp(ringAt(0.12), 1, rings - 1);
+      lurePivot = new THREE.Vector3(0, halfHeights[r] * 0.92, length * 0.5 - spine[r].z);
+      const rod = [V(0, 0, 0), V(0, length * 0.12, length * 0.06), V(0, length * 0.17, length * 0.17),
+        V(0, length * 0.13, length * 0.27)];
+      const thin = length * 0.008;
+      const dark = species.finColor.clone().multiplyScalar(0.8);
+      Geo.loft(lureMesh, rod, [thin, thin, thin * 0.8, thin * 0.6], [thin, thin, thin * 0.8, thin * 0.6],
+        [dark, dark, dark, dark], 5, 2, dark, 0);
+      const glow = species.lureColor || new THREE.Color(0.45, 1.0, 0.85);
+      Geo.sphere(lureMesh, 0, length * 0.115, length * 0.29, length * 0.035, 10, glow);
+      lureMesh.computeNormals();
+    }
+
+    // --- Eye-spot: a false eye by the tail, ringed in colour -----------------
+    //
+    // Real fish do this - the Oscar most famously - so that whatever goes for
+    // the eye goes for the wrong end. A bright ring with a black middle, on
+    // both flanks, just ahead of the tail.
+    if (S.eyespot) {
+      const r = SL.clamp(ringAt(0.86), 1, rings - 1);
+      const ringColour = species.eyespotColor || new THREE.Color(1.0, 0.48, 0.10);
+      const size = length * 0.05;
+      for (const side of [1, -1]) {
+        addSphere(side * halfWidths[r] * 0.92, halfHeights[r] * 0.15, spine[r].z, size, 9, ringColour);
+        addSphere(side * (halfWidths[r] * 0.92 + size * 0.45), halfHeights[r] * 0.15, spine[r].z,
+          size * 0.6, 8, new THREE.Color(0.03, 0.03, 0.03));
       }
     }
 
@@ -938,6 +978,10 @@
       tail: tailMesh.toGeometry(),
       jaw: jawMesh.isEmpty ? null : jawMesh.toGeometry(),
       teeth: teethMesh.isEmpty ? null : teethMesh.toGeometry(),
+      lure: lureMesh.isEmpty ? null : lureMesh.toGeometry(),
+      lurePivot,
+      // Where the light on the end sits, from the lure's root, for its glow.
+      lureBulb: lurePivot ? { y: length * 0.115, z: length * 0.29, r: length * 0.035 } : null,
       tailPivot,
       jawPivot,
       length,
@@ -952,7 +996,7 @@
       const built = build(species);
       // Shared across every individual of the species and across worlds, so
       // world teardown must not dispose these.
-      for (const geometry of [built.tail, built.jaw, built.teeth].concat(built.segments.map((s) => s.geometry))) {
+      for (const geometry of [built.tail, built.jaw, built.teeth, built.lure].concat(built.segments.map((s) => s.geometry))) {
         if (geometry) geometry.userData.shared = true;
       }
       cache[species.id] = built;

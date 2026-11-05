@@ -89,6 +89,64 @@
       schoolSize: 10, groups: 6,
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
     }),
+    fish('anglerfish', 'Anglerfish', 'trench', 'bulb', {
+      // Common down the trench; out on the open plain, only now and then.
+      alsoIn: ['abyss'], rarity: { abyss: 0.06 },
+      diet: 'ambusher',
+      note: 'A round black fish that is mostly mouth, lined with long glassy ' +
+            'teeth, with a rod growing off its forehead and a light on the end ' +
+            'of it. In the dark of the trench the light is all you see - and ' +
+            'all its prey see, until they are close enough to be eaten.',
+      backColor: C(0.10, 0.09, 0.10), bellyColor: C(0.24, 0.20, 0.20), finColor: C(0.16, 0.14, 0.14),
+      eyeColor: C(0.55, 0.62, 0.55), lureColor: C(0.45, 1.0, 0.85),
+      maxHealth: 20, cruiseSpeed: 0.35, sprintSpeed: 1.6, turnRate: 1.4,
+      senseRadius: 6, schoolSize: 1, groups: 2.2, altitude: 4, wagRate: 2.0,
+      shape: { length: 0.55, height: 0.44, width: 0.36, bellyPosition: 0.45,
+               noseSharpness: 0.04, crossSection: 2.2,
+               tailHeight: 0.20, tailSweep: 0.16, tailFork: 0.1,
+               dorsalFin: 0.06, ventralFin: 0.05, sideFin: 0.11,
+               eyeSize: 0.03, eyePosition: 0.18, mouthLine: 0.01,
+               // A huge mouth full of uneven, glassy fangs - always on show.
+               jawLength: 0.30,
+               toothColors: [[0.86, 0.90, 0.88], [0.72, 0.78, 0.76], [0.92, 0.94, 0.90]],
+               lure: true, spineSegments: 16, radialSegments: 12 }
+    }),
+    fish('finfish', 'Fin Fish', 'shallows', 'torpedo', {
+      alsoIn: ['coral'],
+      note: 'All fin: a tall yellow sail along its back, nearly as high as the ' +
+            'fish is long, and a broad tail to match. It raises the sail to ' +
+            'look bigger than it is, which mostly works.',
+      backColor: C(0.18, 0.42, 0.78), bellyColor: C(0.86, 0.90, 0.94), finColor: C(1.0, 0.78, 0.18),
+      eyeColor: C(0.04, 0.04, 0.06),
+      maxHealth: 12, cruiseSpeed: 1.6, sprintSpeed: 4.4, turnRate: 2.4,
+      senseRadius: 9, schoolSize: 4, groups: 2.0, altitude: 2.5, wagRate: 5.5,
+      shape: { length: 0.42, height: 0.17, width: 0.10, bellyPosition: 0.38,
+               noseSharpness: 0.5, crossSection: 2.1,
+               // The point of it: a sail of a dorsal fin, and a big tail.
+               tailHeight: 0.42, tailSweep: 0.34, tailFork: 0.35,
+               dorsalFin: 0.36, ventralFin: 0.08, sideFin: 0.13,
+               eyeSize: 0.045, eyeRing: true, stripes: 0,
+               spineSegments: 18, radialSegments: 11 }
+    }),
+    fish('oscar', 'Oscar', 'plateau', 'disc', {
+      alsoIn: ['kelp'],
+      note: 'A real fish: deep-bodied and dark olive, mottled orange-red, ' +
+            'with a false eye ringed in orange just ahead of its tail so that ' +
+            'whatever goes for its head goes for the wrong end. Curious about ' +
+            'divers, and usually seen in pairs.',
+      backColor: C(0.20, 0.24, 0.14), bellyColor: C(0.80, 0.42, 0.18), finColor: C(0.28, 0.24, 0.14),
+      spotColor: C(0.92, 0.40, 0.12), eyespotColor: C(1.0, 0.50, 0.12),
+      eyeColor: C(0.85, 0.20, 0.08),
+      maxHealth: 16, cruiseSpeed: 1.2, sprintSpeed: 3.6, turnRate: 2.2,
+      senseRadius: 8, schoolSize: 2, groups: 2.4, altitude: 2.5, wagRate: 4.5,
+      shape: { length: 0.34, height: 0.38, width: 0.15, bellyPosition: 0.42,
+               noseSharpness: 0.3, crossSection: 2.2,
+               tailHeight: 0.30, tailSweep: 0.22, tailFork: 0.05,
+               dorsalFin: 0.16, ventralFin: 0.10, sideFin: 0.12,
+               eyeSize: 0.05, eyeRing: true, mouthLine: 0.01,
+               spots: 22, spotSize: 0.038, eyespot: true,
+               spineSegments: 16, radialSegments: 12 }
+    }),
     fish('handfish', 'Spotted Handfish', 'shallows', 'bulb', {
       alsoIn: ['plateau'],
       // The whole animal: it lays a clutch and then does not leave it.

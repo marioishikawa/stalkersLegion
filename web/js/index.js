@@ -20,6 +20,7 @@
     carnivore: 'Carnivore',
     mammal: 'Air breather',
     whale: 'Filter feeder',
+    ambusher: 'Ambush hunter',
     stinger: 'Stinger'
   };
 
@@ -196,6 +197,49 @@
         ctx.fillRect(px(t) - scale * 0.018, py(-halfExtent, t), scale * 0.036, halfExtent * 2 * scale);
       }
       ctx.restore();
+    }
+
+    // Spots, where the body puts them, and the false eye by the tail.
+    if (known && S.spots > 0) {
+      ctx.save();
+      bodyPath();
+      ctx.clip();
+      ctx.fillStyle = css(species.spotColor || species.backColor.clone().multiplyScalar(0.4));
+      for (let i = 0; i < Math.min(S.spots, 24); i++) {
+        const t = SL.lerp(0.16, 0.88, (i * 0.6180339887) % 1);
+        const lift = ((i * 0.7548776662 + 0.31) % 1) * 1.5 - 0.55;
+        ctx.beginPath();
+        ctx.arc(px(t), py(-halfAt(t) * lift, t), Math.max(1.5, scale * (S.spotSize || 0.028)), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    if (known && S.eyespot) {
+      const t = 0.86;
+      ctx.fillStyle = css(species.eyespotColor || new THREE.Color(1.0, 0.48, 0.10));
+      ctx.beginPath();
+      ctx.arc(px(t), py(-halfAt(t) * 0.15, t), scale * 0.05, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#080808';
+      ctx.beginPath();
+      ctx.arc(px(t), py(-halfAt(t) * 0.15, t), scale * 0.028, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // The lure, if it fishes with one: a rod off the forehead, a light on it.
+    if (S.lure) {
+      const t0 = 0.12;
+      const rootY = -halfAt(t0) * 0.92;
+      ctx.strokeStyle = known ? shade(species.finColor, 0.8) : flat;
+      ctx.lineWidth = Math.max(1.2, scale * 0.012);
+      ctx.beginPath();
+      ctx.moveTo(px(t0), py(rootY, t0));
+      ctx.quadraticCurveTo(px(t0 - 0.12), py(rootY - 0.2, t0), px(t0 - 0.17), py(rootY - 0.13, t0));
+      ctx.stroke();
+      ctx.fillStyle = known ? css(species.lureColor || new THREE.Color(0.45, 1.0, 0.85)) : flat;
+      ctx.beginPath();
+      ctx.arc(px(t0 - 0.18), py(rootY - 0.115, t0), scale * 0.04, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Spines along the back.

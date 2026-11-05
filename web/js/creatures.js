@@ -69,6 +69,28 @@
       this.tailMesh.position.copy(built.tailPivot);
       (this.segmented ? this.segmentMeshes[built.tailSegment] : this.object).add(this.tailMesh);
 
+      // A lure, for the things that fish with one: unlit, so it glows.
+      if (built.lure) {
+        this.lureMesh = new THREE.Mesh(built.lure, game.materials.glow);
+        this.lureMesh.position.copy(built.lurePivot);
+        this.object.add(this.lureMesh);
+
+        // And a soft glow round the light: additive and faint, so it reads
+        // as light in the water around the bulb rather than a bigger bulb.
+        // One material per species, in the lure's own colour.
+        if (!species._lureGlow) {
+          species._lureGlow = new THREE.MeshBasicMaterial({
+            color: (species.lureColor || new THREE.Color(0.45, 1.0, 0.85)).clone(),
+            transparent: true, opacity: 0.22, depthWrite: false,
+            side: THREE.BackSide, blending: THREE.AdditiveBlending
+          });
+        }
+        const bulb = built.lureBulb;
+        this.lureGlow = new THREE.Mesh(new THREE.SphereGeometry(bulb.r * 3.2, 12, 10), species._lureGlow);
+        this.lureGlow.position.set(0, bulb.y, bulb.z);
+        this.lureMesh.add(this.lureGlow);
+      }
+
       if (built.jaw) {
         this.jawMesh = new THREE.Mesh(built.jaw, game.materials.surface);
         this.jawMesh.position.copy(built.jawPivot);
@@ -342,6 +364,10 @@
       this.tailMesh.rotation.y = Math.sin(this.swimPhase - 0.9) * 0.38 * amp;
       if (this.jawMesh) this.jawMesh.rotation.x = this.jawOpen * 0.55;
       if (this.teethMesh) this.teethMesh.visible = this.jawOpen > 0.4;
+      // The lure bobs, slowly, the way a bait does on a line.
+      if (this.lureMesh) this.lureMesh.rotation.x = Math.sin(this.swimPhase * 0.35) * 0.14;
+      // The glow breathes a little.
+      if (this.lureGlow) this.lureGlow.scale.setScalar(1 + Math.sin(this.swimPhase * 0.6) * 0.15);
     }
 
     updateDeath(dt) {

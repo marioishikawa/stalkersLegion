@@ -846,7 +846,10 @@
 
       // --- Fish -------------------------------------------------------------
       for (const species of SL.Species.ofBiome(biome.id)) {
-        const groups = Math.max(1, Math.round(species.groups * density));
+        // A species can be common at home and rare somewhere else it also
+        // turns up: `rarity` scales its schools biome by biome.
+        const rarity = species.rarity && species.rarity[biome.id] !== undefined ? species.rarity[biome.id] : 1;
+        const groups = Math.max(1, Math.round(species.groups * density * rarity));
 
         // A nesting species keeps most of its schools over its own clutches.
         const nests = species.nests
