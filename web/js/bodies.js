@@ -678,6 +678,36 @@
       }
     }
 
+    // --- Claws: two big pincers out in front -----------------------------------
+    //
+    // An arm from just behind the head, out and forward to a fat pincer with
+    // a finger along its inside edge. Built before the body is recentred, when
+    // the nose is at z = 0 and forward is toward -z.
+    if (S.claws > 0) {
+      const r = SL.clamp(ringAt(0.14), 1, rings - 1);
+      const reach = length * S.claws;
+      const thick = length * 0.03;
+      const shell = species.backColor;
+      const pale = species.bellyColor;
+      for (const side of [1, -1]) {
+        const w = halfWidths[r];
+        const root = V(side * w * 0.8, -halfHeights[r] * 0.3, spine[r].z);
+        const elbow = V(side * (w + reach * 0.35), -halfHeights[r] * 0.25, spine[r].z - reach * 0.25);
+        const wrist = V(side * (w + reach * 0.32), -halfHeights[r] * 0.15, spine[r].z - reach * 0.55);
+        const mid = V(side * (w + reach * 0.26), -halfHeights[r] * 0.12, spine[r].z - reach * 0.8);
+        const tip = V(side * (w + reach * 0.18), -halfHeights[r] * 0.1, spine[r].z - reach * 1.02);
+        const m = pieceFor(spine[r].z).mesh;
+        Geo.loft(m, [root, elbow, wrist], [thick, thick * 0.9, thick * 1.1], [thick, thick * 0.9, thick * 1.1],
+          [shell, shell, shell], 6, 2, shell, 0);
+        // The pincer: broad and flat, tapering to its point.
+        Geo.loft(m, [wrist, mid, tip], [thick * 2.6, thick * 2.3, thick * 0.6], [thick * 1.5, thick * 1.4, thick * 0.5],
+          [shell, shell, shell], 8, 2.2, pale, 0.4);
+        // The moving finger, along the inside of it.
+        Geo.fin(m, V(mid.x - side * thick * 1.6, mid.y, mid.z), V(mid.x - side * thick * 1.2, mid.y, mid.z + thick * 2),
+          V(tip.x - side * thick * 2.2, tip.y, tip.z + thick * 0.5), shell.clone().multiplyScalar(0.8));
+      }
+    }
+
     // --- Spikes on the shell ---------------------------------------------------
     //
     // Upright thorns scattered over the top of the carapace. All show: the

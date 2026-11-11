@@ -930,6 +930,34 @@
     // Last of all, so every creature placed before it keeps its place.
     spawnMegalodon(game);
     spawnSunJelly(game);
+    scatterLobsters(game);
+  }
+
+  /**
+   * Lobsters, on the rocky ground: the boulder slope and the coral seamount.
+   * Red ones are common; blue ones are rare and yellow ones rarer still, as
+   * they are in the real sea.
+   */
+  function scatterLobsters(game) {
+    if (!SL.Craber) return;
+    const kinds = [['redlobster', 1.2, 4], ['bluelobster', 0.22, 2], ['yellowlobster', 0.25, 2]];
+    for (const [id, rate, least] of kinds) {
+      const species = SL.Species.byId[id];
+      if (!species) continue;
+      for (const biomeId of [species.biome].concat(species.alsoIn || [])) {
+        const biome = SL.Biomes.byId[biomeId];
+        if (!biome) continue;
+        const count = Math.max(least, Math.round(rate * areaFactorOf(biome)));
+        for (let i = 0; i < count; i++) {
+          let point = null;
+          for (let tries = 0; tries < 8 && !point; tries++) {
+            const c = SL.Biomes.randomPointIn(biome);
+            if (c && SL.Biomes.biomeAt(c.x, c.z) === biome) point = c;
+          }
+          if (point) game.crabers.push(new SL.Craber(game, point.x, point.z, species));
+        }
+      }
+    }
   }
 
   /**

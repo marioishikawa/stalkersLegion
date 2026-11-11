@@ -229,6 +229,69 @@
                tailSweep: 0.10, tailFork: 0, dorsalFin: 0.015, ventralFin: 0,
                sideFin: 0.02, eyeSize: 0.022, spineSegments: 20, radialSegments: 7 }
     }),
+    fish('redfish', 'Red Fish', 'kelp', 'torpedo', {
+      alsoIn: ['coral'],
+      note: 'A plain red fish: bright red on top, pink underneath, an ordinary ' +
+            'shape. It swims in small schools through the kelp and over the reef.',
+      backColor: C(0.86, 0.14, 0.12), bellyColor: C(1.0, 0.70, 0.62), finColor: C(0.96, 0.34, 0.24),
+      eyeColor: C(0.04, 0.03, 0.03),
+      maxHealth: 8, cruiseSpeed: 1.8, sprintSpeed: 4.8, turnRate: 2.8,
+      senseRadius: 9, schoolSize: 6, groups: 3.0, altitude: 2.5, wagRate: 7,
+      shape: { length: 0.24, height: 0.24, width: 0.11, bellyPosition: 0.38,
+               noseSharpness: 0.5, crossSection: 2.1,
+               tailHeight: 0.30, tailSweep: 0.24, tailFork: 0.4,
+               dorsalFin: 0.13, ventralFin: 0.05, sideFin: 0.12,
+               eyeSize: 0.06, eyeRing: true, spineSegments: 14, radialSegments: 10 }
+    }),
+    fish('redlobster', 'Red Lobster', 'boulders', 'shrimp', {
+      alsoIn: ['coral'],
+      // Walks the floor, so the world builder places it by hand.
+      grounded: true, groups: 0, walksForward: true,
+      diet: 'scavenger',
+      note: 'A lobster, and the colour you would expect: deep red, with two big ' +
+            'claws out in front and antennae longer than it is. It walks forward and ' +
+            'escapes backward, with a flip of its tail, still facing you.',
+      backColor: C(0.78, 0.16, 0.10), bellyColor: C(0.94, 0.62, 0.42), finColor: C(0.70, 0.18, 0.12),
+      eyeColor: C(0.04, 0.03, 0.03),
+      maxHealth: 24, cruiseSpeed: 0.5, sprintSpeed: 4.0, turnRate: 3,
+      senseRadius: 8, schoolSize: 1, altitude: 0.2, wagRate: 2,
+      shape: { length: 0.6, height: 0.16, width: 0.18, bellyPosition: 0.34, noseSharpness: 0.3,
+               tailHeight: 0.24, tailSweep: 0.16, tailFork: 0.05, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.03, antennae: 1.4, legPairs: 4, legScale: 0.16,
+               claws: 0.42, legStance: 0.12, spineSegments: 16, radialSegments: 10 }
+    }),
+    fish('bluelobster', 'Blue Lobster', 'boulders', 'shrimp', {
+      
+      // Walks the floor, so the world builder places it by hand.
+      grounded: true, groups: 0, walksForward: true,
+      diet: 'scavenger',
+      note: 'A lobster that came out blue. Real ones do, about one in two million - ' +
+            'and they are about that rare down here too. Same claws, same tail-flip.',
+      backColor: C(0.16, 0.34, 0.82), bellyColor: C(0.62, 0.74, 0.94), finColor: C(0.20, 0.40, 0.86),
+      eyeColor: C(0.04, 0.03, 0.03),
+      maxHealth: 24, cruiseSpeed: 0.5, sprintSpeed: 4.0, turnRate: 3,
+      senseRadius: 8, schoolSize: 1, altitude: 0.2, wagRate: 2,
+      shape: { length: 0.6, height: 0.16, width: 0.18, bellyPosition: 0.34, noseSharpness: 0.3,
+               tailHeight: 0.24, tailSweep: 0.16, tailFork: 0.05, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.03, antennae: 1.4, legPairs: 4, legScale: 0.16,
+               claws: 0.42, legStance: 0.12, spineSegments: 16, radialSegments: 10 }
+    }),
+    fish('yellowlobster', 'Yellow Lobster', 'coral', 'shrimp', {
+      
+      // Walks the floor, so the world builder places it by hand.
+      grounded: true, groups: 0, walksForward: true,
+      diet: 'scavenger',
+      note: 'The rarest lobster of all. Real yellow lobsters turn up about once in ' +
+            'thirty million; on the coral seamount there are only ever a handful.',
+      backColor: C(0.96, 0.78, 0.16), bellyColor: C(1.0, 0.92, 0.60), finColor: C(0.92, 0.70, 0.14),
+      eyeColor: C(0.04, 0.03, 0.03),
+      maxHealth: 24, cruiseSpeed: 0.5, sprintSpeed: 4.0, turnRate: 3,
+      senseRadius: 8, schoolSize: 1, altitude: 0.2, wagRate: 2,
+      shape: { length: 0.6, height: 0.16, width: 0.18, bellyPosition: 0.34, noseSharpness: 0.3,
+               tailHeight: 0.24, tailSweep: 0.16, tailFork: 0.05, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.03, antennae: 1.4, legPairs: 4, legScale: 0.16,
+               claws: 0.42, legStance: 0.12, spineSegments: 16, radialSegments: 10 }
+    }),
     fish('bluefish', 'Blue Fish', 'shallows', 'torpedo', {
       alsoIn: ['plateau'],
       note: 'A plain blue fish. Bright blue on top, pale blue underneath, an ' +

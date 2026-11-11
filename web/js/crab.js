@@ -146,10 +146,13 @@
 
       const speed = Math.hypot(step.x, step.z);
       if (speed > 0.05) {
-        // Carried side-on to the direction of travel.
         const travel = Math.atan2(step.x, step.z);
-        this.heading = SL.dampAngle(this.heading,
-          travel + this.sidleSign * Math.PI * 0.5, 7, dt);
+        // A crab is carried side-on to the direction of travel. A lobster
+        // walks forward - and escapes backward, with a flip of its tail, still
+        // facing whatever frightened it.
+        const face = !this.species.walksForward ? travel + this.sidleSign * Math.PI * 0.5
+          : this.state === 'bolt' ? travel + Math.PI : travel;
+        this.heading = SL.dampAngle(this.heading, face, 7, dt);
       }
 
       // Lean with the slope so it does not stand proud of a dune.

@@ -85,13 +85,15 @@
 
     const halfExtent = Math.max(maxHalf, S.tailHeight, dorsalPeak, ventralPeak, legDrop,
       maxHalf + kneeRise, 0.02) + waveAmp;
-    const totalLength = 1 + S.tailSweep + legSpan * 2;
+    // Claws reach out past the nose, so the card makes room in front.
+    const clawSpan = S.claws > 0 ? S.claws * 0.95 : 0;
+    const totalLength = 1 + S.tailSweep + legSpan * 2 + clawSpan;
 
     const scale = Math.min((CARD_W - 16) / totalLength, (CARD_H - 14) / (halfExtent * 2));
     const originX = (CARD_W - totalLength * scale) / 2;
     const midY = CARD_H / 2;
 
-    const px = (t) => originX + (t + legSpan) * scale;
+    const px = (t) => originX + (t + legSpan + clawSpan) * scale;
     /** `t` is where along the body this point sits, and rides the curve. */
     const py = (v, t) => midY + (v + (t === undefined ? 0 : wave(t))) * scale;
 
@@ -155,6 +157,30 @@
         ctx.lineTo(px(t + lean * legSpan * 0.5), py(-halfAt(t) - kneeRise, t));
         ctx.lineTo(px(t + lean * legSpan), py(legDrop, t));
       }
+      ctx.stroke();
+    }
+
+    // Claws: an arm forward from behind the head, and a fat pincer.
+    if (S.claws > 0) {
+      const t0 = 0.14;
+      const y0 = halfAt(t0) * 0.3;
+      const tip = -S.claws * 0.95;
+      ctx.strokeStyle = known ? css(back) : flat;
+      ctx.lineWidth = Math.max(2, scale * 0.04);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(px(t0), py(y0, t0));
+      ctx.lineTo(px(tip * 0.45), py(y0 + 0.02, 0));
+      ctx.stroke();
+      ctx.fillStyle = known ? css(back) : flat;
+      ctx.beginPath();
+      ctx.ellipse(px(tip * 0.72), py(y0, 0), S.claws * 0.32 * scale, S.claws * 0.12 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = known ? shade(back, 0.5) : flat;
+      ctx.lineWidth = Math.max(1, scale * 0.012);
+      ctx.beginPath();
+      ctx.moveTo(px(tip * 0.55), py(y0, 0));
+      ctx.lineTo(px(tip), py(y0, 0));
       ctx.stroke();
     }
 
