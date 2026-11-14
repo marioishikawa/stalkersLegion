@@ -5,10 +5,11 @@
  * Kelper's Reach and the leviathan calls up kelpers - quick, spindly things
  * that dart in, take one loose item off you and run for the weeds with it.
  *
- * They only ever take what you could make again: bait, beacons, medkits, repel
- * charges. Built gear is yours, and so are raw materials. Kill the one that
- * robbed you and you get the item straight back; let it reach the forest and it
- * is gone.
+ * They take anything loose: bait, beacons, medkits, repel charges - or a
+ * mouthful of raw material, titanium, quartz, gold, teeth, diamonds, simyphit.
+ * Built gear is yours. Whatever one takes it carries in its mouth, where you
+ * can see it. Kill the one that robbed you and you get it straight back; let it
+ * reach the forest and it is gone.
  *
  * The leviathan itself is not a bystander. Robbing you is its opening move, not
  * its whole answer: stay in its water once the kelpers are out and it comes and
@@ -24,8 +25,11 @@
   /** How close its mouth has to get to land a bite. */
   const MOUTH_REACH = 5;
 
-  /** Only the consumables are worth stealing. Upgrades are never touched. */
+  /** The consumables it takes one of. Upgrades are never touched. */
   const STEALABLE = ['bait', 'beacon', 'medkit', 'repel'];
+
+  /** The raw materials it takes a mouthful of: up to this many at once. */
+  const MATERIALS = { titanium: 3, tooth: 3, quartz: 2, gold: 2, simyphit: 2, diamond: 1 };
 
   const LABELS = {
     approach: 'closing on you',
@@ -58,19 +62,35 @@
     onDeath() {
       // Whatever it was carrying falls back to you.
       if (this.stolen) {
-        SL.Crafting.stacks[this.stolen] = (SL.Crafting.stacks[this.stolen] || 0) + 1;
-        this.game.hud.toast('Recovered your ' + Kelper.label(this.stolen));
+        const { type, amount, material } = this.stolen;
+        if (material) SL.Crafting.inventory[type] = (SL.Crafting.inventory[type] || 0) + amount;
+        else SL.Crafting.stacks[type] = (SL.Crafting.stacks[type] || 0) + amount;
+        this.game.hud.toast('Recovered your ' + Kelper.label(type, amount));
         this.stolen = null;
       }
+      this.dropLoot();
     }
 
-    static label(type) {
-      return { bait: 'bait pod', beacon: 'beacon', medkit: 'medkit', repel: 'repel charge' }[type] || type;
+    static label(type, amount) {
+      const n = amount || 1;
+      const name = {
+        bait: 'bait pod', beacon: 'beacon', medkit: 'medkit', repel: 'repel charge',
+        titanium: 'titanium', quartz: 'quartz', gold: 'gold', diamond: 'diamond',
+        simyphit: 'simyphit', tooth: n > 1 ? 'rustjaw teeth' : 'rustjaw tooth'
+      }[type] || type;
+      return (n > 1 ? n + ' ' : '') + name;
     }
 
-    /** Picks one consumable off the diver, if they have any. */
+    /**
+     * Picks something off the diver, if they have anything: a consumable, or
+     * a mouthful of one raw material. Every kind they hold is equally likely,
+     * so a diver with full pockets and one medkit is mostly robbed of metal.
+     */
     steal() {
-      const held = STEALABLE.filter((type) => (SL.Crafting.stacks[type] || 0) > 0);
+      if (this.stolen) { this.flee(); return; }   // one mouthful at a time
+      const held = [];
+      for (const type of STEALABLE) if ((SL.Crafting.stacks[type] || 0) > 0) held.push({ type, material: false });
+      for (const type of Object.keys(MATERIALS)) if ((SL.Crafting.inventory[type] || 0) > 0) held.push({ type, material: true });
       if (!held.length) {
         // Nothing worth taking - it loses interest rather than hanging around.
         this.game.hud.toast('A kelper found nothing to take');
@@ -78,13 +98,39 @@
         return;
       }
 
-      const type = held[Math.floor(SL.random() * held.length)];
-      SL.Crafting.stacks[type]--;
-      this.stolen = type;
+      const pick = held[Math.floor(SL.random() * held.length)];
+      let amount = 1;
+      if (pick.material) {
+        const have = SL.Crafting.inventory[pick.type];
+        amount = Math.min(have, 1 + Math.floor(SL.random() * MATERIALS[pick.type]));
+        SL.Crafting.inventory[pick.type] -= amount;
+      } else {
+        SL.Crafting.stacks[pick.type]--;
+      }
+      this.stolen = { type: pick.type, amount, material: pick.material };
+      this.showLoot(pick.type);
 
       this.game.audio.metalBite(0);
-      this.game.hud.toast('A kelper took your ' + Kelper.label(type) + '!');
+      this.game.hud.toast('A kelper took your ' + Kelper.label(pick.type, amount) + '!');
       this.flee();
+    }
+
+    /** What it took, held in its jaws where you can see it. */
+    showLoot(type) {
+      const def = SL.Pickup && SL.Pickup.TYPES[type];
+      if (!def) return;
+      const mesh = new THREE.Mesh(def.build(0), this.game.materials.surface);
+      mesh.scale.setScalar(1.8);
+      mesh.position.set(0, -this.bodyLength * 0.04, this.bodyLength * 0.52);
+      this.object.add(mesh);
+      this.lootMesh = mesh;
+    }
+
+    dropLoot() {
+      if (!this.lootMesh) return;
+      this.object.remove(this.lootMesh);
+      this.lootMesh.geometry.dispose();
+      this.lootMesh = null;
     }
 
     flee() {
@@ -112,6 +158,7 @@
         // Made it home, or far enough away: gone, with whatever it took.
         if (this.position.distanceTo(this.home) < 12 || this.stateTimer > 26) {
           this.stolen = null;                 // it got away with it
+          this.dropLoot();
           this.destroy();
           return _tmp.set(0, 0, 0);
         }

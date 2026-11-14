@@ -1357,8 +1357,10 @@
     }),
     fish('kelper', 'Kelper', 'farkelp', 'arrow', {
       diet: 'carnivore', groups: 0,
-      note: "Called up by the leviathan to rob you. Takes one loose item and runs " +
-            "for the forest with it. Kill it and you get the thing back.",
+      note: "Called up by the leviathan to rob you. Grabs whatever it can get - a " +
+            "medkit, a beacon, or a mouthful of titanium, quartz, gold, teeth or " +
+            "diamonds - and runs for the forest with it. You can see what it took in " +
+            "its mouth. Kill it and you get the lot back.",
       backColor: C(0.30, 0.46, 0.16), bellyColor: C(0.74, 0.82, 0.44), finColor: C(0.46, 0.62, 0.20),
       eyeColor: C(0.95, 0.80, 0.20), glow: 0.35,
       maxHealth: 26, cruiseSpeed: 3.2, sprintSpeed: 7.2, turnRate: 3.2,
