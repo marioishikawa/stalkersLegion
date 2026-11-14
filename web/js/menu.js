@@ -126,8 +126,47 @@
           await this.refresh();
         });
 
+        // Renaming swaps the row's button for a text box in place: Enter or
+        // clicking away keeps the new name, Escape puts the old one back.
+        const rename = document.createElement('button');
+        rename.type = 'button';
+        rename.className = 'world__rename';
+        rename.title = 'Rename this world';
+        rename.textContent = 'rename';
+        rename.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const box = document.createElement('input');
+          box.type = 'text';
+          box.className = 'world__name-input';
+          box.maxLength = 40;
+          box.value = world.name;
+          box.setAttribute('aria-label', 'World name');
+          let finished = false;
+          const finish = async (keep) => {
+            if (finished) return;
+            finished = true;
+            const name = box.value.trim();
+            if (keep && name && name !== world.name) {
+              world.name = name;
+              await SL.Saves.put(world);
+            }
+            await this.refresh();
+          };
+          box.addEventListener('keydown', (k) => {
+            k.stopPropagation();
+            if (k.key === 'Enter') finish(true);
+            else if (k.key === 'Escape') finish(false);
+          });
+          box.addEventListener('blur', () => finish(true));
+          row.replaceChild(box, open);
+          rename.hidden = true;
+          box.focus();
+          box.select();
+        });
+
         row.appendChild(open);
         if (done) row.appendChild(done);
+        row.appendChild(rename);
         row.appendChild(remove);
         list.appendChild(row);
       }
