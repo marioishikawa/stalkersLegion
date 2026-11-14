@@ -328,6 +328,74 @@
                sideFin: 0, eyeSize: 0.03, antennae: 1.3, legPairs: 4, legScale: 0.17,
                claws: 0.5, legStance: 0.12, shellSpikes: 0, spineSegments: 18, radialSegments: 12 }
     }),
+    fish('redsquid', 'Red Squid', 'tentacles', 'squid', {
+      note: 'A squid the length of your forearm, in schools over the Tentacle ' +
+            'Grounds. It swims mantle first, arms trailing, and when you come too ' +
+            'close the whole school jets away backwards at once.',
+      backColor: C(0.78, 0.18, 0.16), bellyColor: C(0.98, 0.70, 0.62), finColor: C(0.90, 0.36, 0.26),
+      eyeColor: C(0.05, 0.04, 0.04),
+      maxHealth: 10, cruiseSpeed: 2.2, sprintSpeed: 6.4, turnRate: 3.0,
+      senseRadius: 10, schoolSize: 6, groups: 3.2, altitude: 6, wagRate: 4,
+      shape: { length: 0.5, width: 0.075, mantle: 0.5, fins: 0.16, eyeSize: 0.34, spots: 8, spotSize: 0.10,
+               radialSegments: 10 }
+    }),
+    fish('glasssquid', 'Glass Squid', 'tentacles', 'squid', {
+      translucent: true,
+      note: 'A squid you can see straight through, all but its eyes and the ' +
+            'faint blue of its insides. It hangs still in the gloom over the spires.',
+      backColor: C(0.62, 0.80, 0.92), bellyColor: C(0.88, 0.95, 1.0), finColor: C(0.52, 0.72, 0.90),
+      eyeColor: C(0.04, 0.05, 0.10),
+      maxHealth: 8, cruiseSpeed: 1.2, sprintSpeed: 4.6, turnRate: 2.4,
+      senseRadius: 9, schoolSize: 3, groups: 2.2, altitude: 9, wagRate: 2,
+      shape: { length: 0.36, width: 0.09, mantle: 0.55, fins: 0.12, finWidth: 0.8, eyeSize: 0.4,
+               radialSegments: 10 }
+    }),
+    fish('fireflysquid', 'Firefly Squid', 'tentacles', 'squid', {
+      glow: 0.6,
+      note: 'A squid no longer than your finger that lights itself up blue. A ' +
+            'school of them in the dark looks like a handful of thrown sparks.',
+      backColor: C(0.30, 0.62, 1.0), bellyColor: C(0.62, 0.86, 1.0), finColor: C(0.40, 0.70, 1.0),
+      eyeColor: C(0.02, 0.04, 0.10),
+      maxHealth: 4, cruiseSpeed: 1.8, sprintSpeed: 5.0, turnRate: 3.4,
+      senseRadius: 8, schoolSize: 10, groups: 2.4, altitude: 7, wagRate: 5,
+      shape: { length: 0.2, width: 0.08, mantle: 0.5, fins: 0.14, eyeSize: 0.36, radialSegments: 8 }
+    }),
+    fish('octopus', 'Octopus', 'tentacles', 'octopus', {
+      alsoIn: ['coral'], rarity: { coral: 0.3 },
+      note: 'Eight arms and a soft round body, keeping low among the rocks. It ' +
+            'creeps more than it swims, and it watches you back.',
+      backColor: C(0.62, 0.30, 0.20), bellyColor: C(0.88, 0.64, 0.50), finColor: C(0.70, 0.36, 0.24),
+      eyeColor: C(0.10, 0.08, 0.04),
+      maxHealth: 30, cruiseSpeed: 0.9, sprintSpeed: 4.0, turnRate: 2.2,
+      senseRadius: 8, schoolSize: 1, groups: 5, altitude: 1.0, wagRate: 1.6,
+      shape: { length: 0.9, width: 0.13, mantle: 0.32, eyeSize: 0.3, spots: 6, spotSize: 0.14,
+               radialSegments: 12 }
+    }),
+    fish('blueringoctopus', 'Blue-ringed Octopus', 'tentacles', 'octopus', {
+      note: 'A small octopus, sandy yellow, covered in rings of electric blue. ' +
+            'In the real sea it is one of the most venomous animals there is; down ' +
+            'here it is shy, and keeps its rings to itself.',
+      backColor: C(0.86, 0.72, 0.36), bellyColor: C(0.96, 0.88, 0.62), finColor: C(0.12, 0.42, 1.0),
+      eyeColor: C(0.06, 0.05, 0.03),
+      maxHealth: 12, cruiseSpeed: 0.8, sprintSpeed: 3.6, turnRate: 2.4,
+      senseRadius: 8, schoolSize: 1, groups: 2.4, altitude: 0.8, wagRate: 1.8,
+      shape: { length: 0.4, width: 0.13, mantle: 0.34, eyeSize: 0.3, spots: 16, spotSize: 0.16,
+               radialSegments: 12 }
+    }),
+    fish('kraken', 'Kraken', 'tentacles', 'squid', {
+      leviathan: true, markerColor: '#c27ad8',
+      diet: 'carnivore', groups: 0,
+      note: 'A squid twenty-six metres long, hanging in the gloom over the ' +
+            'Tentacle Grounds. It watches, comes closer, then rushes you and wraps ' +
+            'you up in its arms and squeezes. Cut it, hard and fast, and it lets go.',
+      backColor: C(0.42, 0.08, 0.12), bellyColor: C(0.86, 0.56, 0.52), finColor: C(0.56, 0.12, 0.16),
+      eyeColor: C(0.95, 0.75, 0.10),
+      maxHealth: 1600, cruiseSpeed: 2.6, sprintSpeed: 8.5, turnRate: 1.1,
+      senseRadius: 70, biteDamage: 9, biteInterval: 1,
+      schoolSize: 1, altitude: 14, wagRate: 0.8,
+      shape: { length: 26, width: 0.065, mantle: 0.42, fins: 0.14, eyeSize: 0.42, spots: 12, spotSize: 0.1,
+               radialSegments: 14 }
+    }),
     fish('bluefish', 'Blue Fish', 'shallows', 'torpedo', {
       alsoIn: ['plateau'],
       note: 'A plain blue fish. Bright blue on top, pale blue underneath, an ' +

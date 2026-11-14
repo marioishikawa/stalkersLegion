@@ -42,6 +42,7 @@
     if (species.profile === 'star') { drawStar(ctx, species, known); return; }
     if (species.profile === 'seahorse') { drawSeahorse(ctx, species, known); return; }
     if (species.profile === 'jelly') { drawJelly(ctx, species, known); return; }
+    if (species.profile === 'squid' || species.profile === 'octopus') { drawCephalopod(ctx, species, known); return; }
     const S = species.shape;
     const steps = 44;
 
@@ -538,6 +539,97 @@
   }
 
   /**
+   * A squid or an octopus, side on, mantle to the right the way it swims:
+   * the mantle, the head with its big eye, and the arms trailing to the left.
+   */
+  function drawCephalopod(ctx, species, known) {
+    const S = species.shape;
+    const C = SL.cephLayout(S);
+    const octo = species.profile === 'octopus';
+    const flat = 'rgba(125, 148, 154, 0.22)';
+    const scale = Math.min((CARD_W - 16) / C.length, (CARD_H - 14) / (C.radius * (octo ? 5.5 : 4.2)));
+    const cy = CARD_H / 2;
+    const X = (z) => CARD_W / 2 + z * scale;
+    const Y = (y) => cy - y * scale;
+    const arm = known ? css(species.finColor) : flat;
+    ctx.lineCap = 'round';
+
+    // Arms behind everything.
+    const count = 5;
+    for (let i = 0; i < count; i++) {
+      const off = (i / (count - 1) - 0.5) * C.radius * (octo ? 1.6 : 1.0);
+      ctx.strokeStyle = arm;
+      ctx.lineWidth = Math.max(1.2, scale * C.radius * (octo ? 0.3 : 0.18));
+      ctx.beginPath();
+      ctx.moveTo(X(C.head - C.radius * 0.5), Y(off * 0.3));
+      const len = C.armLength * (octo ? 0.92 : 0.6);
+      for (let k = 1; k <= 12; k++) {
+        const t = k / 12;
+        ctx.lineTo(X(C.head - C.radius * 0.5 - t * len),
+          Y(off * (0.3 + t * (octo ? 1.6 : 0.8)) + Math.sin(t * 5 + i) * C.radius * 0.25 * t));
+      }
+      ctx.stroke();
+    }
+    if (!octo) {
+      ctx.lineWidth = Math.max(1, scale * C.radius * 0.1);
+      for (const off of [-0.15, 0.15]) {
+        ctx.beginPath();
+        ctx.moveTo(X(C.head - C.radius * 0.5), Y(off * C.radius));
+        ctx.lineTo(X(C.bottom), Y(off * C.radius * 2));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(X(C.bottom + C.length * 0.03), Y(off * C.radius * 2), C.length * 0.035 * scale, C.radius * 0.18 * scale, 0, 0, Math.PI * 2);
+        ctx.fillStyle = arm; ctx.fill();
+      }
+    }
+
+    // Fins, then the mantle over them.
+    if (!octo && S.fins !== 0) {
+      const finLen = C.length * (S.fins || 0.14), finW = C.radius * 1.6 * (S.finWidth || 1);
+      ctx.fillStyle = arm;
+      ctx.beginPath();
+      ctx.moveTo(X(C.top), Y(0));
+      ctx.lineTo(X(C.top - finLen * 0.55), Y(finW));
+      ctx.lineTo(X(C.top - finLen), Y(0));
+      ctx.lineTo(X(C.top - finLen * 0.55), Y(-finW));
+      ctx.closePath();
+      ctx.fill();
+    }
+    const back = known ? css(species.backColor) : flat;
+    ctx.beginPath();
+    if (octo) {
+      ctx.ellipse(X((C.top + C.head) / 2), Y(C.radius * 0.35), (C.top - C.head) / 2 * scale, C.radius * 1.05 * scale, -0.25, 0, Math.PI * 2);
+    } else {
+      ctx.moveTo(X(C.top), Y(0));
+      ctx.quadraticCurveTo(X(C.head + (C.top - C.head) * 0.4), Y(C.radius * 1.15), X(C.head - C.radius * 0.3), Y(C.radius * 0.75));
+      ctx.lineTo(X(C.head - C.radius * 0.3), Y(-C.radius * 0.75));
+      ctx.quadraticCurveTo(X(C.head + (C.top - C.head) * 0.4), Y(-C.radius * 1.15), X(C.top), Y(0));
+    }
+    ctx.closePath();
+    if (known) {
+      const g = ctx.createLinearGradient(0, Y(C.radius), 0, Y(-C.radius));
+      g.addColorStop(0, css(species.backColor)); g.addColorStop(1, css(species.bellyColor));
+      ctx.fillStyle = g;
+    } else ctx.fillStyle = back;
+    ctx.fill();
+
+    // The head and its eye.
+    const headR = C.radius * (octo ? 0.62 : 0.72);
+    ctx.beginPath();
+    ctx.arc(X(C.head - C.radius * 0.3), Y(0), headR * scale, 0, Math.PI * 2);
+    ctx.fillStyle = known ? css(species.backColor.clone().lerp(species.bellyColor, 0.4)) : flat;
+    ctx.fill();
+    if (!known) return;
+    const eye = C.radius * (S.eyeSize || 0.32);
+    ctx.beginPath();
+    ctx.arc(X(C.head - C.radius * 0.3), Y(headR * 0.25), eye * scale, 0, Math.PI * 2);
+    ctx.fillStyle = '#ece0b2'; ctx.fill();
+    ctx.beginPath();
+    ctx.arc(X(C.head - C.radius * 0.3), Y(headR * 0.25), eye * 0.55 * scale, 0, Math.PI * 2);
+    ctx.fillStyle = css(species.eyeColor); ctx.fill();
+  }
+
+  /**
    * A jellyfish, side on: the bell, its frilled arms, and its tentacles
    * drawn as the long soft curls they are - from the same layout as the body,
    * so a long-tentacled jelly is a long-tentacled card.
@@ -805,5 +897,6 @@
     }
   };
 
+  Index.drawFish = drawFish;
   SL.Index = Index;
 })(window.SL);

@@ -198,6 +198,21 @@
       flora: ['seagrass', 'seagrass', 'seagrass', 'kelp', 'coralFan'], floraDensity: 3.2,
       // Simyphit grows here, among the grass.
       simyphitDensity: 1.0
+    },
+    {
+      // A wide raised floor in the outer ring, forty-odd metres down, with
+      // crooked spires of rock standing up out of it like arms - and things
+      // with arms living among them. Squid in the open water over it,
+      // octopuses on the rock, and somewhere in the gloom, the Kraken.
+      id: 'tentacles', name: 'The Tentacle Grounds',
+      populationBoost: 2.0,
+      floorColor: new THREE.Color(0.30, 0.18, 0.30),
+      waterColor: new THREE.Color(0.14, 0.08, 0.22),
+      fogDensity: 0.036,
+      scrapDensity: 0.25, stalkerDensity: 0,
+      flora: ['coralTube', 'glowPod', 'boulder', 'coralTube', 'coralFan'], floraDensity: 2.2,
+      // Simyphit grows thick on the spires' feet.
+      simyphitDensity: 1.4
     }
   ];
 
@@ -247,6 +262,7 @@
   let islet = null;
   let ventField = null;
   let meadow = null;
+  let tentacles = null;
 
   function placeFeatures() {
     seamounts = [];
@@ -377,6 +393,75 @@
         || Math.hypot(mount.x - meadow.x, mount.z - meadow.z) > meadow.radius * 1.5 + mount.width * 2.4);
     }
 
+    // The Tentacle Grounds: a raised floor in the outer ring with crooked
+    // spires standing on it. Its bearing is chosen like the meadow's - clear
+    // of the trench, and as far as it can get from every other far place.
+    {
+      const others = [bankAngle, isletAngle, ventAngle, Math.atan2(meadow.z, meadow.x)];
+      const apart = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+      let best = 0, bestGap = -1;
+      for (let i = 0; i < 72; i++) {
+        const angle = (i / 72) * Math.PI * 2;
+        if (Math.abs(Math.sin(angle)) < 0.6) continue;
+        const gap = Math.min(...others.map((o) => apart(angle, o)));
+        if (gap > bestGap) { bestGap = gap; best = angle; }
+      }
+      tentacles = {
+        x: Math.cos(best) * 1700,
+        z: Math.sin(best) * 1700,
+        radius: 210,
+        // From about 85 m down to about 45 m.
+        rise: 40,
+        spires: []
+      };
+      for (let i = 0; i < 22; i++) {
+        const spread = Math.sqrt(SL.hash(i, 711, SEED)) * tentacles.radius * 0.8;
+        const bearing = SL.hash(i, 712, SEED) * Math.PI * 2;
+        const width = SL.lerp(4, 8, SL.hash(i, 713, SEED));
+        tentacles.spires.push({
+          x: tentacles.x + Math.cos(bearing) * spread,
+          z: tentacles.z + Math.sin(bearing) * spread,
+          height: SL.lerp(10, 26, SL.hash(i, 714, SEED)),
+          width,
+          // Which way it leans, and how hard: a spire is an arm, not a post.
+          leanX: (SL.hash(i, 715, SEED) - 0.5) * 1.6,
+          leanZ: (SL.hash(i, 716, SEED) - 0.5) * 1.6,
+          reachSq: (width * 3.2) * (width * 3.2)
+        });
+      }
+      seamounts = seamounts.filter((mount) =>
+        Math.hypot(mount.x - tentacles.x, mount.z - tentacles.z) > tentacles.radius * 1.5 + mount.width * 2.4);
+    }
+
+    // More coral seamounts: tall ones whose tops reach up into the light,
+    // scattered between the shelf break and the rim. Each is as tall as it
+    // needs to be for its top to sit ten to twenty metres down, which is reef
+    // depth. Kept off every other far place and out of the trench.
+    {
+      const clear = (x, z, width) => {
+        const reach = width * 2.4;
+        for (const f of [kingBasin, farBank, ventField, meadow, tentacles]) {
+          if (Math.hypot(x - f.x, z - f.z) < (f.radius || 100) * 1.6 + reach) return false;
+        }
+        if (Math.hypot(x - islet.x, z - islet.z) < islet.flatRadius * 1.6 + reach) return false;
+        if (trenchInfluence(x, z) > 0.02) return false;
+        return true;
+      };
+      for (let i = 0; i < 96; i++) {
+        const angle = SL.hash(i, 911, SEED) * Math.PI * 2;
+        const radius = SL.lerp(520, 2150, SL.hash(i, 922, SEED));
+        const width = SL.lerp(36, 60, SL.hash(i, 944, SEED));
+        const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
+        if (!clear(x, z, width)) continue;
+        const top = SL.lerp(10, 20, SL.hash(i, 933, SEED));
+        seamounts.push({
+          x, z, width,
+          rise: Math.max(14, -marginProfile(radius) - top),
+          reachSq: (width * 2.4) * (width * 2.4)
+        });
+      }
+    }
+
     // Sixteen chimneys, narrow and steep - the tall ones stand thirty-eight
     // metres off the mound, which out here is most of the way back to the
     // depth of the shelf break.
@@ -480,6 +565,42 @@
     return meadow.rise * (1 - SL.smoothstep((d - 0.8) / 0.7));
   }
 
+  /**
+   * How far the Tentacle Grounds lift the floor at a point, in metres: a
+   * flat-topped rise like the meadow's, and on it the spires, each one a
+   * stack of blobs leaning further over the higher it goes.
+   */
+  function tentacleRise(x, z) {
+    if (!tentacles) return 0;
+    const dx = x - tentacles.x, dz = z - tentacles.z;
+    const d = Math.sqrt(dx * dx + dz * dz) / tentacles.radius;
+    if (d > 1.6) return 0;
+    let rise = tentacles.rise * (1 - SL.smoothstep((d - 0.75) / 0.8));
+    for (const spire of tentacles.spires) {
+      const sx = x - spire.x, sz = z - spire.z;
+      if (sx * sx + sz * sz > spire.reachSq) continue;
+      // A crooked column: the higher, the further over. Approximated as the
+      // tallest of a few leaning lumps.
+      let top = 0;
+      for (let k = 0; k < 4; k++) {
+        const f = k / 3;
+        const cx = sx - spire.leanX * spire.width * f * 1.4;
+        const cz = sz - spire.leanZ * spire.width * f * 1.4;
+        const cd = Math.sqrt(cx * cx + cz * cz) / (spire.width * SL.lerp(1, 0.55, f));
+        top = Math.max(top, spire.height * SL.lerp(0.45, 1, f) * Math.exp(-cd * cd * 1.4));
+      }
+      rise += top;
+    }
+    return rise;
+  }
+
+  /** Whether a point is on the Tentacle Grounds proper, 0 outside to 1 in the middle. */
+  function tentacleInfluence(x, z) {
+    if (!tentacles) return 0;
+    const d = Math.hypot(x - tentacles.x, z - tentacles.z) / tentacles.radius;
+    return d >= 1.1 ? 0 : 1 - SL.smoothstep(d / 1.1);
+  }
+
   /** How far the far bank lifts the floor at a point, in metres. */
   function bankRise(x, z) {
     if (!farBank) return 0;
@@ -553,6 +674,7 @@
     y += isletRise(x, z);
     y += ventRise(x, z);
     y += meadowRise(x, z);
+    y += tentacleRise(x, z);
 
     // The king's basin is gouged below the surrounding floor.
     if (kingBasin) {
@@ -614,6 +736,10 @@
 
     // The islet and its reef flat, which includes the dry part.
     if (isletRise(x, z) > 14) return depth < 22 ? byId.islet : byId.boulders;
+
+    // The Tentacle Grounds, spires and all; their skirt is rubble.
+    if (tentacleInfluence(x, z) > 0) return byId.tentacles;
+    if (tentacleRise(x, z) > 6) return byId.boulders;
 
     // The meadow's top is the meadow; its flanks are rubble.
     if (meadowRise(x, z) > 24) return depth < 42 ? byId.meadow : byId.boulders;
@@ -729,6 +855,8 @@
     get islet() { return islet; },
     get ventField() { return ventField; },
     get meadow() { return meadow; },
+    get tentacles() { return tentacles; },
+    tentacleRise, tentacleInfluence,
     bankRise, isletRise, isletHead, ventRise, ventInfluence, meadowRise,
     trenchInfluence, seamountRise
   };

@@ -471,9 +471,138 @@
     };
   }
 
+  /**
+   * The shape of a squid or an octopus, in metres along its length.
+   *
+   * Both swim mantle first, so the mantle is the "nose" at +Z and the arms
+   * trail behind as the tail. `mantle` is the share of the length that is
+   * mantle; the rest, behind a short head, is arms.
+   */
+  SL.cephLayout = function (S) {
+    const L = S.length;
+    const top = L / 2;
+    const mantle = L * (S.mantle || 0.45);
+    const head = top - mantle;
+    const radius = L * (S.width || 0.08);
+    return { length: L, top, head, radius, armLength: head + L / 2, bottom: -L / 2 };
+  };
+
+  /**
+   * A squid (profile 'squid') or an octopus (profile 'octopus').
+   *
+   * The mantle is lofted along the spine - a long cone with two fins at its
+   * tip for a squid, a soft round bag for an octopus - then a head with an
+   * eye either side. The arms hang from the head as one mesh, and that is the
+   * tail as far as the animation goes: it sways behind as the animal swims.
+   */
+  function buildCephalopod(species) {
+    const S = species.shape;
+    const C = SL.cephLayout(S);
+    const octo = species.profile === 'octopus';
+    const body = new MeshData();
+    const tail = new MeshData();
+
+    // --- The mantle, tip to head ------------------------------------------------
+    const spine = [], w = [], h = [], colours = [];
+    const rings = 16;
+    for (let i = 0; i <= rings; i++) {
+      const t = i / rings;                       // 0 at the tip, 1 at the head
+      const z = SL.lerp(C.top, C.head - C.radius * 0.6, t);
+      let r;
+      if (octo) {
+        r = Math.pow(Math.sin(Math.PI * SL.lerp(0.04, 0.82, t)), 0.6);
+      } else {
+        r = t < 0.75 ? SL.lerp(0.12, 1, Math.pow(t / 0.75, 0.7)) : SL.lerp(1, 0.78, (t - 0.75) / 0.25);
+      }
+      spine.push(new THREE.Vector3(0, octo ? Math.sin(t * Math.PI) * C.radius * 0.35 : 0, z));
+      w.push(C.radius * Math.max(r, 0.08));
+      h.push(C.radius * Math.max(r, 0.08) * (octo ? 1.08 : 1));
+      colours.push(species.backColor.clone().lerp(species.bellyColor, t * 0.5));
+    }
+    Geo.loft(body, spine, w, h, colours, S.radialSegments || 12, 2, species.bellyColor, 0.45);
+
+    // Spots, for the ones that have them: rings on an octopus, dots on a squid.
+    const spots = S.spots || 0;
+    for (let i = 0; i < spots; i++) {
+      const t = 0.15 + ((i * 0.618) % 1) * 0.7;
+      const a = i * 2.399;
+      const z = SL.lerp(C.top, C.head, t);
+      const r = C.radius * (octo ? Math.pow(Math.sin(Math.PI * SL.lerp(0.04, 0.82, t)), 0.6) : SL.lerp(0.3, 1, t)) * 1.0;
+      Geo.sphere(body, Math.cos(a) * r, Math.sin(a) * r * (Math.sin(a) > -0.2 ? 1 : 0.6), z,
+        C.radius * (S.spotSize || 0.12), 6, species.finColor);
+    }
+
+    // Fins at the tip of a squid's mantle: a diamond either side.
+    if (!octo && S.fins !== 0) {
+      const finLen = C.length * (S.fins || 0.14);
+      const finW = C.radius * 1.6 * (S.finWidth || 1);
+      for (const side of [1, -1]) {
+        Geo.fin(body, new THREE.Vector3(side * C.radius * 0.15, 0, C.top - finLen * 0.05),
+          new THREE.Vector3(side * finW, 0, C.top - finLen * 0.55),
+          new THREE.Vector3(side * C.radius * 0.4, 0, C.top - finLen), species.finColor);
+      }
+    }
+
+    // The head, and its eyes.
+    const headR = C.radius * (octo ? 0.62 : 0.72);
+    Geo.sphere(body, 0, 0, C.head - C.radius * 0.3, headR, 10, species.backColor.clone().lerp(species.bellyColor, 0.4));
+    const eye = C.radius * (S.eyeSize || 0.32);
+    for (const side of [1, -1]) {
+      Geo.sphere(body, side * headR * 0.85, headR * 0.25, C.head - C.radius * 0.3, eye, 8, new THREE.Color(0.92, 0.88, 0.70));
+      Geo.sphere(body, side * (headR * 0.85 + eye * 0.55), headR * 0.25, C.head - C.radius * 0.3, eye * 0.6, 6, species.eyeColor);
+    }
+
+    // --- The arms, from their own pivot under the head ----------------------------
+    const pivotZ = C.head - C.radius * 0.7;
+    const arms = S.arms || 8;
+    const reach = C.armLength - C.radius * 0.7;
+    const armW = C.radius * (octo ? 0.26 : 0.16);
+    const lay = (count, length, width, root, curl, club, colour) => {
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + 0.2;
+        const pts = [], ws = [], cs = [];
+        const n = SL.clamp(Math.round(length / width * 0.8), 8, 22);
+        for (let k = 0; k < n; k++) {
+          const t = k / (n - 1);
+          // Splayed out a little from the head, then trailing, with a curl at the end.
+          const spread = root * (1 + Math.sin(t * Math.PI) * (octo ? 0.9 : 0.35));
+          const swirl = Math.sin(t * Math.PI * 1.4 + i * 1.3) * curl * t;
+          pts.push(new THREE.Vector3(Math.cos(a) * spread + Math.cos(a + 1.6) * swirl,
+            Math.sin(a) * spread + Math.sin(a + 1.6) * swirl, -t * length));
+          let ww = width * SL.lerp(1, 0.18, Math.pow(t, 0.8));
+          if (club && t > 0.82) ww = width * 0.7;
+          ws.push(ww);
+          cs.push(colour.clone().lerp(species.bellyColor, t * 0.4));
+        }
+        Geo.loft(tail, pts, ws, ws, cs, 5, 2, species.bellyColor, octo ? 0.5 : 0.2);
+      }
+    };
+    lay(arms, reach * (octo ? 1 : 0.6), armW, C.radius * 0.35, C.radius * (octo ? 0.8 : 0.3), false, species.finColor);
+    // A squid's two feeding tentacles: longer, thinner, with clubs on the end.
+    if (!octo) lay(2, reach, armW * 0.6, C.radius * 0.15, C.radius * 0.2, true, species.finColor);
+
+    body.computeNormals();
+    tail.computeNormals();
+    const geometry = body.toGeometry();
+    return {
+      body: geometry,
+      segments: [{ geometry, span: 0 }],
+      rootOffset: new THREE.Vector3(0, 0, 0),
+      tailSegment: 0,
+      jawSegment: 0,
+      tail: tail.toGeometry(),
+      jaw: null,
+      tailPivot: new THREE.Vector3(0, 0, pivotZ),
+      jawPivot: null,
+      length: C.length,
+      radius: C.radius
+    };
+  }
+
   /** Builds the three geometries and the pivots that animate them. */
   function build(species) {
     if (species.profile === 'jelly') return buildJelly(species);
+    if (species.profile === 'squid' || species.profile === 'octopus') return buildCephalopod(species);
     if (species.profile === 'star') return buildStar(species);
     if (species.profile === 'seahorse') return buildSeahorse(species);
     const S = species.shape;

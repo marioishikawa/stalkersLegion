@@ -935,6 +935,7 @@
     spawnSunJelly(game);
     scatterLobsters(game);
     spawnLobsterCave(game);
+    spawnKraken(game);
   }
 
   /**
@@ -1059,7 +1060,7 @@
     const species = SL.Species.megalodon;
     if (!species || !SL.MegalodonLeviathan) return;
 
-    const others = [SL.Biomes.farBank, SL.Biomes.islet, SL.Biomes.ventField, SL.Biomes.meadow]
+    const others = [SL.Biomes.farBank, SL.Biomes.islet, SL.Biomes.ventField, SL.Biomes.meadow, SL.Biomes.tentacles]
       .filter(Boolean).map((f) => Math.atan2(f.z, f.x));
     const apart = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
     let best = null, bestGap = -1;
@@ -1077,6 +1078,24 @@
     const y = Math.min(floor + species.altitude, SL.WATER_LEVEL - 14);
     const lev = new SL.MegalodonLeviathan(game, species, best.x, y, best.z);
     lev.territory.set(best.x, y, best.z);
+    keepUnlessKilled(game, game.megalodons, lev);
+  }
+
+  /**
+   * The Kraken, over the middle of the Tentacle Grounds.
+   *
+   * It goes on the megalodons' list: the same kind of animal as far as the
+   * rest of the game is concerned - one big hunter on its own ground - so the
+   * knife, the scanner, the warning and the collisions all already know it.
+   */
+  function spawnKraken(game) {
+    const species = SL.Species.byId.kraken;
+    const ground = SL.Biomes.tentacles;
+    if (!species || !ground || !SL.KrakenLeviathan) return;
+    const floor = SL.Biomes.floorHeightAt(ground.x, ground.z);
+    const y = Math.min(floor + species.altitude, SL.WATER_LEVEL - 12);
+    const lev = new SL.KrakenLeviathan(game, species, ground.x, y, ground.z);
+    lev.territory.set(ground.x, y, ground.z);
     keepUnlessKilled(game, game.megalodons, lev);
   }
 
