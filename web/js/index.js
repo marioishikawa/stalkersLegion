@@ -785,7 +785,7 @@
               DIET_LABEL[species.diet] || 'Grazer',
               biome ? biome.name : '',
               species.biteDamage > 0
-                ? species.biteDamage + (species.stings ? ' dmg sting' : ' dmg bite')
+                ? species.biteDamage + (species.stings ? ' dmg sting' : species.pinches ? ' dmg pinch' : ' dmg bite')
                 : 'Harmless'
             ].filter(Boolean).join('  ·  ')
           : (hinted ? this.whereabouts(species) : 'Click for where it lives');

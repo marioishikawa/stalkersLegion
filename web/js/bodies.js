@@ -689,8 +689,11 @@
       const thick = length * 0.03;
       const shell = species.backColor;
       const pale = species.bellyColor;
-      for (const side of [1, -1]) {
-        const w = halfWidths[r];
+      // A pair, as a lobster has - or one, straight out under the chin, for
+      // a fish that holds a single claw out in front of it.
+      const single = S.clawCount === 1;
+      for (const side of single ? [0] : [1, -1]) {
+        const w = single ? 0 : halfWidths[r];
         const root = V(side * w * 0.8, -halfHeights[r] * 0.3, spine[r].z);
         const elbow = V(side * (w + reach * 0.35), -halfHeights[r] * 0.25, spine[r].z - reach * 0.25);
         const wrist = V(side * (w + reach * 0.32), -halfHeights[r] * 0.15, spine[r].z - reach * 0.55);
@@ -702,9 +705,15 @@
         // The pincer: broad and flat, tapering to its point.
         Geo.loft(m, [wrist, mid, tip], [thick * 2.6, thick * 2.3, thick * 0.6], [thick * 1.5, thick * 1.4, thick * 0.5],
           [shell, shell, shell], 8, 2.2, pale, 0.4);
-        // The moving finger, along the inside of it.
-        Geo.fin(m, V(mid.x - side * thick * 1.6, mid.y, mid.z), V(mid.x - side * thick * 1.2, mid.y, mid.z + thick * 2),
-          V(tip.x - side * thick * 2.2, tip.y, tip.z + thick * 0.5), shell.clone().multiplyScalar(0.8));
+        // The moving finger, along the inside of it - or, on a single claw,
+        // along the top of it.
+        if (single) {
+          Geo.fin(m, V(0, mid.y + thick * 1.6, mid.z), V(0, mid.y + thick * 1.2, mid.z + thick * 2),
+            V(0, tip.y + thick * 2.2, tip.z + thick * 0.5), shell.clone().multiplyScalar(0.8));
+        } else {
+          Geo.fin(m, V(mid.x - side * thick * 1.6, mid.y, mid.z), V(mid.x - side * thick * 1.2, mid.y, mid.z + thick * 2),
+            V(tip.x - side * thick * 2.2, tip.y, tip.z + thick * 0.5), shell.clone().multiplyScalar(0.8));
+        }
       }
     }
 

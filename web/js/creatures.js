@@ -120,7 +120,7 @@
      * How hard its bite throws the diver, as a multiple of the usual shove.
      * Zero means the damage lands and the diver stays where they were.
      */
-    get knockback() { return 1; }
+    get knockback() { return this.species.knockback !== undefined ? this.species.knockback : 1; }
 
     /**
      * How much of a collision with the diver the diver absorbs. One is solid:
@@ -635,6 +635,53 @@
             if (_tmp.lengthSq() < 0.06) return _tmp.set(0, 0, 0);
             return _tmp.normalize().multiplyScalar(this.species.sprintSpeed);
           }
+        }
+      }
+
+      // --- Standing its ground ---------------------------------------------------
+      //
+      // Also above fleeing: a fish that confronts does not run. The nearest
+      // rustjaw, shark or diver inside its sense range gets faced, closed on
+      // to just short of claw's reach, and held there - and a diver who comes
+      // right up to it gets pinched.
+      if (this.species.confronts) {
+        this.foeTimer = (this.foeTimer || 0) - dt;
+        this.pinchCooldown = Math.max(0, (this.pinchCooldown || 0) - dt);
+        if (this.foeTimer <= 0) {
+          this.foeTimer = 0.4;
+          this.foe = null;
+          const r = this.species.senseRadius;
+          let best = r * r;
+          const consider = (c) => {
+            if (!c || c.dead) return;
+            const d = c.position.distanceToSquared(p);
+            if (d < best) { best = d; this.foe = c; }
+          };
+          for (const s of this.game.stalkers) consider(s);
+          for (const s of this.game.sharks) consider(s);
+          if (!this.game.player.dead) consider(this.game.player);
+        }
+
+        const foe = this.foe;
+        if (foe && !foe.dead) {
+          this.state = 'confront';
+          this.fleeTimer = 0;
+          _tmp.subVectors(foe.position, p);
+          const distance = _tmp.length();
+          _tmp.normalize();
+
+          const player = this.game.player;
+          if (foe === player && distance < this.bodyLength * 1.6 + 0.6 && this.pinchCooldown <= 0) {
+            this.pinchCooldown = 1.6;
+            player.hurt(this.species.biteDamage, this);
+          }
+
+          // Close in to just short of reach, slowing as it gets there so it
+          // stops facing the thing instead of sliding past it and having to
+          // turn round - then hold, still facing it.
+          const hold = this.bodyLength * 2.5 + 0.8;
+          const speed = SL.clamp((distance - hold) * 0.8, 0.03, this.species.cruiseSpeed * 1.4);
+          return _tmp.multiplyScalar(speed);
         }
       }
 

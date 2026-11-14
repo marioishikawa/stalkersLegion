@@ -229,6 +229,25 @@
                tailSweep: 0.10, tailFork: 0, dorsalFin: 0.015, ventralFin: 0,
                sideFin: 0.02, eyeSize: 0.022, spineSegments: 20, radialSegments: 7 }
     }),
+    fish('claunch', 'Claunch Fish', 'kelp', 'diamond', {
+      alsoIn: ['plateau'],
+      // Faces down what would chase anything else away.
+      confronts: true, pinches: true, knockback: 0.35,
+      note: 'A stocky fish that holds one big claw out in front of it. It does ' +
+            'not run: a rustjaw, a shark or a diver that comes near gets turned ' +
+            'on and faced down, claw first - and anything that comes right up ' +
+            'to it gets pinched.',
+      backColor: C(0.36, 0.20, 0.52), bellyColor: C(0.84, 0.76, 0.88), finColor: C(0.90, 0.46, 0.20),
+      eyeColor: C(0.95, 0.70, 0.10),
+      maxHealth: 22, cruiseSpeed: 1.3, sprintSpeed: 3.2, turnRate: 3.0,
+      senseRadius: 7, biteDamage: 4, schoolSize: 1, groups: 3.0, altitude: 2, wagRate: 4,
+      shape: { length: 0.36, height: 0.30, width: 0.16, bellyPosition: 0.40,
+               noseSharpness: 0.3, crossSection: 2.4,
+               tailHeight: 0.26, tailSweep: 0.18, tailFork: 0.15,
+               dorsalFin: 0.10, ventralFin: 0.06, sideFin: 0.12,
+               eyeSize: 0.055, eyeRing: true, backSpikes: 4,
+               claws: 0.55, clawCount: 1, spineSegments: 14, radialSegments: 10 }
+    }),
     fish('redfish', 'Red Fish', 'kelp', 'torpedo', {
       alsoIn: ['coral'],
       note: 'A plain red fish: bright red on top, pink underneath, an ordinary ' +
