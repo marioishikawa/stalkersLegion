@@ -1531,6 +1531,16 @@
   const byId = {};
   SPECIES.forEach((s) => { byId[s.id] = s; });
 
+  // The leviathans, made tougher: a world takes long enough to get round that
+  // each of these should be a fight, not an errand. Every one is still
+  // killable with the Diamond Blade - it is just a longer fight. The Diamond
+  // Leviathan already heals and already has three thousand, so it gets less.
+  const TOUGHER = { kingstalker: 1.6, redpuff: 1.6, kelperlev: 1.6, glowlev: 1.6, carnilev: 1.6,
+    diamondlev: 1.3, seahorselev: 1.6, megalodon: 1.6, sunjelly: 1.6, kraken: 1.6 };
+  for (const id of Object.keys(TOUGHER)) {
+    if (byId[id]) byId[id].maxHealth = Math.round(byId[id].maxHealth * TOUGHER[id]);
+  }
+
   SL.Species = {
     list: SPECIES,
 

@@ -120,6 +120,14 @@
       stack: 'bait'
     },
     {
+      id: 'lure',
+      name: 'Rare Fish Lure',
+      blurb: 'Press L. Drops a glowing lure that draws in a fish from here you have not scanned yet - or one of the rarest - and holds it still for a minute.',
+      cost: { quartz: 2, gold: 1, simyphit: 1 },
+      consumable: true,
+      stack: 'lure'
+    },
+    {
       id: 'repel',
       name: 'Repel Charge',
       blurb: 'Press V. Drives every rustjaw within 25 m off you for a while.',
@@ -174,7 +182,7 @@
     recipes: RECIPES,
     inventory: { titanium: 0, tooth: 0, quartz: 0, gold: 0, diamond: 0, simyphit: 0 },
     /** Consumables held, keyed by recipe stack name. */
-    stacks: { medkit: 0, beacon: 0, bait: 0, repel: 0 },
+    stacks: { medkit: 0, beacon: 0, bait: 0, repel: 0, lure: 0 },
     built: {},
 
     reset() {

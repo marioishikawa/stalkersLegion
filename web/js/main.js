@@ -159,6 +159,7 @@
     teardownWorld() {
       for (const fish of this.fish) fish.object.parent && fish.object.parent.remove(fish.object);
       this.fish.length = 0;
+      this.lures = [];
       this.stalkers.length = 0;
       this.scrap.length = 0;
       this.pickups.length = 0;
@@ -249,6 +250,7 @@
       SL.Crafting.reset();
       SL.Index.reset();
       this.player.resetLoadout();
+      if (SL.Mech) SL.Mech.setup(this);
 
       SL.World.spawnCreatures(this);
 
@@ -436,6 +438,15 @@
       // draining behind the title card and the pause screen.
       if (!this.paused) {
         this.player.update(dt, this.input);
+        if (SL.Mech) SL.Mech.update(dt);
+        // Spent lures go out.
+        if (this.lures && this.lures.length) {
+          this.lures = this.lures.filter((l) => {
+            if (l.until > this.time) { l.mesh.scale.setScalar(1 + Math.sin(this.time * 5) * 0.2); return true; }
+            if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+            return false;
+          });
+        }
         this.worldTime += dt;
 
         this.autosaveTimer = (this.autosaveTimer || 0) - dt;
@@ -777,7 +788,7 @@
       KeyW: 'forward', KeyS: 'back', KeyA: 'left', KeyD: 'right',
       ArrowUp: 'forward', ArrowDown: 'back', ArrowLeft: 'left', ArrowRight: 'right',
       Space: 'up', ControlLeft: 'down', KeyC: 'down', ShiftLeft: 'sprint',
-      KeyX: 'scan'
+      KeyX: 'scan', KeyQ: 'fire', KeyR: 'refill'
     };
 
     // Any keypress or click is a gesture, and a gesture is permission to make
@@ -819,6 +830,8 @@
           case 'KeyG': game.player.dropBeacon(); break;
           case 'KeyB': game.player.throwBait(); break;
           case 'KeyV': game.player.useRepel(); break;
+          case 'KeyL': game.player.useLure(); break;
+          case 'KeyT': if (SL.Mech) SL.Mech.toggleRope(game.player); break;
           case 'KeyI':
             e.preventDefault();
             game.toggleIndex();
@@ -882,7 +895,11 @@
       if (!game.started || game.paused) return;
 
       if (isLocked()) {
-        if (e.button === 0) game.player.swing();
+        if (e.button === 0) {
+          // In the mech the button is the laser, held down to keep firing.
+          if (SL.Mech && SL.Mech.piloting) game.input.fire = true;
+          else game.player.swing();
+        }
         return;
       }
 
@@ -895,6 +912,7 @@
     });
 
     window.addEventListener('mouseup', (e) => {
+      if (e.button === 0 && isLocked()) game.input.fire = false;
       if (!dragging) return;
       dragging = false;
       // A press that barely moved was aimed at something, not a look.

@@ -467,6 +467,8 @@
       if (this.dead || damage <= 0 || this.game.paused || this.invulnerable) return;
 
       damage *= (1 - this.damageResist);
+      // The mech's plating takes half of anything that gets at you in it.
+      if (SL.Mech && SL.Mech.piloting) damage *= 0.5;
       this.health -= damage;
       this.timeSinceDamage = 0;
       this.game.audio.playerHurt();
@@ -546,6 +548,8 @@
     }
 
     swing() {
+      // In the mech, a click is a burst of the laser instead.
+      if (SL.Mech && SL.Mech.piloting) { SL.Mech.pulseLaser(); return; }
       if (this.dead || this.swingTime > 0) return;
       this.swingTime = this.swingDuration;
       this.strikeResolved = false;
@@ -809,6 +813,7 @@
      */
     interact() {
       if (this.dead) return;
+      if (SL.Mech && SL.Mech.interact(this)) return;
 
       if (this.carriedScrap) {
         this.camera.getWorldDirection(_forward);
@@ -865,6 +870,57 @@
       this.game.hud.toast('Bait pod thrown');
     }
 
+    /**
+     * L: drops a Rare Fish Lure. It draws in a small school of something from
+     * this biome you have not scanned yet - or, once you have them all, one of
+     * the rarest things here - and holds them round it, calm, for a minute.
+     */
+    useLure() {
+      if (this.dead) return;
+      if (SL.Mech && SL.Mech.piloting) { this.game.hud.toast('Get out of the mech to set a lure'); return; }
+      const biome = SL.Biomes.biomeAt(this.position.x, this.position.z);
+      const rarityHere = (s) => (s.rarity && s.rarity[biome.id] !== undefined ? s.rarity[biome.id] : 1) * (s.groups || 1);
+      const candidates = SL.Species.ofBiome(biome.id).filter((s) => !s.uncatalogued && !s.leviathan
+        && s.profile !== 'seahorse' && (s.groups || 0) > 0);
+      if (!candidates.length) { this.game.hud.toast('Nothing here would come to a lure'); return; }
+      if (!SL.Crafting.consume('lure')) {
+        this.game.hud.toast('No lures — build one at the fabricator');
+        return;
+      }
+
+      const unscanned = candidates.filter((s) => !SL.Index.scanned[s.id]);
+      const pool = unscanned.length ? unscanned
+        : candidates.slice().sort((a, b) => rarityHere(a) - rarityHere(b)).slice(0, 3);
+      const species = pool[Math.floor(Math.random() * pool.length)];
+
+      this.camera.getWorldDirection(_forward);
+      const at = this.position.clone().addScaledVector(_forward, 3);
+      const floor = SL.Biomes.floorHeightAt(at.x, at.z);
+      at.y = SL.clamp(at.y, floor + 1, SL.WATER_LEVEL - 2);
+      const lure = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), this.game.materials.glow);
+      lure.position.copy(at);
+      const light = new THREE.PointLight(0x9fffd8, 1.2, 10, 1.6);
+      lure.add(light);
+      this.game.addToWorld(lure);
+
+      const count = Math.min(Math.max(1, Math.round(species.schoolSize * 0.5)), 4);
+      const until = this.game.time + 60;
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const fish = new SL.Fish(this.game, species,
+          at.x + Math.cos(a) * 9, at.y + (Math.random() - 0.5) * 2, at.z + Math.sin(a) * 9);
+        fish.territory.copy(at);
+        fish.territoryRadius = 3;
+        fish.luredUntil = until;
+        this.game.fish.push(fish);
+      }
+      this.game.lures = (this.game.lures || []).filter((l) => l.until > this.game.time);
+      this.game.lures.push({ mesh: lure, until });
+      this.game.audio.crystal();
+      this.game.hud.toast(unscanned.length ? 'Something you have not seen yet is coming to the lure'
+        : 'A ' + species.name + ' is coming to the lure');
+    }
+
     /** Drives nearby stalkers off. Does nothing to a leviathan. */
     useRepel() {
       if (this.dead) return;
@@ -889,6 +945,8 @@
 
     updateOxygen(dt) {
       if (this.invulnerable) { this.oxygen = this.maxOxygen; return; }
+      // In the mech you breathe its air, as long as it has any.
+      if (SL.Mech && SL.Mech.breathing(this, dt)) return;
 
       // The wreck's air plant still runs: inside the hull, the tank fills as
       // fast as it does at the surface.
@@ -989,7 +1047,10 @@
       this.inWater = this.position.y < SL.WATER_LEVEL;
       this.grounded = !this.inWater && this.position.y <= ground + 0.08;
 
-      if (this.inWater) {
+      if (SL.Mech && SL.Mech.piloting) {
+        // --- Walking the mech -------------------------------------------------
+        SL.Mech.drive(dt, input, this);
+      } else if (this.inWater) {
         // --- Swim where you look ----------------------------------------------
         _tmp.set(0, 0, 0);
         if (input.forward) _tmp.add(_forward);

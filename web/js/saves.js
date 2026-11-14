@@ -177,6 +177,7 @@
       world.killed = Object.assign({}, SL.Quest.killed);
       world.completed = !!SL.Quest.finished;
 
+      world.mech = SL.Mech ? SL.Mech.capture() : null;
       world.crafting = {
         inventory: Object.assign({}, SL.Crafting.inventory),
         stacks: Object.assign({}, SL.Crafting.stacks),
@@ -215,6 +216,8 @@
           }
         }
       }
+
+      if (SL.Mech && world.mech) SL.Mech.restore(world.mech);
 
       if (world.player) {
         p.position.set(world.player.x, world.player.y, world.player.z);

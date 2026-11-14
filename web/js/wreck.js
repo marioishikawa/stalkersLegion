@@ -186,6 +186,18 @@
       return Math.abs(l.a) < HALF + R + m && Math.abs(l.s) < R + m;
     },
 
+    /** The lit console at the bow, which is also the mech deployer. */
+    consolePoint() {
+      return toWorld(HALF - 1.2, W.deck - CY + 1.0, 0, new THREE.Vector3());
+    },
+
+    /** The mech's charging pad, on the crater sand outside the breach. */
+    padPoint() {
+      const at = toWorld(W.door.a - 1, 0, R + 7.5, new THREE.Vector3());
+      at.y = W.deck;
+      return at;
+    },
+
     /** Where the diver wakes: on the sand inside, near the bow, facing the breach. */
     spawnPoint() {
       const at = toWorld(HALF - 3.5, W.deck - CY + 1.4, 0, new THREE.Vector3());

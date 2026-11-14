@@ -20,7 +20,7 @@
         'deathScreen', 'carryNote', 'hatchNote', 'hint', 'muteNote', 'titaniumCount', 'toothCount',
         'fabricator', 'recipeList', 'toasts', 'lookMode', 'fps', 'worldName',
         'quartzCount', 'goldCount', 'diamondCount', 'simyphitCount', 'medkitCount', 'resources',
-        'beaconCount', 'baitCount', 'repelCount', 'minimap', 'chartLegend',
+        'beaconCount', 'baitCount', 'repelCount', 'lureCount', 'minimap', 'chartLegend',
         'scan', 'scanFill', 'scanLabel']) {
         this.el[id] = document.getElementById(id);
       }
@@ -92,6 +92,7 @@
       this.el.beaconCount.textContent = SL.Crafting.stacks.beacon;
       this.el.baitCount.textContent = SL.Crafting.stacks.bait;
       this.el.repelCount.textContent = SL.Crafting.stacks.repel;
+      this.el.lureCount.textContent = SL.Crafting.stacks.lure || 0;
 
       // A resource you have never seen stays hidden, so the strip starts small
       // and grows as the ocean gives things up.
@@ -230,7 +231,12 @@
       if (atHatch) {
         this.el.hatchNote.textContent = SL.Wreck.hatchOpen ? '[E] close the hatch' : '[E] open the hatch';
       }
-      this.el.hatchNote.classList.toggle('is-visible', !!atHatch);
+      // Or the mech: its deployer, the mech itself, and its cockpit readout.
+      const mechNote = !atHatch && SL.Mech ? (SL.Mech.status() || SL.Mech.prompt(p)) : null;
+      if (mechNote) this.el.hatchNote.textContent = mechNote;
+      // The cockpit readout sits higher, clear of the health and air bars.
+      this.el.hatchNote.style.bottom = SL.Mech && SL.Mech.piloting ? '150px' : '';
+      this.el.hatchNote.classList.toggle('is-visible', !!(atHatch || mechNote));
 
       // --- Damage flash and death ------------------------------------------------
       if (this.damageTimer > 0) {

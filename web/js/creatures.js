@@ -484,6 +484,8 @@
 
     startle(from, duration) {
       if (this.dead) return;
+      // Drawn in by a lure, it holds its nerve until the lure goes out.
+      if (this.luredUntil && this.game.time < this.luredUntil) return;
       this.fleeFrom.copy(from);
       this.fleeTimer = Math.max(this.fleeTimer, duration);
       this.state = 'flee';
