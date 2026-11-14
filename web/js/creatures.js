@@ -225,6 +225,15 @@
         }
       }
 
+      // The lobster cave, likewise: it is the lobsters' and nobody else's.
+      if (SL.LobsterCave && SL.LobsterCave.placed) {
+        const margin = Math.max(this.radius, this.bodyLength * 0.4) + 0.3;
+        if (SL.LobsterCave.keepOut(p, margin, _rock)) {
+          p.add(_rock);
+          desired.addScaledVector(_rock.normalize(), speed * 1.4);
+        }
+      }
+
       // Surface: fish are held under it, but an air breather on its way up is
       // allowed through - that is the whole point of the climb.
       if (p.y > ceiling && this.state !== 'surfacing') {

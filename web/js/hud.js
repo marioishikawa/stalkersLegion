@@ -197,7 +197,8 @@
       }
 
       for (const lev of this.game.glowLevs.concat(this.game.carniLevs, this.game.kelperLevs,
-        this.game.diamondLevs, this.game.seahorseLevs, this.game.megalodons)) {
+        this.game.diamondLevs, this.game.seahorseLevs, this.game.megalodons,
+        SL.LobsterCave && SL.LobsterCave.keeper ? [SL.LobsterCave.keeper] : [])) {
         if (!lev.hunting) continue;
         const d = lev.position.distanceTo(p.position);
         // Given a wider band than a stalker, because it closes far faster.

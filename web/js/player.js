@@ -1297,8 +1297,13 @@
      * frame's move.
      */
     keepOutOfWreck() {
+      if (SL.LobsterCave) this.applyShove(SL.LobsterCave.collide(this.position, _before, BODY_RADIUS, _shove));
       if (!SL.Wreck) return;
-      const shove = SL.Wreck.collide(this.position, _before, BODY_RADIUS, _shove);
+      this.applyShove(SL.Wreck.collide(this.position, _before, BODY_RADIUS, _shove));
+    }
+
+    /** Moves the diver by a wall's push and stops them pressing into it. */
+    applyShove(shove) {
       if (!shove) return;
       this.position.add(shove);
       const length = shove.length();

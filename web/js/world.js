@@ -331,6 +331,7 @@
     // can tell where any single one of them is. Recorded here first, so fish
     // have something to not swim into.
     if (SL.Solids) SL.Solids.reset();
+    if (SL.LobsterCave) SL.LobsterCave.addSolids();
 
     for (const biome of SL.Biomes.list) {
       const patches = Math.round((biome.floraDensity || 0) * 34 * areaFactorOf(biome));
@@ -362,6 +363,7 @@
           // Nothing grows through the wreck. Skipped after every draw this
           // plant would have made, so the rest of the garden is unchanged.
           if (SL.Wreck && SL.Wreck.covers(x, z, 0.6)) continue;
+          if (SL.LobsterCave && SL.LobsterCave.covers(x, z, 1.2)) continue;
 
           instances.push({
             type,
@@ -697,6 +699,7 @@
           // seed is drawn first either way, so later nests are unchanged.
           const nestSeed = (SL.random() * 1e9) | 0;
           if (SL.Wreck && SL.Wreck.covers(point.x, point.z, 2)) continue;
+          if (SL.LobsterCave && SL.LobsterCave.covers(point.x, point.z, 2)) continue;
 
           game.nests.push(new SL.Nest(game, species, point.x, point.z, nestSeed));
         }
@@ -931,6 +934,7 @@
     spawnMegalodon(game);
     spawnSunJelly(game);
     scatterLobsters(game);
+    spawnLobsterCave(game);
   }
 
   /**
@@ -956,6 +960,37 @@
           }
           if (point) game.crabers.push(new SL.Craber(game, point.x, point.z, species));
         }
+      }
+    }
+  }
+
+  /**
+   * The Big Lobster in its cave, and a handful of red lobsters on the sand
+   * round about - the ones that run to it when they are hurt. Last of all,
+   * so nothing placed before it moves.
+   */
+  function spawnLobsterCave(game) {
+    const cave = SL.LobsterCave;
+    if (!cave || !cave.placed || !SL.BigLobster) return;
+    cave.keeper = new SL.BigLobster(game);
+    game.crabers.push(cave.keeper);
+
+    const L = cave.layout;
+    const yard = { x: L.x, z: L.z, r: 30 };
+    const kinds = ['redlobster', 'redlobster', 'redlobster', 'redlobster', 'redlobster', 'redlobster', 'bluelobster'];
+    for (const id of kinds) {
+      const species = SL.Species.byId[id];
+      if (!species) continue;
+      for (let tries = 0; tries < 10; tries++) {
+        const a = SL.random() * Math.PI * 2;
+        const r = SL.randRange(L.R + 3, yard.r - 4);
+        const x = L.x + Math.cos(a) * r, z = L.z + Math.sin(a) * r;
+        if (SL.Biomes.floorHeightAt(x, z) > SL.WATER_LEVEL - 3) continue;
+        const lobster = new SL.Craber(game, x, z, species);
+        lobster.yard = yard;
+        lobster.pickTarget();
+        game.crabers.push(lobster);
+        break;
       }
     }
   }

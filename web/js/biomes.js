@@ -574,6 +574,9 @@
     // level floor rather than dunes poking up through it.
     if (r < 44 && SL.Wreck) y = SL.Wreck.craterFloor(x, z, y);
 
+    // The level sand the lobster cave sits on.
+    if (SL.LobsterCave) y = SL.LobsterCave.floor(x, z, y);
+
     // Everything is held under the surface - except the islet, whose peak is
     // allowed through by exactly as much as it rises. Written as a lifted cap
     // rather than a branch so the shoreline is smooth instead of stepped.
@@ -585,6 +588,7 @@
     // The wreck's crater is sand, and sand is the Safe Shallows - whatever its
     // depth would otherwise make it. Checked first, because it is cheap.
     if (SL.Wreck && SL.Wreck.inCrater(x, z)) return byId.shallows;
+    if (SL.LobsterCave && SL.LobsterCave.inYard(x, z)) return byId.shallows;
 
     const y = floorHeightAt(x, z);
     const depth = -y;

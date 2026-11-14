@@ -21,8 +21,14 @@
   const LABELS = {
     potter: 'pottering about',
     bolt: 'legging it',
-    hide: 'sitting very still'
+    hide: 'sitting very still',
+    refuge: 'running for the cave',
+    sheltered: 'hiding in the cave',
+    leaving: 'heading home'
   };
+
+  /** How far a hurt lobster will run to reach the cave. */
+  const REFUGE_RANGE = 140;
 
   /**
    * The floor as drawn. A crab stands on what you can see - out on the coarse
@@ -74,6 +80,10 @@
      * to say "shallows" asks this instead, so each keeps to its own country.
      */
     walksOn(x, z) {
+      // Nothing but its keeper chooses to walk inside the lobster cave.
+      if (SL.LobsterCave && SL.LobsterCave.covers(x, z, 1)) return false;
+      // The lobsters that live round the cave keep to their own patch of sand.
+      if (this.yard) return Math.hypot(x - this.yard.x, z - this.yard.z) < this.yard.r;
       if (!this.homes) {
         const S = this.species;
         this.homes = [S.biome].concat(S.alsoIn || []).map((id) => SL.Biomes.byId[id]);
@@ -87,9 +97,30 @@
       this.stateTimer = 0;
     }
 
-    /** Anything that hits it makes it run, and it has nothing to fight with. */
-    onHurt() { this.enterState('bolt'); this.stateTimer = 0; }
+    /**
+     * Anything that hits it makes it run, and it has nothing to fight with.
+     * A lobster near enough to the cave runs there instead - and if it was
+     * the diver that hurt it, the Big Lobster takes note.
+     */
+    onHurt(damage, source) {
+      if (this.species.seeksCave) {
+        const cave = SL.LobsterCave;
+        if (source && source === this.game.player) cave.wronged(this.game);
+        if (this.state === 'refuge' || this.state === 'sheltered') return;
+        if (cave.placed && Math.hypot(this.position.x - cave.layout.x, this.position.z - cave.layout.z) < REFUGE_RANGE) {
+          this.route = cave.routeIn(this.position);
+          this.target.copy(this.route.shift());
+          this.enterState('refuge');
+          return;
+        }
+      }
+      this.enterState('bolt'); this.stateTimer = 0;
+    }
     provoke() { this.onHurt(); }
+
+    onDeath(killer) {
+      if (this.species.seeksCave && killer && killer === this.game.player) SL.LobsterCave.wronged(this.game);
+    }
 
     /** Somewhere else on the sand. Never off the sand. */
     pickTarget() {
@@ -139,6 +170,10 @@
         const push = SL.Wreck.collide(p, _prev, this.bodyLength * 0.4, _wall);
         if (push) { p.x += push.x; p.z += push.z; }
       }
+      if (SL.LobsterCave) {
+        const push = SL.LobsterCave.collide(p, _prev, this.bodyLength * 0.4, _wall);
+        if (push) { p.x += push.x; p.z += push.z; }
+      }
 
       // Glued to the floor, which is the point of it.
       const ground = groundAt(p.x, p.z);
@@ -183,6 +218,41 @@
       const distance = threat ? threat.distanceTo(this.position) : Infinity;
 
       switch (this.state) {
+        case 'refuge':
+        case 'leaving': {
+          // Walking a route: to the cave and in, or out and home. It runs
+          // there, and ambles back.
+          const dx = this.target.x - this.position.x;
+          const dz = this.target.z - this.position.z;
+          const gap = Math.hypot(dx, dz);
+          if (gap < 0.8 || this.stateTimer > 60) {
+            if (this.route && this.route.length && this.stateTimer <= 60) {
+              this.target.copy(this.route.shift());
+            } else if (this.state === 'refuge') {
+              this.route = null;
+              this.enterState('sheltered');
+              this.shelterFor = SL.randRange(30, 60);
+            } else {
+              this.route = null;
+              this.enterState('potter');
+              this.pickTarget();
+            }
+            return _tmp.set(0, 0, 0);
+          }
+          const pace = this.state === 'refuge' ? S.sprintSpeed * 0.6 : S.cruiseSpeed * 1.5;
+          return _tmp.set(dx / gap, 0, dz / gap).multiplyScalar(pace);
+        }
+
+        case 'sheltered': {
+          // Tucked up in the cave until it feels safe again.
+          if (this.stateTimer > this.shelterFor) {
+            this.route = SL.LobsterCave.routeOut(this.home);
+            this.target.copy(this.route.shift());
+            this.enterState('leaving');
+          }
+          return _tmp.set(0, 0, 0);
+        }
+
         case 'bolt': {
           // Straight away from whatever spooked it, at a fair clip.
           if (this.stateTimer > 3.5 || distance > SPOOK_RANGE * 2.2) {
@@ -263,6 +333,123 @@
   }
 
   SL.Craber = Craber;
+
+  // ---------------------------------------------------------------------------
+
+  const BIG_LABELS = {
+    potter: 'pottering round its cave',
+    watch: 'watching you',
+    attack: 'throwing you out of its cave'
+  };
+
+  /**
+   * The Big Lobster: two metres of lobster, and the cave is its.
+   *
+   * It never leaves. Come in and it turns to watch you. Come in after you
+   * have hurt a lobster - any lobster, anywhere - and it comes for you with
+   * its claws, until you are out of the door. Then it lets it go.
+   */
+  class BigLobster extends Craber {
+    constructor(game) {
+      const cave = SL.LobsterCave;
+      const spot = cave.innerSpot(new THREE.Vector3());
+      super(game, spot.x, spot.z, SL.Species.byId.biglobster);
+      this.pinchCooldown = 0;
+      this.state = 'potter';
+      this.pickTarget();
+    }
+
+    get stateLabel() { return BIG_LABELS[this.state] || ''; }
+    get hunting() { return this.state === 'attack' && !this.dead; }
+
+    walksOn(x, z) { return SL.LobsterCave.insideXZ(x, z, 2.2); }
+
+    pickTarget() {
+      this.route = null;
+      if (SL.LobsterCave && SL.LobsterCave.placed) SL.LobsterCave.innerSpot(this.target);
+    }
+
+    /** It does not run. Hurting it is hurting a lobster. */
+    onHurt(damage, source) {
+      if (source && source === this.game.player) SL.LobsterCave.wronged(this.game);
+    }
+    provoke() {}
+    onDeath() {}
+
+    steer(dt) {
+      const S = this.species;
+      const cave = SL.LobsterCave;
+      const player = this.game.player;
+      const p = this.position;
+      this.pinchCooldown = Math.max(0, this.pinchCooldown - dt);
+
+      const intruder = !player.dead && cave.isInside(player.position);
+      let want = null;
+
+      if (intruder && cave.grudge) {
+        if (this.state !== 'attack') {
+          this.enterState('attack');
+          this.game.hud.toast('The Big Lobster wants you out of its cave');
+        }
+        cave.chased = true;
+        const dx = player.position.x - p.x, dz = player.position.z - p.z;
+        const flat = Math.hypot(dx, dz);
+        const rise = player.position.y - p.y;
+        // A long reach: it rears up on its tail to get at a diver overhead.
+        const reach = this.bodyLength * 0.6 + 1.2;
+        if (flat < reach && rise < 3.6 && this.pinchCooldown <= 0) {
+          this.pinchCooldown = 1.6;
+          player.hurt(S.biteDamage, this);
+        }
+        const speed = flat > reach * 0.7 ? S.sprintSpeed : 0;
+        want = flat > 1e-3 ? _tmp.set(dx / flat * speed, 0, dz / flat * speed) : _tmp.set(0, 0, 0);
+      } else {
+        if (this.state === 'attack') {
+          this.enterState('potter');
+          this.pickTarget();
+          // Seen off. It lets it go - until the next lobster.
+          if (cave.chased && !player.dead) {
+            cave.grudge = false;
+            this.game.hud.toast('The Big Lobster lets you go');
+          }
+          cave.chased = false;
+        }
+        if (intruder) {
+          // It turns to keep you in front of it, and edges a little closer.
+          this.enterState('watch');
+          const dx = player.position.x - p.x, dz = player.position.z - p.z;
+          const flat = Math.hypot(dx, dz);
+          const speed = flat > 4 ? S.cruiseSpeed * 0.5 : 0.06;
+          want = flat > 1e-3 ? _tmp.set(dx / flat * speed, 0, dz / flat * speed) : _tmp.set(0, 0, 0);
+        } else {
+          if (this.state === 'watch') { this.enterState('potter'); this.pickTarget(); }
+          const dx = this.target.x - p.x, dz = this.target.z - p.z;
+          const gap = Math.hypot(dx, dz);
+          if (gap < 0.8 || this.stateTimer > 20) {
+            this.stateTimer = 0;
+            this.pickTarget();
+            return _tmp.set(0, 0, 0);
+          }
+          want = _tmp.set(dx / gap, 0, dz / gap).multiplyScalar(S.cruiseSpeed);
+        }
+      }
+
+      // It keeps to the back of its cave, well clear of the walls and never
+      // out of the door: anything taking it outward past that line is cut.
+      const ox = p.x - cave.layout.x, oz = p.z - cave.layout.z;
+      const out = Math.hypot(ox, oz);
+      const limit = cave.layout.R - 2.2;
+      if (out > limit - 0.3) {
+        const nx = ox / out, nz = oz / out;
+        const radial = want.x * nx + want.z * nz;
+        if (radial > 0) { want.x -= nx * radial; want.z -= nz * radial; }
+        if (out > limit) { want.x -= nx * (out - limit) * 2; want.z -= nz * (out - limit) * 2; }
+      }
+      return want;
+    }
+  }
+
+  SL.BigLobster = BigLobster;
 
   // ---------------------------------------------------------------------------
 

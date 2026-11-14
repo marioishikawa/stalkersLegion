@@ -228,11 +228,14 @@
       SL.Biomes.setSeed(this.seed);
       // One sampling pass builds both the spawn index and the chart.
       SL.Biomes.buildIndex();
+      // Found before the terrain is built, so the sand under it is level.
+      if (SL.LobsterCave) SL.LobsterCave.place();
       this.teardownWorld();
 
       SL.World.buildLighting(this);
       SL.World.buildTerrain(this);
       if (SL.Wreck) SL.Wreck.build(this);
+      if (SL.LobsterCave) SL.LobsterCave.build(this);
       SL.World.buildWaterSurface(this);
       if (!this.sky) SL.World.buildSky(this);
       const plants = SL.World.scatterFlora(this);

@@ -265,7 +265,7 @@
     fish('redlobster', 'Red Lobster', 'boulders', 'shrimp', {
       alsoIn: ['coral'],
       // Walks the floor, so the world builder places it by hand.
-      grounded: true, groups: 0, walksForward: true,
+      grounded: true, groups: 0, walksForward: true, seeksCave: true,
       diet: 'scavenger',
       note: 'A lobster, and the colour you would expect: deep red, with two big ' +
             'claws out in front and antennae longer than it is. It walks forward and ' +
@@ -282,7 +282,7 @@
     fish('bluelobster', 'Blue Lobster', 'boulders', 'shrimp', {
       
       // Walks the floor, so the world builder places it by hand.
-      grounded: true, groups: 0, walksForward: true,
+      grounded: true, groups: 0, walksForward: true, seeksCave: true,
       diet: 'scavenger',
       note: 'A lobster that came out blue. Real ones do, about one in two million - ' +
             'and they are about that rare down here too. Same claws, same tail-flip.',
@@ -298,7 +298,7 @@
     fish('yellowlobster', 'Yellow Lobster', 'coral', 'shrimp', {
       
       // Walks the floor, so the world builder places it by hand.
-      grounded: true, groups: 0, walksForward: true,
+      grounded: true, groups: 0, walksForward: true, seeksCave: true,
       diet: 'scavenger',
       note: 'The rarest lobster of all. Real yellow lobsters turn up about once in ' +
             'thirty million; on the coral seamount there are only ever a handful.',
@@ -310,6 +310,23 @@
                tailHeight: 0.24, tailSweep: 0.16, tailFork: 0.05, dorsalFin: 0,
                sideFin: 0, eyeSize: 0.03, antennae: 1.4, legPairs: 4, legScale: 0.16,
                claws: 0.42, legStance: 0.12, spineSegments: 16, radialSegments: 10 }
+    }),
+    fish('biglobster', 'Big Lobster', 'shallows', 'shrimp', {
+      // Lives in its sand cave; the world builder puts it there.
+      grounded: true, groups: 0, walksForward: true, pinches: true, knockback: 1.4,
+      diet: 'scavenger',
+      note: 'A lobster two metres long, living in a cave of packed sand in the ' +
+            'Safe Shallows. The other lobsters run to it when they are hurt. It lets ' +
+            'you look round its cave - unless you have hurt a lobster. Then it comes ' +
+            'for you with both claws until you are back out of the door.',
+      backColor: C(0.56, 0.12, 0.08), bellyColor: C(0.92, 0.56, 0.36), finColor: C(0.48, 0.12, 0.08),
+      eyeColor: C(0.04, 0.03, 0.03),
+      maxHealth: 260, cruiseSpeed: 0.6, sprintSpeed: 3.0, turnRate: 2,
+      senseRadius: 10, schoolSize: 1, altitude: 0.3, wagRate: 1.5, biteDamage: 10,
+      shape: { length: 2.0, height: 0.16, width: 0.19, bellyPosition: 0.34, noseSharpness: 0.3,
+               tailHeight: 0.24, tailSweep: 0.16, tailFork: 0.05, dorsalFin: 0,
+               sideFin: 0, eyeSize: 0.03, antennae: 1.3, legPairs: 4, legScale: 0.17,
+               claws: 0.5, legStance: 0.12, shellSpikes: 0, spineSegments: 18, radialSegments: 12 }
     }),
     fish('bluefish', 'Blue Fish', 'shallows', 'torpedo', {
       alsoIn: ['plateau'],

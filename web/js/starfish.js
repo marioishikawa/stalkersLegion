@@ -129,6 +129,10 @@
               const push = SL.Wreck.collide(p, _prev, this.bodyLength * 0.4, _wall);
               if (push) { p.x += push.x; p.z += push.z; }
             }
+            if (SL.LobsterCave) {
+              const push = SL.LobsterCave.collide(p, _prev, this.bodyLength * 0.4, _wall);
+              if (push) { p.x += push.x; p.z += push.z; }
+            }
             // A starfish has no front; it turns as slowly as it does anything.
             this.heading = SL.dampAngle(this.heading, Math.atan2(dx, dz), 0.15, dt);
           } else {
