@@ -78,6 +78,7 @@
           '<span class="world__meta"></span>';
         open.querySelector('.world__name').textContent = world.name;
         open.querySelector('.world__meta').textContent = [
+          world.planet > 1 && SL.Planet ? SL.Planet.nameOf(world.planet) : null,
           world.biome || 'Safe Shallows',
           (world.depth || 0).toFixed(0) + ' m down',
           formatPlaytime(world.playtime),

@@ -680,7 +680,7 @@
    */
   function scatterNests(game) {
     for (const species of SL.Species.list) {
-      if (!species.nests) continue;
+      if (!species.nests || (SL.Planet && SL.Planet.absent(species))) continue;
 
       const biomes = [species.biome].concat(species.alsoIn || []);
       for (const biomeId of biomes) {

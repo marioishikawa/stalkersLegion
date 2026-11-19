@@ -44,7 +44,9 @@
 
   /** The drawn floor where the generated one is not available yet. */
   function surfaceAt(x, z) {
-    return SL.Terrain ? SL.Terrain.surfaceAt(x, z) : SL.Biomes.floorHeightAt(x, z);
+    const y = SL.Terrain ? SL.Terrain.surfaceAt(x, z) : SL.Biomes.floorHeightAt(x, z);
+    // The little Earth town, while you are standing in it.
+    return SL.Earth && SL.Earth.active ? Math.max(y, SL.Earth.groundAt(x, z)) : y;
   }
 
   /** Out of the water, metres per second squared. Brisk, not lunar. */
@@ -813,7 +815,9 @@
      */
     interact() {
       if (this.dead) return;
+      if (SL.Earth && SL.Earth.interact(this)) return;
       if (SL.Mech && SL.Mech.interact(this)) return;
+      if (SL.Aquarium && SL.Aquarium.interactTank(this)) return;
       if (SL.Rocket && SL.Rocket.interact(this)) return;
 
       if (this.carriedScrap) {
@@ -835,7 +839,11 @@
         nearby.carriedBy(this, this.carryPoint, new THREE.Vector3(0, 0, 0));
         this.carriedScrap = nearby;
         this.game.audio.pickUp();
+        return;
       }
+
+      // Nothing else to do with E: a small fish within reach goes in the net.
+      if (SL.Aquarium) SL.Aquarium.tryCatch(this);
     }
 
     dropBeacon() {
@@ -987,7 +995,11 @@
         if (dot > bestDot) { bestDot = dot; this.focusLabel = label; }
       };
 
-      for (const c of this.game.fish) if (!c.dead) consider(c.species.name, c.position, 14);
+      for (const c of this.game.fish) {
+        if (c.dead) continue;
+        const small = c.bodyLength <= 0.42 && !c.species.leviathan && c.position.distanceTo(this.position) < 2.4;
+        consider(small ? c.species.name + '   [E] catch' : c.species.name, c.position, 14);
+      }
       for (const c of this.game.stalkers) if (!c.dead) consider(c.species.name, c.position, 22);
       for (const c of this.game.kings) if (!c.dead) consider(c.species.name, c.position, 40);
       for (const c of this.game.whales) if (!c.dead) consider(c.species.name, c.position, 60);
@@ -1041,6 +1053,7 @@
 
       // Riding the rocket home: no steering, just the view.
       if (SL.Rocket && SL.Rocket.flying) { SL.Rocket.carry(this); return; }
+      if (SL.Earth && SL.Earth.flying) { SL.Earth.carry(this); return; }
 
       this.camera.getWorldDirection(_forward);
       _right.set(_forward.z, 0, -_forward.x).normalize();
@@ -1342,6 +1355,7 @@
      * frame and being shoved back out.
      */
     keepOutOfScenery() {
+      if (SL.Earth) SL.Earth.collide(this.position, BODY_RADIUS);
       if (!SL.Solids) return;
       const shove = SL.Solids.diverCorrection(this.position, BODY_RADIUS, _shove);
       if (!shove) return;

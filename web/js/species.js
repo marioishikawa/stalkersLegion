@@ -89,6 +89,17 @@
       schoolSize: 10, groups: 6,
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
     }),
+    fish('redglimmer', 'Red Glimmer', 'shallows', 'torpedo', {
+      alsoIn: ['islet', 'kelp'],
+      nests: true,
+      // Only on Vireth: see planet.js.
+      note: "Vireth's answer to the Glimmerfin: small, quick and bright as a coal, " +
+            "with gold fins and a red mirror down each side. The first fish anyone sees here.",
+      backColor: C(0.86, 0.16, 0.12), bellyColor: C(0.98, 0.84, 0.74), finColor: C(1.0, 0.72, 0.22),
+      eyeColor: C(0.04, 0.02, 0.02), glow: 0.15,
+      schoolSize: 10, groups: 6,
+      shape: { length: 0.27, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.6, stripes: 4, sideFin: 0.12 }
+    }),
     fish('anglerfish', 'Anglerfish', 'trench', 'bulb', {
       // Common down the trench; out on the open plain, only now and then.
       alsoIn: ['abyss'], rarity: { abyss: 0.06 },
@@ -1551,7 +1562,9 @@
      * stalker - that one is handed to you for finishing this list, so it can
      * hardly be on it.
      */
-    catalogue: SPECIES.filter((s) => !s.uncatalogued),
+    get catalogue() {
+      return SPECIES.filter((s) => !s.uncatalogued && !(SL.Planet && SL.Planet.absent(s)));
+    },
 
     byId,
     stalker: byId.stalker,
@@ -1577,6 +1590,7 @@
     // whale are placed individually by the world builder.
     ofBiome: (biomeId) => SPECIES.filter(
       (s) => (s.biome === biomeId || (s.alsoIn && s.alsoIn.indexOf(biomeId) >= 0))
-        && s.diet !== 'carnivore' && s.diet !== 'whale' && !s.grounded && !s.drifter)
+        && s.diet !== 'carnivore' && s.diet !== 'whale' && !s.grounded && !s.drifter
+        && !(SL.Planet && SL.Planet.absent(s)))
   };
 })(window.SL);

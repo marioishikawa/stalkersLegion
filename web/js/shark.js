@@ -43,7 +43,8 @@
   };
 
   /** What it prefers above everything else. */
-  const PREY = 'glimmerfin';
+  /** What sharks hunt: the Glimmerfin at home, the Red Glimmer on Vireth. */
+  const preyId = () => (SL.Planet ? SL.Planet.prey : 'glimmerfin');
 
   /**
    * The share of the world's starting Glimmerfin below which the shark stops
@@ -140,12 +141,12 @@
      * number, so it holds however big the map gets.
      */
     takeCensus() {
-      const target = (this.game.startPopulation || {})[PREY] || 0;
+      const target = (this.game.startPopulation || {})[preyId()] || 0;
       if (!target) { this.preyHealthy = true; return; }
 
       let alive = 0;
       for (const fish of this.game.fish) {
-        if (fish.species.id === PREY && !fish.dead) alive++;
+        if (fish.species.id === preyId() && !fish.dead) alive++;
       }
       this.preyHealthy = alive >= target * PREY_FLOOR;
     }
@@ -158,7 +159,7 @@
 
       for (const fish of this.game.fish) {
         if (fish.dead) continue;
-        const isPrey = fish.species.id === PREY;
+        const isPrey = fish.species.id === preyId();
         // Off-menu while the Glimmerfin are thin, and the only thing on it
         // while they are not.
         if (this.preyHealthy !== isPrey) continue;

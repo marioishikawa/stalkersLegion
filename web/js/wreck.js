@@ -191,6 +191,13 @@
       return toWorld(HALF - 1.2, W.deck - CY + 1.0, 0, new THREE.Vector3());
     },
 
+    /** Where the aquarium stands inside the hull, on a planet you crashed on. */
+    tankPoint() {
+      const at = toWorld(-2, 0, -1.0, new THREE.Vector3());
+      at.y = W.deck;
+      return at;
+    },
+
     /** The rocket's launch pad, on the crater sand on the far side of the hull. */
     rocketPoint() {
       const at = toWorld(-4, 0, -(R + 10), new THREE.Vector3());
@@ -375,9 +382,12 @@
       const hull = new MeshData();
       const lamps = new MeshData();
 
-      const steel = new THREE.Color(0.30, 0.35, 0.33);
-      const rust = new THREE.Color(0.46, 0.26, 0.13);
-      const seam = new THREE.Color(0.18, 0.21, 0.20);
+      // At home it is a rusted submarine. Anywhere else it is the spaceship
+      // you came down in: white plates, scorched black where it hit.
+      const away = SL.Planet && SL.Planet.current > 1;
+      const steel = away ? new THREE.Color(0.80, 0.82, 0.84) : new THREE.Color(0.30, 0.35, 0.33);
+      const rust = away ? new THREE.Color(0.16, 0.14, 0.14) : new THREE.Color(0.46, 0.26, 0.13);
+      const seam = away ? new THREE.Color(0.42, 0.46, 0.50) : new THREE.Color(0.18, 0.21, 0.20);
       const colourAt = (a, phi) => {
         const n = SL.fbm(a * 0.35, phi * 2.2, 3, 1, 2, 0.5, 4417);
         const c = steel.clone().lerp(rust, SL.clamp(0.35 + n * 0.9, 0, 1));

@@ -157,6 +157,7 @@
      * leak the old one onto the GPU.
      */
     teardownWorld() {
+      if (SL.Earth) SL.Earth.leave();
       for (const fish of this.fish) fish.object.parent && fish.object.parent.remove(fish.object);
       this.fish.length = 0;
       this.lures = [];
@@ -225,6 +226,8 @@
       const started = performance.now();
 
       this.seed = seed >>> 0;
+      // Which planet: decides the water's colour and which fish live here.
+      if (SL.Planet) SL.Planet.set((this.world && this.world.planet) || 1);
       SL.setSeed(this.seed);
       SL.Biomes.setSeed(this.seed);
       // One sampling pass builds both the spawn index and the chart.
@@ -252,6 +255,7 @@
       this.player.resetLoadout();
       if (SL.Mech) SL.Mech.setup(this);
       if (SL.Rocket) SL.Rocket.setup(this);
+      if (SL.Aquarium) SL.Aquarium.setup(this);
 
       SL.World.spawnCreatures(this);
 
@@ -373,9 +377,89 @@
         (hours ? hours + ' h ' + (minutes % 60) + ' min' : minutes + ' min') + ' in the water'
         + '  ·  ' + SL.Index.count + ' species catalogued'
         + '  ·  ' + SL.Quest.leviathansDown + ' leviathans killed';
+      const fish = SL.Aquarium ? SL.Aquarium.names() : [];
+      document.getElementById('homeFish').textContent = fish.length
+        ? 'In the aquarium, home with you: ' + fish.join(', ')
+        : 'You came home without any fish in the aquarium';
       document.getElementById('homeScreen').classList.add('is-visible');
       this.updateCursor();
       this.audio.craft();
+    }
+
+    /**
+     * The sequel. NASA takes your materials and builds a new ship, which
+     * comes down on Vireth - a new world, with your gear, your aquarium and
+     * none of your materials. Two screens: the build, and the crash.
+     */
+    toNasa() {
+      document.getElementById('homeScreen').classList.remove('is-visible');
+      this.completionOpen = false;
+      SL.Earth.enter(this);
+      this.enter();
+    }
+
+    /** The test flight is over, one way or another. */
+    crashScreen() {
+      this.setPaused(true);
+      this.completionOpen = true;
+      document.getElementById('pauseScreen').classList.remove('is-visible');
+      this.nasaStep = 0;
+      document.getElementById('nasaScreen').classList.add('is-visible');
+      this.nasaNext();
+      this.updateCursor();
+    }
+
+    /** The old two-screen version, kept for anything that still calls it. */
+    nasaStory() {
+      const screen = document.getElementById('nasaScreen');
+      const title = document.getElementById('nasaTitle');
+      const text = document.getElementById('nasaText');
+      const button = document.getElementById('nasaButton');
+      title.innerHTML = 'Back at <em>NASA</em>';
+      text.textContent = 'You hand NASA everything you brought back, and they build you a new '
+        + 'space ship - bigger, faster, and with a proper place for the aquarium. '
+        + 'One short hop to test it. What could go wrong?';
+      button.textContent = 'Launch';
+      this.nasaStep = 0;
+      screen.classList.add('is-visible');
+      this.updateCursor();
+    }
+
+    nasaNext() {
+      const title = document.getElementById('nasaTitle');
+      const text = document.getElementById('nasaText');
+      const button = document.getElementById('nasaButton');
+      if (this.nasaStep === 0) {
+        this.nasaStep = 1;
+        this.audio.bite(0);
+        title.innerHTML = 'Something went <em>wrong</em>';
+        text.textContent = 'Warning lights, a lot of shaking, then a long way down. The new ship '
+          + 'is lying on the floor of an ocean on a planet nobody has a name for yet - you call '
+          + 'it Vireth. The water is violet. There are rustjaws here too. But some of the fish '
+          + 'from home, like the Glimmerfin, are nowhere to be seen.';
+        button.textContent = 'Climb out';
+        return;
+      }
+      document.getElementById('nasaScreen').classList.remove('is-visible');
+      this.completionOpen = false;
+      this.crashOnNewPlanet();
+    }
+
+    async crashOnNewPlanet() {
+      if (SL.Earth) SL.Earth.leave();
+      // The world you leave keeps you in its wreck, for if you ever go back.
+      if (SL.Wreck) { const s = SL.Wreck.spawnPoint(); this.player.position.copy(s.position); this.player.yaw = s.yaw; }
+      const from = this.world;
+      const world = SL.Saves.create(((from && from.name) || 'Untitled Reef').replace(/ · Vireth$/, '') + ' · Vireth');
+      world.planet = 2;
+      world.biome = 'Safe Shallows';
+      // Your gear came with you; your materials went into the ship.
+      world.crafting = { inventory: {}, stacks: {}, built: Object.assign({}, SL.Crafting.built) };
+      world.aquarium = SL.Aquarium && SL.Aquarium.fish.length ? { fish: SL.Aquarium.fish.slice(), net: [] } : null;
+      await this.saveWorld();
+      await SL.Saves.put(world);
+      this.enterWorld(world);
+      this.hud.toast('You crashed on Vireth');
     }
 
     closeHome(andLeave) {
@@ -395,6 +479,8 @@
     /** Writes the current run into its world record. Never blocks the game. */
     saveWorld(options) {
       if (!this.world || !this.player) return Promise.resolve(false);
+      // Earth is a visit, not a place in the world: nothing is saved from it.
+      if (SL.Earth && SL.Earth.active) return Promise.resolve(false);
 
       SL.Saves.capture(this.world, this);
       const saved = SL.Saves.put(this.world);
@@ -421,6 +507,12 @@
 
     /** Saves and returns to the world list. */
     async quitToMenu() {
+      // Leaving from Earth puts you back in the wreck, as if you had gone back down.
+      if (SL.Earth && SL.Earth.active) {
+        SL.Earth.leave();
+        if (SL.Wreck) { const s = SL.Wreck.spawnPoint(); this.player.position.copy(s.position); this.player.yaw = s.yaw; }
+        this.player.velocity.set(0, 0, 0);
+      }
       await this.saveWorld();
       this.started = false;
       this.setPaused(true);
@@ -464,6 +556,8 @@
         this.player.update(dt, this.input);
         if (SL.Mech) SL.Mech.update(dt);
         if (SL.Rocket) SL.Rocket.update(dt);
+        if (SL.Aquarium) SL.Aquarium.update(dt);
+        if (SL.Earth) SL.Earth.update(dt);
         // Spent lures go out.
         if (this.lures && this.lures.length) {
           this.lures = this.lures.filter((l) => {
@@ -1026,6 +1120,8 @@
     });
 
     document.getElementById('homeStayButton').addEventListener('click', () => game.closeHome(false));
+    document.getElementById('homeNasaButton').addEventListener('click', () => game.toNasa());
+    document.getElementById('nasaButton').addEventListener('click', () => game.nasaNext());
     document.getElementById('homeLeaveButton').addEventListener('click', () => game.closeHome(true));
   }
 
