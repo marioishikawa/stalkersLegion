@@ -814,6 +814,7 @@
     interact() {
       if (this.dead) return;
       if (SL.Mech && SL.Mech.interact(this)) return;
+      if (SL.Rocket && SL.Rocket.interact(this)) return;
 
       if (this.carriedScrap) {
         this.camera.getWorldDirection(_forward);
@@ -1037,6 +1038,9 @@
         this.clampToWorld();
         return;
       }
+
+      // Riding the rocket home: no steering, just the view.
+      if (SL.Rocket && SL.Rocket.flying) { SL.Rocket.carry(this); return; }
 
       this.camera.getWorldDirection(_forward);
       _right.set(_forward.z, 0, -_forward.x).normalize();

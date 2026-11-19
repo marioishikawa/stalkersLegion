@@ -191,6 +191,13 @@
       return toWorld(HALF - 1.2, W.deck - CY + 1.0, 0, new THREE.Vector3());
     },
 
+    /** The rocket's launch pad, on the crater sand on the far side of the hull. */
+    rocketPoint() {
+      const at = toWorld(-4, 0, -(R + 10), new THREE.Vector3());
+      at.y = W.deck;
+      return at;
+    },
+
     /** The mech's charging pad, on the crater sand outside the breach. */
     padPoint() {
       const at = toWorld(W.door.a - 1, 0, R + 7.5, new THREE.Vector3());

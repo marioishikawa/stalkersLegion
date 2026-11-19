@@ -251,6 +251,7 @@
       SL.Index.reset();
       this.player.resetLoadout();
       if (SL.Mech) SL.Mech.setup(this);
+      if (SL.Rocket) SL.Rocket.setup(this);
 
       SL.World.spawnCreatures(this);
 
@@ -361,6 +362,29 @@
       this.audio.craft();
     }
 
+    /** The ending: the rocket made it. */
+    showHome() {
+      this.completionOpen = true;
+      this.setPaused(true);
+      document.getElementById('pauseScreen').classList.remove('is-visible');
+      const minutes = Math.round((this.worldTime || 0) / 60);
+      const hours = Math.floor(minutes / 60);
+      document.getElementById('homeStats').textContent =
+        (hours ? hours + ' h ' + (minutes % 60) + ' min' : minutes + ' min') + ' in the water'
+        + '  ·  ' + SL.Index.count + ' species catalogued'
+        + '  ·  ' + SL.Quest.leviathansDown + ' leviathans killed';
+      document.getElementById('homeScreen').classList.add('is-visible');
+      this.updateCursor();
+      this.audio.craft();
+    }
+
+    closeHome(andLeave) {
+      this.completionOpen = false;
+      document.getElementById('homeScreen').classList.remove('is-visible');
+      if (andLeave) this.quitToMenu();
+      else this.enter();
+    }
+
     closeCompletion(andLeave) {
       this.completionOpen = false;
       document.getElementById('completionScreen').classList.remove('is-visible');
@@ -439,6 +463,7 @@
       if (!this.paused) {
         this.player.update(dt, this.input);
         if (SL.Mech) SL.Mech.update(dt);
+        if (SL.Rocket) SL.Rocket.update(dt);
         // Spent lures go out.
         if (this.lures && this.lures.length) {
           this.lures = this.lures.filter((l) => {
@@ -999,6 +1024,9 @@
     document.getElementById('leaveCompleteButton').addEventListener('click', () => {
       game.closeCompletion(true);
     });
+
+    document.getElementById('homeStayButton').addEventListener('click', () => game.closeHome(false));
+    document.getElementById('homeLeaveButton').addEventListener('click', () => game.closeHome(true));
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

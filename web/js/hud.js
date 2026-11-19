@@ -232,7 +232,8 @@
         this.el.hatchNote.textContent = SL.Wreck.hatchOpen ? '[E] close the hatch' : '[E] open the hatch';
       }
       // Or the mech: its deployer, the mech itself, and its cockpit readout.
-      const mechNote = !atHatch && SL.Mech ? (SL.Mech.status() || SL.Mech.prompt(p)) : null;
+      const mechNote = atHatch ? null
+        : (SL.Mech && (SL.Mech.status() || SL.Mech.prompt(p))) || (SL.Rocket && SL.Rocket.prompt(p)) || null;
       if (mechNote) this.el.hatchNote.textContent = mechNote;
       // The cockpit readout sits higher, clear of the health and air bars.
       this.el.hatchNote.style.bottom = SL.Mech && SL.Mech.piloting ? '150px' : '';

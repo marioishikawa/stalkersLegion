@@ -93,8 +93,8 @@
         if (world.completed) {
           done = document.createElement('span');
           done.className = 'world__done';
-          done.title = 'You finished this world';
-          done.textContent = 'complete';
+          done.title = world.wentHome ? 'You finished this world and went home' : 'You finished this world';
+          done.textContent = world.wentHome ? 'made it home' : 'complete';
         }
 
         const asks = world.completed
