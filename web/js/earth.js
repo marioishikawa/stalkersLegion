@@ -21,6 +21,10 @@
   const GROUND = SL.WATER_LEVEL + 2;
   const SHIP_HEIGHT = 18;
   const BUILD_TIME = 20;
+  /** Grass round the town, then a beach running down under the water. */
+  const GRASS = 8, BEACH = 30, SEA_BED = -6;
+  /** The fishing pier, running out from the south side of the island into deep water. */
+  const PIER = { x: -20, z0: HALF_Z + 2, z1: HALF_Z + GRASS + BEACH + 14, half: 1.6, y: GROUND + 0.35 };
   const FLIGHT = 6;
 
   const Earth = {
@@ -30,9 +34,26 @@
     timer: 0,
     boxes: [],
 
+    /**
+     * The island: level under the town and its grass, then a beach sloping
+     * gently down into the sea, so you can walk off it into the water and
+     * walk - or swim - back up it again.
+     */
     groundAt(x, z) {
       if (!this.active) return -Infinity;
-      return Math.abs(x - AT.x) < HALF_X && Math.abs(z - AT.z) < HALF_Z ? GROUND : -Infinity;
+      return this.shape(x, z);
+    },
+
+    shape(x, z) {
+      // The pier's deck, on its posts.
+      const lx = x - AT.x, lz = z - AT.z;
+      if (Math.abs(lx - PIER.x) < PIER.half && lz > PIER.z0 && lz < PIER.z1) return PIER.y;
+      const dx = Math.max(0, Math.abs(x - AT.x) - HALF_X);
+      const dz = Math.max(0, Math.abs(z - AT.z) - HALF_Z);
+      const d = Math.hypot(dx, dz);
+      if (d <= GRASS) return GROUND;
+      if (d >= GRASS + BEACH) return -Infinity;
+      return SL.lerp(GROUND, SEA_BED, SL.smoothstep((d - GRASS) / BEACH));
     },
 
     /** Keeps the diver out of the buildings. */
@@ -48,7 +69,18 @@
       }
     },
 
+    /** Where you stand on arriving: the west end of the street, facing NASA. */
+    startPoint() {
+      return { position: new THREE.Vector3(AT.x - HALF_X + 4, GROUND + 1.7, AT.z), yaw: -Math.PI / 2 };
+    },
+
+    /** The far end of the pier, in the world. */
+    pierEnd() {
+      return new THREE.Vector3(AT.x + PIER.x, PIER.y, AT.z + PIER.z1 - 1.5);
+    },
+
     enter(game, quiet) {
+      if (this.active) this.leave();
       this.game = game;
       this.active = true;
       this.stage = 'arrived';
@@ -116,7 +148,16 @@
       this.boxes = [];
 
       // The ground: the island under it, pavement, and the road down the middle.
-      box(HALF_X * 2, 12, HALF_Z * 2, 0x6b6656, 0, GROUND - 6, 0);
+      g.add(this.buildIsland(game));
+      g.add(this.buildCoast());
+
+      // The pier: planks on posts, out to where the water is deep.
+      const pierLen = PIER.z1 - PIER.z0;
+      box(PIER.half * 2, 0.25, pierLen, 0x8a6a44, PIER.x, PIER.y - 0.12, PIER.z0 + pierLen / 2);
+      for (let z = PIER.z0 + 2; z < PIER.z1; z += 4) {
+        for (const side of [1, -1]) box(0.3, 8, 0.3, 0x5a4530, PIER.x + side * (PIER.half - 0.2), PIER.y - 4.2, z);
+      }
+      if (SL.People) SL.People.buildEarth(game, g, AT);
       box(HALF_X * 2, 0.1, HALF_Z * 2, 0x9a978c, 0, GROUND + 0.05, 0);
       box(HALF_X * 2, 0.12, 8, 0x3a3c3e, 0, GROUND + 0.08, 0);
       for (let x = -HALF_X + 4; x < HALF_X - 14; x += 6) box(2.4, 0.13, 0.25, 0xe8e0c0, x, GROUND + 0.1, 0);
@@ -176,6 +217,62 @@
       g.position.set(AT.x, 0, AT.z);
       game.addToWorld(g);
       this.group = g;
+    },
+
+    /** The ground of the island, grass to sand to wet sand, as one mesh. */
+    buildIsland(game) {
+      const mesh = new SL.MeshData();
+      const step = 2;
+      const ex = HALF_X + GRASS + BEACH + 2, ez = HALF_Z + GRASS + BEACH + 2;
+      const nx = Math.ceil(ex * 2 / step), nz = Math.ceil(ez * 2 / step);
+      const grass = new THREE.Color(0.30, 0.52, 0.24), sand = new THREE.Color(0.86, 0.78, 0.56);
+      const wet = new THREE.Color(0.52, 0.46, 0.34);
+      for (let j = 0; j <= nz; j++) {
+        for (let i = 0; i <= nx; i++) {
+          const x = -ex + i * step, z = -ez + j * step;
+          let y = this.shape(AT.x + x, AT.z + z);
+          if (y === -Infinity) y = SEA_BED - 1;
+          const c = y >= GROUND - 0.01 ? grass : y > SL.WATER_LEVEL + 0.2 ? sand : wet;
+          mesh.vertex(x, y, z, 0, 1, 0, c);
+        }
+      }
+      for (let j = 0; j < nz; j++) {
+        for (let i = 0; i < nx; i++) {
+          const a = j * (nx + 1) + i, b = a + nx + 1;
+          mesh.quad(a, b, b + 1, a + 1);
+        }
+      }
+      mesh.computeNormals();
+      return new THREE.Mesh(mesh.toGeometry(), game.materials.surface);
+    },
+
+    /**
+     * Across the bay: the mainland. Green hills, and a city skyline along the
+     * shore, too far to swim to - it is there so the island is somewhere.
+     */
+    buildCoast() {
+      const g = new THREE.Group();
+      const hill = new THREE.MeshLambertMaterial({ color: 0x5f7f52 });
+      const rock = new THREE.MeshLambertMaterial({ color: 0x7c7a70 });
+      const tower = [0x8e9aa8, 0xa8b0b8, 0x7a8696, 0xb8b2a6];
+      for (let i = 0; i < 9; i++) {
+        const a = -0.9 + i * 0.22;
+        const r = 300 + (i % 3) * 25;
+        const h = new THREE.Mesh(new THREE.ConeGeometry(70 + (i % 4) * 15, 30 + (i * 7) % 35, 9),
+          i % 3 === 2 ? rock : hill);
+        h.position.set(Math.sin(a) * r, 5, Math.cos(a) * r + 40);
+        g.add(h);
+      }
+      for (let i = 0; i < 16; i++) {
+        const a = -0.35 + i * 0.045;
+        const r = 250;
+        const height = 18 + ((i * 53) % 45);
+        const b = new THREE.Mesh(new THREE.BoxGeometry(9, height, 9),
+          new THREE.MeshLambertMaterial({ color: tower[i % tower.length] }));
+        b.position.set(Math.sin(a) * r, height / 2, Math.cos(a) * r);
+        g.add(b);
+      }
+      return g;
     },
 
     /** The word NASA, painted on a board. */

@@ -79,7 +79,7 @@
       this.pulse = 0;
       // A new world always starts on foot, knife in hand.
       if (game.player && game.player.knife) game.player.knife.visible = true;
-      if (!SL.Wreck) return;
+      if (!SL.Wreck || SL.Wreck.absent) { this.group = null; this.pad = null; this.console = null; this.at = null; return; }
 
       this.pad = SL.Wreck.padPoint();
       this.console = SL.Wreck.consolePoint();

@@ -85,6 +85,7 @@
       this.keeper = null;
       this.grudge = false;
       this.chased = false;
+      if (SL.Planet && SL.Planet.onEarth) return false;
 
       const B = SL.Biomes;
       const shallows = B.byId.shallows;

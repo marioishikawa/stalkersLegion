@@ -26,7 +26,7 @@
       this.net = [];
       this.fish = [];
       this.swimmers = [];
-      if (!SL.Wreck) return;
+      if (!SL.Wreck || SL.Wreck.absent) { this.group = null; this.pad = null; this.console = null; this.at = null; this.inside = null; return; }
       // On a planet you have crashed on, the tank came down with you and sits
       // inside the wreck. On Earth it stands by the rocket pad.
       if (SL.Planet && SL.Planet.current > 1) {

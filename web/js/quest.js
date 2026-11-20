@@ -96,6 +96,8 @@
     /** Called whenever something that could finish the world happens. */
     check(game) {
       if (this.finished || !game || !game.started) return;
+      // Earth is home, not a world to finish.
+      if (SL.Planet && SL.Planet.onEarth) return;
       if (!this.progress().complete) return;
 
       this.finished = true;

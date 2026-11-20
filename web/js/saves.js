@@ -182,6 +182,7 @@
       world.aquarium = SL.Aquarium ? SL.Aquarium.capture() : null;
       // On Earth, the town is where you are.
       world.earth = SL.Earth ? SL.Earth.capture() : null;
+      world.people = SL.People ? SL.People.capture() : null;
       world.crafting = {
         inventory: Object.assign({}, SL.Crafting.inventory),
         stacks: Object.assign({}, SL.Crafting.stacks),
@@ -235,6 +236,7 @@
       }
 
       if (SL.Earth && world.earth) SL.Earth.restore(world.earth, game);
+      if (SL.People && world.people) SL.People.restore(world.people, game);
     }
   };
 

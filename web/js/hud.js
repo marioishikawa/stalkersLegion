@@ -41,6 +41,8 @@
         const row = document.createElement('button');
         row.type = 'button';
         row.className = 'recipe';
+        // Things you buy rather than build are not on the fabricator.
+        if (recipe.hidden) row.style.display = 'none';
 
         const cost = Object.entries(recipe.cost)
           .map(([type, n]) => n + ' ' + (SL.Pickup.TYPES[type]
@@ -233,7 +235,7 @@
       }
       // Or the mech: its deployer, the mech itself, and its cockpit readout.
       const mechNote = atHatch ? null
-        : (SL.Earth && SL.Earth.prompt(p)) || (SL.Mech && (SL.Mech.status() || SL.Mech.prompt(p))) || (SL.Aquarium && SL.Aquarium.prompt(p))
+        : (SL.People && SL.People.prompt(p)) || (SL.Earth && SL.Earth.prompt(p)) || (SL.Mech && (SL.Mech.status() || SL.Mech.prompt(p))) || (SL.Aquarium && SL.Aquarium.prompt(p))
           || (SL.Rocket && SL.Rocket.prompt(p)) || null;
       if (mechNote) this.el.hatchNote.textContent = mechNote;
       // The cockpit readout sits higher, clear of the health and air bars.

@@ -838,10 +838,15 @@
     // hard to work.
     game.startPopulation = {};
 
-    spawnLeviathans(game);
-    scatterNests(game);
-    spawnIslander(game);
-    scatterCrabers(game);
+    // Earth's sea is a real one: fish, sharks and turtles, and none of the
+    // alien planet's rustjaws, crabs, nests or leviathans.
+    const earth = SL.Planet && SL.Planet.onEarth;
+    if (!earth) {
+      spawnLeviathans(game);
+      scatterNests(game);
+      spawnIslander(game);
+      scatterCrabers(game);
+    }
     scatterSharks(game);
 
     for (const biome of SL.Biomes.list) {
@@ -911,7 +916,7 @@
       }
 
       // --- Stalkers -----------------------------------------------------------
-      const stalkers = Math.round((biome.stalkerDensity || 0) * 9 * areaFactorOf(biome));
+      const stalkers = earth ? 0 : Math.round((biome.stalkerDensity || 0) * 9 * areaFactorOf(biome));
       for (let i = 0; i < stalkers; i++) {
         const point = SL.Biomes.randomPointIn(biome);
         if (!point) continue;
@@ -921,6 +926,8 @@
         game.stalkers.push(stalker);
       }
     }
+
+    if (earth) return;
 
     // Last, so the dice everything above was dealt with are unchanged and an
     // existing world keeps the same fish in the same places.

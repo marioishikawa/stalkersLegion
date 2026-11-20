@@ -109,6 +109,12 @@
   const Wreck = {
     layout: W,
 
+    /**
+     * There is no wreck on Earth: you arrive by ship, not by crash. While this
+     * is set, every question about the hull answers as if it were not there.
+     */
+    absent: false,
+
     get hatchOpen() { return hatch.open; },
 
     /** The hatch starts shut every time a world is built. */
@@ -116,6 +122,7 @@
 
     /** Whether the diver is close enough to the hatch to work it, from either side. */
     nearHatch(position) {
+      if (Wreck.absent) return false;
       const door = toWorld(W.door.a, W.deck - CY + 1.3, R * 0.85, _door);
       return Math.hypot(position.x - door.x, position.y - door.y, position.z - door.z) < 3.4;
     },
@@ -169,6 +176,7 @@
 
     /** Height of the crater floor blended into the shelf around it. */
     craterFloor(x, z, y) {
+      if (Wreck.absent) return y;
       const r = Math.hypot(x - W.x, z - W.z);
       if (r >= W.craterEdge) return y;
       return SL.lerp(W.deck, y, SL.smoothstep((r - W.craterFlat) / (W.craterEdge - W.craterFlat)));
@@ -176,11 +184,13 @@
 
     /** Whether a point is in the crater, which counts as Safe Shallows. */
     inCrater(x, z) {
+      if (Wreck.absent) return false;
       return Math.hypot(x - W.x, z - W.z) < W.craterEdge;
     },
 
     /** Whether the hull covers this patch of sand, with some room to spare. */
     covers(x, z, margin) {
+      if (Wreck.absent) return false;
       const l = toLocal({ x, y: CY, z }, _l);
       const m = margin || 0;
       return Math.abs(l.a) < HALF + R + m && Math.abs(l.s) < R + m;
@@ -214,6 +224,7 @@
 
     /** Where the diver wakes: on the sand inside, near the bow, facing the breach. */
     spawnPoint() {
+      if (Wreck.absent && SL.Earth) return SL.Earth.startPoint();
       const at = toWorld(HALF - 3.5, W.deck - CY + 1.4, 0, new THREE.Vector3());
       const door = toWorld(W.door.a, W.deck - CY + 1.4, R * 0.6, new THREE.Vector3());
       const yaw = Math.atan2(-(door.x - at.x), -(door.z - at.z));
@@ -230,6 +241,7 @@
      * through. Returns the world push, or null.
      */
     collide(position, previous, radius, out) {
+      if (Wreck.absent) return null;
       const l = toLocal(position, _l);
       // Quick reject: nowhere near.
       if (Math.abs(l.a) > HALF + R + radius + 1 || Math.abs(l.s) > R + radius + 1
@@ -280,6 +292,7 @@
      * are pushed out of. Returns the world push, or null.
      */
     keepOut(position, margin, out) {
+      if (Wreck.absent) return null;
       const l = toLocal(position, _l);
       if (Math.abs(l.a) > HALF + R + margin + 1 || Math.abs(l.s) > R + margin + 1
         || l.y > R + W.tower.height + margin + 1) return null;
@@ -309,6 +322,7 @@
 
     /** Whether a point is inside the hull. */
     isInside(position) {
+      if (Wreck.absent) return false;
       return insideHull(toLocal(position, _l));
     },
 
@@ -322,6 +336,7 @@
      * points to walk in order, or null for "carry on as normal".
      */
     routeFor(walker) {
+      if (Wreck.absent) return null;
       const at = walker.position;
       const doorOut = toWorld(W.door.a, 0, R + 1.6, new THREE.Vector3());
       const doorIn = toWorld(W.door.a, 0, R * 0.45, new THREE.Vector3());
@@ -344,6 +359,7 @@
 
     /** A few walkers that live round the wreck, so something does wander in. */
     populate(game) {
+      if (Wreck.absent) return;
       const spots = (n, make) => {
         for (let i = 0; i < n; i++) {
           for (let tries = 0; tries < 12; tries++) {
@@ -379,6 +395,7 @@
     // --- The hull itself --------------------------------------------------------
 
     build(game) {
+      if (Wreck.absent) { game.wreck = null; return; }
       const hull = new MeshData();
       const lamps = new MeshData();
 

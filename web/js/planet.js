@@ -16,13 +16,14 @@
 
   /** Home fish that never made it to Vireth. */
   const ABSENT = {
-    // The Red Glimmer lives only on Vireth.
-    1: ['redglimmer'],
     2: ['glimmerfin', 'bluefish', 'bluefat', 'fatfish', 'finfish', 'oscar', 'redfish',
       'darter', 'nibbler', 'emberfin']
   };
 
-  const NAMES = { 1: 'Earth', 2: 'Vireth' };
+  /** 1 is the Rustjaw Legion's own planet, where the game starts. */
+  const NAMES = { 1: 'Legion', 2: 'Vireth', 3: 'Earth' };
+  /** Earth: a real sea, and somewhere to go home to. */
+  const EARTH = 3;
 
   /** How each planet tints the water and the sand, from home's colours. */
   const TINT = {
@@ -39,10 +40,17 @@
     nameOf(n) { return NAMES[n] || 'Earth'; },
 
     /** The little bright fish the sharks hunt, which differs from planet to planet. */
-    get prey() { return this.current === 2 ? 'redglimmer' : 'glimmerfin'; },
+    get prey() { return this.current === 2 ? 'redglimmer' : this.current === EARTH ? 'goldfish' : 'glimmerfin'; },
+
+    /** Whether this world is Earth. */
+    get onEarth() { return this.current === EARTH; },
+    EARTH,
 
     /** Whether a species is missing from the planet this world is on. */
     absent(species) {
+      // A species lives on the planets it lists - by default the two alien ones.
+      const on = (species && species.planets) || [1, 2];
+      if (on.indexOf(this.current) < 0) return true;
       const list = ABSENT[this.current];
       return !!(list && species && list.indexOf(species.id) >= 0);
     },

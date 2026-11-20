@@ -175,6 +175,26 @@
       cost: { simyphit: 8, diamond: 2, titanium: 6 },
       requires: 'prismsuit',
       apply(player) { player.damageResist = 0.8; }
+    },
+
+    // --- Bought from the fisherman on Earth, never built --------------------------
+    // Last, and as floors rather than settings, so whichever order gear is put
+    // back on after a load, the better of two never loses to the worse.
+    {
+      id: 'seafins',
+      name: 'Sea Fins',
+      blurb: 'Bought from the fisherman. Swim speed up to 8.',
+      cost: {},
+      hidden: true,
+      apply(player) { player.swimSpeed = Math.max(player.swimSpeed, 8); }
+    },
+    {
+      id: 'diversuit',
+      name: 'Diver Suit',
+      blurb: 'Bought from the fisherman. Take at least 55% less damage.',
+      cost: {},
+      hidden: true,
+      apply(player) { player.damageResist = Math.max(player.damageResist, 0.55); }
     }
   ];
 

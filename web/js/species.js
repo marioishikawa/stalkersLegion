@@ -89,8 +89,57 @@
       schoolSize: 10, groups: 6,
       shape: { length: 0.26, height: 0.26, width: 0.11, noseSharpness: 0.55, tailFork: 0.55, stripes: 4, sideFin: 0.11 }
     }),
+    // ---------------------------------------------------------------- Earth
+    // These live only in Earth's sea, which you reach by going home.
+    fish('clownfish', 'Clownfish', 'coral', 'disc', {
+      alsoIn: ['shallows'], planets: [3],
+      note: 'Orange with three white bands edged in black, darting in and out of ' +
+            'the sea fans. Small, bold, and famous.',
+      backColor: C(1.0, 0.46, 0.08), bellyColor: C(1.0, 0.56, 0.18), finColor: C(1.0, 0.52, 0.14),
+      eyeColor: C(0.04, 0.03, 0.02),
+      schoolSize: 4, groups: 5, altitude: 2, cruiseSpeed: 1.4,
+      shape: { length: 0.16, height: 0.42, width: 0.14, noseSharpness: 0.3, tailFork: 0.1,
+               stripes: 3, dorsalFin: 0.16, sideFin: 0.12, eyeSize: 0.07 }
+    }),
+    fish('goldfish', 'Goldfish', 'shallows', 'torpedo', {
+      alsoIn: ['plateau'], planets: [3],
+      note: 'A round gold fish with a long flowing tail. Someone let theirs go, and ' +
+            'now there are rather a lot of them.',
+      backColor: C(1.0, 0.62, 0.10), bellyColor: C(1.0, 0.86, 0.46), finColor: C(1.0, 0.70, 0.24),
+      eyeColor: C(0.04, 0.03, 0.02),
+      schoolSize: 8, groups: 6, altitude: 2.5, cruiseSpeed: 1.2,
+      shape: { length: 0.2, height: 0.36, width: 0.15, bellyPosition: 0.4, noseSharpness: 0.3,
+               tailHeight: 0.6, tailSweep: 0.4, tailFork: 0.5, dorsalFin: 0.16, sideFin: 0.12, eyeSize: 0.07 }
+    }),
+    fish('wobbegong', 'Wobbegong', 'kelp', 'ribbon', {
+      alsoIn: ['shallows', 'coral'], planets: [3],
+      note: 'A carpet shark: flat, blotched like the sea floor, with a fringe of weed ' +
+            'round its mouth. It lies on the bottom and waits, and you swim right over it.',
+      backColor: C(0.56, 0.46, 0.28), bellyColor: C(0.78, 0.70, 0.52), finColor: C(0.46, 0.38, 0.22),
+      eyeColor: C(0.10, 0.08, 0.04),
+      maxHealth: 60, schoolSize: 1, groups: 3, altitude: 0.3, cruiseSpeed: 0.5, sprintSpeed: 3, wagRate: 1.5,
+      shape: { length: 1.6, height: 0.07, width: 0.16, noseSharpness: 0.1, crossSection: 3,
+               tailHeight: 0.12, tailFork: 0.1, dorsalFin: 0.05, sideFin: 0.2,
+               spots: 18, spotSize: 0.03, eyeSize: 0.02, spineSegments: 18 }
+    }),
+    fish('whaleshark', 'Whale Shark', 'plateau', 'torpedo', {
+      alsoIn: ['boulders'], planets: [3],
+      note: 'The biggest fish in the sea: twelve metres long, dark blue and covered in ' +
+            'white spots, cruising with its huge mouth open for plankton. Gentle as anything. ' +
+            'The fisherman wants one scanned.',
+      backColor: C(0.18, 0.26, 0.36), bellyColor: C(0.88, 0.90, 0.88), finColor: C(0.16, 0.22, 0.30),
+      spotColor: C(0.92, 0.94, 0.92),
+      eyeColor: C(0.03, 0.03, 0.04),
+      maxHealth: 900, schoolSize: 1, groups: 0.4, altitude: 8, cruiseSpeed: 1.6, sprintSpeed: 2.6,
+      senseRadius: 4, turnRate: 0.6, wagRate: 1.2,
+      shape: { length: 12, height: 0.16, width: 0.14, bellyPosition: 0.35, noseSharpness: 0.05,
+               crossSection: 2.4, tailHeight: 0.28, tailSweep: 0.2, tailFork: 0.5,
+               dorsalFin: 0.12, sideFin: 0.18, spots: 60, spotSize: 0.012, eyeSize: 0.01,
+               spineSegments: 22, radialSegments: 12 }
+    }),
+
     fish('redglimmer', 'Red Glimmer', 'shallows', 'torpedo', {
-      alsoIn: ['islet', 'kelp'],
+      alsoIn: ['islet', 'kelp'], planets: [2],
       nests: true,
       // Only on Vireth: see planet.js.
       note: "Vireth's answer to the Glimmerfin: small, quick and bright as a coal, " +
@@ -495,6 +544,7 @@
     }),
 
     fish('stingray', 'Stingray', 'plateau', 'disc', {
+      planets: [1, 2, 3],
       alsoIn: ['islet'],
       note: "All wing and whip tail, hugging the plateau grass. Harmless.",
       // Broad wings, a whip tail, and it hugs the grass. Harmless.
@@ -534,6 +584,7 @@
     // all three is a tour of the sunlit half of the map rather than three
     // identical encounters in the same bay.
     fish('greenturtle', 'Green Turtle', 'shallows', 'disc', {
+      planets: [1, 2, 3],
       alsoIn: ['kelp'],
       diet: 'mammal',
       note: 'Grazes the shallows at walking pace and climbs for air about ' +
@@ -1041,6 +1092,7 @@
 
     // ------------------------------------------------------------- The predator
     fish('shark', 'Shark', 'shallows', 'torpedo', {
+      planets: [1, 2, 3],
       alsoIn: ['kelp'],
       diet: 'carnivore',
       note: 'Here for the Glimmerfin, and it will cross its whole range for ' +

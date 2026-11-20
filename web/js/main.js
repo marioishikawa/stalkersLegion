@@ -238,13 +238,18 @@
 
       SL.World.buildLighting(this);
       SL.World.buildTerrain(this);
+      // Earth has no wreck: you came by ship, and there is a town instead.
+      if (SL.Wreck) SL.Wreck.absent = !!(SL.Planet && SL.Planet.onEarth);
       if (SL.Wreck) SL.Wreck.build(this);
       if (SL.LobsterCave) SL.LobsterCave.build(this);
       SL.World.buildWaterSurface(this);
       if (!this.sky) SL.World.buildSky(this);
       const plants = SL.World.scatterFlora(this);
-      SL.World.scatterScrap(this);
-      SL.World.scatterCrystals(this);
+      // No scrap metal and no crystal on Earth: that is the alien sea's.
+      if (!(SL.Planet && SL.Planet.onEarth)) {
+        SL.World.scatterScrap(this);
+        SL.World.scatterCrystals(this);
+      }
 
       // The player and HUD survive world changes; only the ocean is rebuilt.
       if (!this.player) this.player = new SL.Player(this);
@@ -256,6 +261,8 @@
       if (SL.Mech) SL.Mech.setup(this);
       if (SL.Rocket) SL.Rocket.setup(this);
       if (SL.Aquarium) SL.Aquarium.setup(this);
+      if (SL.People) { SL.People.reset(); SL.People.game = this; }
+      if (SL.Earth && SL.Planet && SL.Planet.onEarth) SL.Earth.enter(this, true);
 
       SL.World.spawnCreatures(this);
 
@@ -394,8 +401,42 @@
     toNasa() {
       document.getElementById('homeScreen').classList.remove('is-visible');
       this.completionOpen = false;
-      SL.Earth.enter(this);
-      this.enter();
+      this.goToEarth();
+    }
+
+    /** A world's name without the planet on the end. */
+    baseName(world) {
+      return ((world && world.name) || 'Untitled Reef').replace(/ · (Vireth|Earth)$/, '');
+    }
+
+    /**
+     * Home: Earth is its own world, with its own sea. You arrive in the town
+     * with your gear, your materials and your aquarium. One Earth per world
+     * you came home from: going again takes you back to the same one.
+     */
+    async goToEarth() {
+      if (SL.Earth) SL.Earth.leave();
+      const from = this.world;
+      let world = from && from.earthId ? await SL.Saves.get(from.earthId) : null;
+      if (!world) {
+        world = SL.Saves.create(this.baseName(from) + ' · Earth');
+        world.planet = 3;
+        world.biome = 'Safe Shallows';
+        if (from) from.earthId = world.id;
+      }
+      world.crafting = {
+        inventory: Object.assign({}, SL.Crafting.inventory),
+        stacks: Object.assign({}, SL.Crafting.stacks),
+        built: Object.assign({}, SL.Crafting.built)
+      };
+      if (SL.Aquarium && SL.Aquarium.fish.length) world.aquarium = SL.Aquarium.capture();
+      // Arriving: in the town, at the start of the street.
+      world.player = null;
+      world.earth = null;
+      if (from && from.planet !== 3) await this.saveWorld();
+      await SL.Saves.put(world);
+      this.enterWorld(world);
+      this.hud.toast('Home on Earth. NASA is at the end of the street - and someone is fishing off the pier');
     }
 
     /** The test flight is over, one way or another. */
@@ -450,8 +491,10 @@
       // The world you leave keeps you in its wreck, for if you ever go back.
       if (SL.Wreck) { const s = SL.Wreck.spawnPoint(); this.player.position.copy(s.position); this.player.yaw = s.yaw; }
       const from = this.world;
-      const world = SL.Saves.create(((from && from.name) || 'Untitled Reef').replace(/ · Vireth$/, '') + ' · Vireth');
+      const world = SL.Saves.create(this.baseName(from) + ' · Vireth');
       world.planet = 2;
+      // The fisherman, if you asked him along.
+      if (SL.People && SL.People.joined) world.people = { stage: 'joined', coins: SL.People.coins, joined: true };
       world.biome = 'Safe Shallows';
       // Your gear came with you; your materials went into the ship.
       world.crafting = { inventory: {}, stacks: {}, built: Object.assign({}, SL.Crafting.built) };
@@ -550,6 +593,7 @@
         if (SL.Rocket) SL.Rocket.update(dt);
         if (SL.Aquarium) SL.Aquarium.update(dt);
         if (SL.Earth) SL.Earth.update(dt);
+        if (SL.People) SL.People.update(dt);
         // Spent lures go out.
         if (this.lures && this.lures.length) {
           this.lures = this.lures.filter((l) => {
@@ -672,7 +716,7 @@
       // that commands them is still alive, because the species has to stay
       // catalogue-able after you have killed the thing the objective told you
       // to kill.
-      if (SL.Kelpers) SL.Kelpers.tick(this, dt);
+      if (SL.Kelpers && !(SL.Planet && SL.Planet.onEarth)) SL.Kelpers.tick(this, dt);
 
       // Sharks always think, the same way stalkers do: a hunt that only runs
       // when you are watching is not a population, it is a cutscene.
@@ -750,7 +794,7 @@
       for (let i = this.bubbles.length - 1; i >= 0; i--) this.bubbles[i].update(dt);
 
       this.scrapTimer -= dt;
-      if (this.scrapTimer <= 0) { this.scrapTimer = 20; SL.World.replenishScrap(this); }
+      if (this.scrapTimer <= 0) { this.scrapTimer = 20; if (!(SL.Planet && SL.Planet.onEarth)) SL.World.replenishScrap(this); }
 
       SL.World.updateWater(this, dt);
       SL.World.updateAmbience(this, dt);
@@ -841,12 +885,12 @@
     },
     // Straight to the little Earth town, to walk it and try NASA.
     earthsus(game) {
-      if (SL.Earth && SL.Earth.active) { game.hud.toast('CHEAT — you are already on Earth'); return; }
+      if (SL.Planet && SL.Planet.onEarth) { game.hud.toast('CHEAT — you are already on Earth'); return; }
       if (SL.Rocket && SL.Rocket.flying) return;
       ['homeScreen', 'completionScreen', 'nasaScreen'].forEach((id) => document.getElementById(id).classList.remove('is-visible'));
       game.completionOpen = false;
-      SL.Earth.enter(game);
-      game.hud.toast('CHEAT — home to Earth. NASA is at the end of the street');
+      game.hud.toast('CHEAT — going home to Earth');
+      game.goToEarth();
     },
     // Crash straight onto Vireth: a new Vireth world, with your gear and aquarium.
     virethsus(game) {

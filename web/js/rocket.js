@@ -41,7 +41,7 @@
       this.remaining = 0;
       this.flightTime = 0;
       this.wentHome = false;
-      if (!SL.Wreck) return;
+      if (!SL.Wreck || SL.Wreck.absent) { this.group = null; this.pad = null; this.console = null; this.at = null; return; }
       this.pad = SL.Wreck.rocketPoint();
       this.buildPad(game);
       this.buildRocket(game);

@@ -815,6 +815,7 @@
      */
     interact() {
       if (this.dead) return;
+      if (SL.People && SL.People.interact(this)) return;
       if (SL.Earth && SL.Earth.interact(this)) return;
       if (SL.Mech && SL.Mech.interact(this)) return;
       if (SL.Aquarium && SL.Aquarium.interactTank(this)) return;
@@ -1067,7 +1068,10 @@
       this.inWater = this.position.y < SL.WATER_LEVEL;
       this.grounded = !this.inWater && this.position.y <= ground + 0.08;
 
-      if (SL.Mech && SL.Mech.piloting) {
+      if (SL.People && SL.People.driving) {
+        // --- In the fisherman's boat ------------------------------------------
+        SL.People.drive(dt, input, this);
+      } else if (SL.Mech && SL.Mech.piloting) {
         // --- Walking the mech -------------------------------------------------
         SL.Mech.drive(dt, input, this);
       } else if (this.inWater) {
