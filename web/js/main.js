@@ -228,6 +228,12 @@
       this.seed = seed >>> 0;
       // Which planet: decides the water's colour and which fish live here.
       if (SL.Planet) SL.Planet.set((this.world && this.world.planet) || 1);
+      // Earth has no wreck: you came by ship, and there is a town instead.
+      // Decided before anything asks the sea floor its height, because the
+      // crater the wreck lies in is part of that height - set it late and the
+      // floor is shaped for the last planet's answer, which on the way from
+      // Earth to Vireth buried the wreck in undug sand.
+      if (SL.Wreck) SL.Wreck.absent = !!(SL.Planet && SL.Planet.onEarth);
       SL.setSeed(this.seed);
       SL.Biomes.setSeed(this.seed);
       // One sampling pass builds both the spawn index and the chart.
@@ -238,8 +244,6 @@
 
       SL.World.buildLighting(this);
       SL.World.buildTerrain(this);
-      // Earth has no wreck: you came by ship, and there is a town instead.
-      if (SL.Wreck) SL.Wreck.absent = !!(SL.Planet && SL.Planet.onEarth);
       if (SL.Wreck) SL.Wreck.build(this);
       if (SL.LobsterCave) SL.LobsterCave.build(this);
       SL.World.buildWaterSurface(this);
