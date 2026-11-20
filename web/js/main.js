@@ -415,6 +415,15 @@
      * you came home from: going again takes you back to the same one.
      */
     async goToEarth() {
+      try {
+        await this.goToEarthNow();
+      } catch (e) {
+        console.error(e);
+        this.hud.toast('Could not reach Earth: ' + (e && e.message ? e.message : e));
+      }
+    }
+
+    async goToEarthNow() {
       if (SL.Earth) SL.Earth.leave();
       const from = this.world;
       let world = from && from.earthId ? await SL.Saves.get(from.earthId) : null;
@@ -487,6 +496,15 @@
     }
 
     async crashOnNewPlanet() {
+      try {
+        await this.crashOnNewPlanetNow();
+      } catch (e) {
+        console.error(e);
+        this.hud.toast('Could not reach Vireth: ' + (e && e.message ? e.message : e));
+      }
+    }
+
+    async crashOnNewPlanetNow() {
       if (SL.Earth) SL.Earth.leave();
       // The world you leave keeps you in its wreck, for if you ever go back.
       if (SL.Wreck) { const s = SL.Wreck.spawnPoint(); this.player.position.copy(s.position); this.player.yaw = s.yaw; }
@@ -942,6 +960,8 @@
    */
   function checkCheat(game, key) {
     if (!game.started) return 'none';
+    // A space in the middle of a code ("vireth sus") is ignored, not a reset.
+    if (key === ' ') return 'none';
 
     const buffer = (game.cheatBuffer || '') + key;
 

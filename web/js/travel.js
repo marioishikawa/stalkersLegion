@@ -326,6 +326,15 @@
     },
 
     go(game, text) {
+      // Other planets are a trip, not a place in this sea.
+      const k = key(text).replace(/sus$/, '');
+      if (k === 'vireth' || k === 'earth') {
+        this.close(game);
+        game.audio.cheat();
+        if (k === 'vireth') { game.hud.toast('CHEAT — crashing on Vireth'); game.crashOnNewPlanet(); }
+        else { game.hud.toast('CHEAT — going home to Earth'); game.goToEarth(); }
+        return;
+      }
       const place = find(this.places, text);
       if (!place) {
         this.el.feedback.textContent = 'Nowhere called "' + text.trim() + '". Try a biome, a leviathan, or a beacon.';
