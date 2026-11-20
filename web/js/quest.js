@@ -26,8 +26,11 @@
    * the one animal out there that is simply left alone. You still have to
    * catalogue it; you just have to do that with the scanner like anybody else.
    */
-  const LEVIATHANS = ['kingstalker', 'redpuff', 'kelperlev', 'glowlev', 'carnilev',
+  const LEGION = ['kingstalker', 'redpuff', 'kelperlev', 'glowlev', 'carnilev',
     'diamondlev', 'seahorselev', 'megalodon', 'sunjelly', 'kraken'];
+  /** Vireth has its own. */
+  const VIRETH = ['scorchmaw', 'lashwyrm', 'flarebell', 'sunsteed'];
+  const levs = () => (SL.Planet && SL.Planet.onVireth ? VIRETH : LEGION);
 
   const Quest = {
     /** Leviathan species ids killed in this world. */
@@ -41,11 +44,11 @@
       this.finished = false;
     },
 
-    get leviathanIds() { return LEVIATHANS.slice(); },
-    get leviathansDown() { return LEVIATHANS.filter((id) => this.killed[id]).length; },
-    get leviathanTotal() { return LEVIATHANS.length; },
+    get leviathanIds() { return levs().slice(); },
+    get leviathansDown() { return levs().filter((id) => this.killed[id]).length; },
+    get leviathanTotal() { return levs().length; },
 
-    isLeviathan(species) { return LEVIATHANS.indexOf(species.id) >= 0; },
+    isLeviathan(species) { return levs().indexOf(species.id) >= 0; },
 
     /**
      * Anything the diver kills passes through here. The kill is the scan, for

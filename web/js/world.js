@@ -841,13 +841,17 @@
     // Earth's sea is a real one: fish, sharks and turtles, and none of the
     // alien planet's rustjaws, crabs, nests or leviathans.
     const earth = SL.Planet && SL.Planet.onEarth;
-    if (!earth) {
+    // Vireth: the rustjaws came, and nothing else did. Its own fish come in
+    // through the ordinary schools below; its leviathans are placed at the end.
+    const vireth = SL.Planet && SL.Planet.onVireth;
+    if (!earth && !vireth) {
       spawnLeviathans(game);
       scatterNests(game);
       spawnIslander(game);
       scatterCrabers(game);
     }
-    scatterSharks(game);
+    if (vireth) scatterNests(game);
+    if (!vireth) scatterSharks(game);
 
     for (const biome of SL.Biomes.list) {
       const density = POPULATION * areaFactorOf(biome);
@@ -928,6 +932,15 @@
     }
 
     if (earth) return;
+    if (vireth) {
+      scatterSimyphit(game);
+      const V = SL.Species.byId;
+      spawnMegalodon(game, V.scorchmaw);
+      spawnKraken(game, V.lashwyrm);
+      spawnSunJelly(game, V.flarebell);
+      spawnSeahorseLeviathan(game, V.sunsteed);
+      return;
+    }
 
     // Last, so the dice everything above was dealt with are unchanged and an
     // existing world keeps the same fish in the same places.
@@ -1011,8 +1024,8 @@
    * where the slope falls past forty metres, the deepest such spot that is
    * still boulder slope. No dice, so nothing else in the world moves.
    */
-  function spawnSunJelly(game) {
-    const species = SL.Species.byId.sunjelly;
+  function spawnSunJelly(game, which) {
+    const species = which || SL.Species.byId.sunjelly;
     if (!species || !SL.SunJelly) return;
     let best = null, bestDepth = 0;
     for (let i = 0; i < 96; i++) {
@@ -1063,8 +1076,8 @@
    * than a hazard dropped on top of one of the others. Placed through
    * keepUnlessKilled, so once dead it stays dead in this world.
    */
-  function spawnMegalodon(game) {
-    const species = SL.Species.megalodon;
+  function spawnMegalodon(game, which) {
+    const species = which || SL.Species.megalodon;
     if (!species || !SL.MegalodonLeviathan) return;
 
     const others = [SL.Biomes.farBank, SL.Biomes.islet, SL.Biomes.ventField, SL.Biomes.meadow, SL.Biomes.tentacles]
@@ -1095,8 +1108,8 @@
    * rest of the game is concerned - one big hunter on its own ground - so the
    * knife, the scanner, the warning and the collisions all already know it.
    */
-  function spawnKraken(game) {
-    const species = SL.Species.byId.kraken;
+  function spawnKraken(game, which) {
+    const species = which || SL.Species.byId.kraken;
     const ground = SL.Biomes.tentacles;
     if (!species || !ground || !SL.KrakenLeviathan) return;
     const floor = SL.Biomes.floorHeightAt(ground.x, ground.z);
@@ -1151,9 +1164,9 @@
    * and through keepUnlessKilled like every leviathan: kill it and it stays
    * dead in this world, update or no update.
    */
-  function spawnSeahorseLeviathan(game) {
+  function spawnSeahorseLeviathan(game, which) {
     const meadow = SL.Biomes.meadow;
-    const species = SL.Species.seahorseLeviathan;
+    const species = which || SL.Species.seahorseLeviathan;
     if (!meadow || !species || !SL.SeahorseLeviathan) return;
 
     const floor = SL.Biomes.floorHeightAt(meadow.x, meadow.z);

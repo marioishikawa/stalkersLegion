@@ -29,6 +29,9 @@
     build() {
       const index = SL.Biomes.index;
       const n = index.resolution;
+      // Remember which world this was painted for, so a new one is repainted.
+      this.forIndex = index;
+      this.forPlanet = SL.Planet ? SL.Planet.current : 1;
 
       this.base.width = n;
       this.base.height = n;
@@ -77,7 +80,10 @@
     }
 
     draw() {
-      if (!this.built) this.build();
+      // Once per world: a new seed is a new index, and Vireth repaints the same
+      // sea floor in its own colours.
+      if (!this.built || this.forIndex !== SL.Biomes.index
+        || this.forPlanet !== (SL.Planet ? SL.Planet.current : 1)) this.build();
 
       const ctx = this.ctx;
       const game = this.game;

@@ -716,7 +716,8 @@
       // that commands them is still alive, because the species has to stay
       // catalogue-able after you have killed the thing the objective told you
       // to kill.
-      if (SL.Kelpers && !(SL.Planet && SL.Planet.onEarth)) SL.Kelpers.tick(this, dt);
+      // Kelpers belong to Legion's far forest.
+      if (SL.Kelpers && !(SL.Planet && (SL.Planet.onEarth || SL.Planet.onVireth))) SL.Kelpers.tick(this, dt);
 
       // Sharks always think, the same way stalkers do: a hunt that only runs
       // when you are watching is not a population, it is a cutscene.

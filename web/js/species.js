@@ -138,6 +138,173 @@
                spineSegments: 22, radialSegments: 12 }
     }),
 
+    // ---------------------------------------------------------------- Vireth
+    // A hot world. Of everything from the Legion's sea only the rustjaw made it
+    // here; all of these live on Vireth and nowhere else.
+    fish('emberdart', 'Ember Dart', 'kelp', 'arrow', {
+      alsoIn: ['farkelp'], planets: [2],
+      note: 'A thin orange fish with a glowing yellow tip to its nose, darting through the scorchweed in quick straight lines.',
+      backColor: C(0.95, 0.40, 0.08), bellyColor: C(1.0, 0.84, 0.40), finColor: C(1.0, 0.70, 0.12), glow: 0.2,
+      schoolSize: 7, groups: 5, cruiseSpeed: 2.4, sprintSpeed: 6,
+      shape: { length: 0.34, height: 0.16, width: 0.08, noseSharpness: 0.9, tailFork: 0.6, sideFin: 0.1, stripes: 2 }
+    }),
+    fish('ashwrasse', 'Ash Wrasse', 'plateau', 'disc', {
+      alsoIn: ['shallows'], planets: [2],
+      note: 'A flat round fish the colour of cold ash, with a hot red rim to every fin. It grazes the ash plateau in loose groups.',
+      backColor: C(0.42, 0.40, 0.38), bellyColor: C(0.72, 0.68, 0.62), finColor: C(0.92, 0.24, 0.10),
+      schoolSize: 6, groups: 5,
+      shape: { length: 0.3, height: 0.5, width: 0.1, tailFork: 0.2, dorsalFin: 0.2, ventralFin: 0.14, sideFin: 0.1 }
+    }),
+    fish('slagback', 'Slagback', 'boulders', 'boxy', {
+      alsoIn: ['crystal'], planets: [2],
+      note: 'A blocky fish plated like cooled slag, black with orange cracks. Slow, and heavier than it looks.',
+      backColor: C(0.16, 0.12, 0.10), bellyColor: C(0.46, 0.30, 0.18), finColor: C(1.0, 0.46, 0.10),
+      maxHealth: 30, schoolSize: 3, groups: 4, cruiseSpeed: 1.0, altitude: 1.5,
+      shape: { length: 0.5, height: 0.34, width: 0.24, backSpikes: 5, tailFork: 0.1, sideFin: 0.12, stripes: 3 }
+    }),
+    fish('magmamoth', 'Magma Moth', 'coral', 'diamond', {
+      alsoIn: ['islet'], planets: [2],
+      note: 'A fish with wide wing-like fins, red shading to yellow at the tips, that flutters over the magma reef like a moth round a lamp.',
+      backColor: C(0.86, 0.12, 0.10), bellyColor: C(1.0, 0.80, 0.30), finColor: C(1.0, 0.86, 0.20), glow: 0.15,
+      schoolSize: 5, groups: 5, wagRate: 9,
+      shape: { length: 0.22, height: 0.3, width: 0.08, dorsalFin: 0.3, ventralFin: 0.24, sideFin: 0.26, tailFork: 0.5 }
+    }),
+    fish('sulphurshard', 'Sulphur Shard', 'crystal', 'arrow', {
+      planets: [2],
+      note: 'A glassy yellow fish you can almost see through, sharp at both ends, living among the sulphur crystals.',
+      backColor: C(0.94, 0.86, 0.20), bellyColor: C(1.0, 0.96, 0.60), finColor: C(0.98, 0.90, 0.36), glow: 0.3,
+      schoolSize: 8, groups: 4,
+      shape: { length: 0.26, height: 0.18, width: 0.07, noseSharpness: 0.95, tailFork: 0.7 }
+    }),
+    fish('cindereel', 'Cinder Eel', 'vents', 'eel', {
+      alsoIn: ['trench'], planets: [2],
+      note: 'A long black eel with a line of glowing coals down its back, winding between the boiling chimneys.',
+      backColor: C(0.08, 0.06, 0.06), bellyColor: C(0.30, 0.16, 0.10), finColor: C(1.0, 0.42, 0.06), glow: 0.4,
+      maxHealth: 26, schoolSize: 2, groups: 4, altitude: 2,
+      shape: { length: 1.2, height: 0.07, width: 0.06, dorsalFin: 0.05, spots: 14, spotSize: 0.02, spineSegments: 18 }
+    }),
+    fish('gloomgulp', 'Gloomgulp', 'trench', 'bulb', {
+      planets: [2],
+      note: 'All mouth and a red lure. In the burning trench the lure looks like one more ember - until it moves.',
+      backColor: C(0.22, 0.06, 0.06), bellyColor: C(0.42, 0.14, 0.10), finColor: C(0.30, 0.08, 0.08), glow: 0.1,
+      diet: 'ambusher', schoolSize: 1, groups: 3, cruiseSpeed: 0.6, lureColor: C(1.0, 0.30, 0.10),
+      shape: { length: 0.5, height: 0.5, width: 0.4, lure: true, jawLength: 0.3, eyeSize: 0.03, noseSharpness: 0.04 }
+    }),
+    fish('smoulderray', 'Smoulder Ray', 'abyss', 'disc', {
+      alsoIn: ['plateau'], planets: [2],
+      note: 'A wide dark ray that glows faintly orange along the edges of its wings, gliding just over the smoulder plain.',
+      backColor: C(0.18, 0.10, 0.08), bellyColor: C(0.70, 0.50, 0.36), finColor: C(0.96, 0.48, 0.14), glow: 0.25,
+      maxHealth: 40, schoolSize: 1, groups: 4, altitude: 1.5, cruiseSpeed: 1.2,
+      shape: { length: 1.4, height: 0.1, width: 0.6, crossSection: 3, tailHeight: 0.05, tailFork: 0, sideFin: 0.5, dorsalFin: 0 }
+    }),
+    fish('ochrefin', 'Ochre Fin', 'coldreef', 'torpedo', {
+      planets: [2],
+      note: 'A plain, sturdy yellow-brown fish in big schools over the ochre reef, which on Vireth is about as dull as fish get.',
+      backColor: C(0.72, 0.52, 0.18), bellyColor: C(0.94, 0.84, 0.56), finColor: C(0.80, 0.56, 0.16),
+      schoolSize: 9, groups: 5,
+      shape: { length: 0.3, height: 0.28, width: 0.12, tailFork: 0.45, stripes: 1 }
+    }),
+    fish('boilbubble', 'Boilbubble', 'vents', 'bulb', {
+      planets: [2],
+      note: 'A round red puff of a fish that hangs in the hot water rising off the chimneys, bobbing up and down with it.',
+      backColor: C(0.94, 0.20, 0.12), bellyColor: C(1.0, 0.62, 0.40), finColor: C(1.0, 0.50, 0.24), glow: 0.2,
+      schoolSize: 4, groups: 4, cruiseSpeed: 0.8, altitude: 6,
+      shape: { length: 0.24, height: 0.44, width: 0.42, tailFork: 0.2, spots: 10, spotSize: 0.05 }
+    }),
+    fish('islefire', 'Isle Firefin', 'islet', 'torpedo', {
+      alsoIn: ['shallows'], planets: [2],
+      note: 'Red and gold in stripes, quick and everywhere round the volcano isle - Vireth\'s answer to a reef fish.',
+      backColor: C(0.96, 0.24, 0.10), bellyColor: C(1.0, 0.82, 0.30), finColor: C(1.0, 0.66, 0.14),
+      schoolSize: 8, groups: 5,
+      shape: { length: 0.22, height: 0.3, width: 0.1, stripes: 5, tailFork: 0.5 }
+    }),
+    fish('saffronhorse', 'Saffron Seahorse', 'meadow', 'seahorse', {
+      planets: [2], upright: true,
+      note: 'A small yellow seahorse with red rings round its tail, clinging to the saffron grass.',
+      backColor: C(0.98, 0.76, 0.14), bellyColor: C(1.0, 0.90, 0.50), finColor: C(0.96, 0.30, 0.12),
+      schoolSize: 3, groups: 5, cruiseSpeed: 0.4, altitude: 1.5,
+      shape: { length: 0.22, belly: 1.1, snout: 0.16, spots: 8, eyeSize: 0.04 }
+    }),
+    fish('lashsquid', 'Lash Squid', 'tentacles', 'squid', {
+      alsoIn: ['coral'], planets: [2],
+      note: 'An orange squid with a whip of a feeding tentacle twice its own length. Schools of them hunt the lash grounds.',
+      backColor: C(0.96, 0.44, 0.10), bellyColor: C(1.0, 0.80, 0.56), finColor: C(1.0, 0.56, 0.20),
+      schoolSize: 5, groups: 4, altitude: 6, cruiseSpeed: 2.2, sprintSpeed: 6.4,
+      shape: { length: 0.6, width: 0.07, mantle: 0.45, fins: 0.18, eyeSize: 0.34, spots: 6 }
+    }),
+    fish('emberoctopus', 'Ember Octopus', 'tentacles', 'octopus', {
+      alsoIn: ['boulders'], planets: [2],
+      note: 'A deep red octopus that goes bright yellow when it is startled - and then dark again, and gone.',
+      backColor: C(0.70, 0.10, 0.08), bellyColor: C(0.98, 0.62, 0.30), finColor: C(0.84, 0.18, 0.10),
+      maxHealth: 30, schoolSize: 1, groups: 5, altitude: 1, cruiseSpeed: 0.9,
+      shape: { length: 0.9, width: 0.13, mantle: 0.32, eyeSize: 0.3, spots: 8, spotSize: 0.13 }
+    }),
+    fish('basinglow', 'Basin Glow', 'kings', 'torpedo', {
+      planets: [2],
+      note: 'A pale fish lit gold from inside, in slow schools down in the cinder basin where nothing else much lives.',
+      backColor: C(1.0, 0.82, 0.46), bellyColor: C(1.0, 0.94, 0.76), finColor: C(1.0, 0.70, 0.30), glow: 0.5,
+      schoolSize: 6, groups: 4,
+      shape: { length: 0.28, height: 0.24, width: 0.1, tailFork: 0.4 }
+    }),
+    fish('flaretail', 'Flaretail', 'farkelp', 'ribbon', {
+      alsoIn: ['kelp'], planets: [2],
+      note: 'A ribbon of a fish with a tail like a lit fuse, flickering through the flare forest.',
+      backColor: C(0.98, 0.56, 0.12), bellyColor: C(1.0, 0.86, 0.50), finColor: C(1.0, 0.30, 0.08), glow: 0.3,
+      schoolSize: 4, groups: 4,
+      shape: { length: 0.6, height: 0.12, width: 0.05, tailHeight: 0.6, tailSweep: 0.5, dorsalFin: 0.1 }
+    }),
+    fish('dunecrawler', 'Dune Shrimp', 'shallows', 'shrimp', {
+      alsoIn: ['plateau'], planets: [2],
+      note: 'A sand-orange shrimp that hops over the ember flats in little clouds when you swim near.',
+      backColor: C(0.94, 0.56, 0.24), bellyColor: C(1.0, 0.82, 0.60), finColor: C(0.96, 0.40, 0.18),
+      schoolSize: 6, groups: 4, altitude: 1,
+      shape: { length: 0.16, height: 0.2, width: 0.1, antennae: 1.2, legPairs: 4, tailFork: 0.2 }
+    }),
+
+    // Vireth's leviathans.
+    fish('scorchmaw', 'Scorchmaw Leviathan', 'abyss', 'torpedo', {
+      leviathan: true, markerColor: '#ff5a1e', planets: [2],
+      diet: 'carnivore', groups: 0,
+      note: 'Twenty metres of shark-shaped animal plated in black slag, glowing orange where the plates crack. It patrols the smoulder plain, circles what it finds, then charges.',
+      backColor: C(0.10, 0.07, 0.06), bellyColor: C(0.52, 0.22, 0.10), finColor: C(1.0, 0.40, 0.06),
+      eyeColor: C(1.0, 0.86, 0.20), glow: 0.2,
+      maxHealth: 2600, cruiseSpeed: 3.0, sprintSpeed: 10, turnRate: 1.0,
+      senseRadius: 60, biteDamage: 48, biteInterval: 4, schoolSize: 1, altitude: 20, wagRate: 1.5,
+      shape: { length: 20, height: 0.17, width: 0.12, noseSharpness: 0.6, tailFork: 0.6, dorsalFin: 0.16,
+               sideFin: 0.18, backSpikes: 9, stripes: 6, eyeSize: 0.012, jawLength: 0.16, hiddenTeeth: true,
+               toothColors: [[1.0, 0.86, 0.40], [1.0, 0.60, 0.20]], spineSegments: 22, radialSegments: 12 }
+    }),
+    fish('lashwyrm', 'Lashwyrm', 'tentacles', 'squid', {
+      leviathan: true, markerColor: '#ffb020', planets: [2],
+      diet: 'carnivore', groups: 0,
+      note: 'A thirty-metre squid, gold and orange, over the lash grounds. Like the Kraken it watches, rushes and grabs - and it holds on harder. Cut it free.',
+      backColor: C(0.86, 0.46, 0.06), bellyColor: C(1.0, 0.84, 0.50), finColor: C(0.96, 0.30, 0.06),
+      eyeColor: C(0.10, 0.04, 0.02),
+      maxHealth: 2800, cruiseSpeed: 2.8, sprintSpeed: 9, turnRate: 1.1,
+      senseRadius: 70, biteDamage: 11, biteInterval: 1, schoolSize: 1, altitude: 14, wagRate: 0.8,
+      shape: { length: 30, width: 0.06, mantle: 0.4, fins: 0.16, eyeSize: 0.4, spots: 14, spotSize: 0.1, radialSegments: 14 }
+    }),
+    fish('flarebell', 'Flarebell Leviathan', 'boulders', 'jelly', {
+      leviathan: true, markerColor: '#ffd23c', planets: [2],
+      drifter: true, upright: true, translucent: true, stings: true, diet: 'stinger', groups: 0,
+      note: 'A jellyfish six metres across, burning yellow and red, with twenty-five metres of stinging tentacles hanging under it over the slag slope.',
+      backColor: C(1.0, 0.80, 0.10), bellyColor: C(1.0, 0.40, 0.10), finColor: C(1.0, 0.24, 0.06), glow: 0.7,
+      maxHealth: 1700, cruiseSpeed: 0.6, sprintSpeed: 1.0, turnRate: 0.6,
+      senseRadius: 2, biteDamage: 16, schoolSize: 1, altitude: 20, wagRate: 0.9,
+      shape: { bell: 3.0, bellHeight: 0.75, tentacleLength: 25, tentacles: 40, oralArms: 8 }
+    }),
+    fish('sunsteed', 'Sunsteed Leviathan', 'meadow', 'seahorse', {
+      leviathan: true, markerColor: '#ff8c28', planets: [2],
+      upright: true, diet: 'carnivore', groups: 0,
+      note: 'A fifteen-metre seahorse the colour of a sunset, standing over the saffron meadow. Do not get in front of its head.',
+      backColor: C(0.96, 0.36, 0.08), bellyColor: C(1.0, 0.82, 0.30), finColor: C(1.0, 0.56, 0.12),
+      eyeColor: C(0.05, 0.02, 0.02), glow: 0.15,
+      maxHealth: 2000, cruiseSpeed: 1.5, sprintSpeed: 3.4, turnRate: 0.9,
+      senseRadius: 24, biteDamage: 42, biteInterval: 4, schoolSize: 1, altitude: 8, wagRate: 4,
+      drops: {},
+      shape: { length: 15, belly: 1.2, snout: 0.14, spots: 36, eyeSize: 0.026, radialSegments: 12 }
+    }),
+
     fish('redglimmer', 'Red Glimmer', 'shallows', 'torpedo', {
       alsoIn: ['islet', 'kelp'], planets: [2],
       nests: true,
@@ -544,7 +711,7 @@
     }),
 
     fish('stingray', 'Stingray', 'plateau', 'disc', {
-      planets: [1, 2, 3],
+      planets: [1, 3],
       alsoIn: ['islet'],
       note: "All wing and whip tail, hugging the plateau grass. Harmless.",
       // Broad wings, a whip tail, and it hugs the grass. Harmless.
@@ -584,7 +751,7 @@
     // all three is a tour of the sunlit half of the map rather than three
     // identical encounters in the same bay.
     fish('greenturtle', 'Green Turtle', 'shallows', 'disc', {
-      planets: [1, 2, 3],
+      planets: [1, 3],
       alsoIn: ['kelp'],
       diet: 'mammal',
       note: 'Grazes the shallows at walking pace and climbs for air about ' +
@@ -1092,7 +1259,7 @@
 
     // ------------------------------------------------------------- The predator
     fish('shark', 'Shark', 'shallows', 'torpedo', {
-      planets: [1, 2, 3],
+      planets: [1, 3],
       alsoIn: ['kelp'],
       diet: 'carnivore',
       note: 'Here for the Glimmerfin, and it will cross its whole range for ' +
@@ -1134,6 +1301,7 @@
                jawLength: 0.16, spineSegments: 22, radialSegments: 12 }
     }),
     fish('stalker', 'Rustjaw', 'kelp', 'eel', {
+      planets: [1, 2],
       note: "Obsessed with scrap metal. Chews it, hauls it, and bites whatever interrupts.",
       diet: 'carnivore',
       backColor: C(0.22, 0.26, 0.20), bellyColor: C(0.62, 0.60, 0.46), finColor: C(0.30, 0.34, 0.24),
@@ -1522,6 +1690,7 @@
 
     // ---------------------------------------------------- The bonded stalker
     fish('petstalker', 'Bonded Rustjaw', 'kelp', 'eel', {
+      planets: [1, 2],
       // Never spawns on its own - awarded for finishing the databank, which
       // is also why it is not in it. A reward that is also a requirement is a
       // circle: the card could only be filled after the thing it gates was

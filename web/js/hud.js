@@ -162,8 +162,11 @@
       // --- Depth and biome ------------------------------------------------------
       this.el.depthValue.textContent = p.depth.toFixed(1);
       const biome = p.biome;
-      if (biome !== this.lastBiome) {
+      // By name as well as by place: a place keeps its object from world to
+      // world, but on Vireth it has a different name.
+      if (biome !== this.lastBiome || biome.name !== this.lastBiomeName) {
         this.lastBiome = biome;
+        this.lastBiomeName = biome.name;
         this.el.biomeName.textContent = biome.name;
         this.el.biomeName.classList.remove('is-entering');
         void this.el.biomeName.offsetWidth;   // restart the animation

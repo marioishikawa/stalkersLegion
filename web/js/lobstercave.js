@@ -85,7 +85,8 @@
       this.keeper = null;
       this.grudge = false;
       this.chased = false;
-      if (SL.Planet && SL.Planet.onEarth) return false;
+      // The Big Lobster's cave is on Legion only.
+      if (SL.Planet && (SL.Planet.onEarth || SL.Planet.onVireth)) return false;
 
       const B = SL.Biomes;
       const shallows = B.byId.shallows;
