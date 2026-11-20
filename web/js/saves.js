@@ -180,6 +180,8 @@
       world.mech = SL.Mech ? SL.Mech.capture() : null;
       world.rocket = SL.Rocket ? SL.Rocket.capture() : null;
       world.aquarium = SL.Aquarium ? SL.Aquarium.capture() : null;
+      // On Earth, the town is where you are.
+      world.earth = SL.Earth ? SL.Earth.capture() : null;
       world.crafting = {
         inventory: Object.assign({}, SL.Crafting.inventory),
         stacks: Object.assign({}, SL.Crafting.stacks),
@@ -231,6 +233,8 @@
         p.oxygen = Math.min(world.player.oxygen, p.maxOxygen);
         p.velocity.set(0, 0, 0);
       }
+
+      if (SL.Earth && world.earth) SL.Earth.restore(world.earth, game);
     }
   };
 

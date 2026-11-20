@@ -339,6 +339,32 @@
       this.place();
     },
 
+    /**
+     * Cheat: a finished mech right beside you, fully charged and full of air,
+     * and you in it. Already in one, it just tops it up.
+     */
+    cheat(p) {
+      if (!this.group || p.dead) return false;
+      this.building = 0;
+      this.battery = 100;
+      this.air = MAX_AIR;
+      this.refillHold = 0;
+      if (this.piloting) return true;
+      this.built = true;
+      this.towing = false;
+      p.camera.getWorldDirection(_fwd);
+      _fwd.y = 0;
+      if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, -1);
+      _fwd.normalize();
+      const x = p.position.x + _fwd.x * 2.5, z = p.position.z + _fwd.z * 2.5;
+      this.position.set(x, ground(x, z), z);
+      this.heading = Math.atan2(_fwd.x, _fwd.z);
+      this.group.visible = true;
+      this.place();
+      this.enter(p);
+      return true;
+    },
+
     /** A click: a short burst of the laser. */
     pulseLaser() { this.pulse = 0.35; },
 

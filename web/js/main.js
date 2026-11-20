@@ -479,8 +479,6 @@
     /** Writes the current run into its world record. Never blocks the game. */
     saveWorld(options) {
       if (!this.world || !this.player) return Promise.resolve(false);
-      // Earth is a visit, not a place in the world: nothing is saved from it.
-      if (SL.Earth && SL.Earth.active) return Promise.resolve(false);
 
       SL.Saves.capture(this.world, this);
       const saved = SL.Saves.put(this.world);
@@ -507,12 +505,6 @@
 
     /** Saves and returns to the world list. */
     async quitToMenu() {
-      // Leaving from Earth puts you back in the wreck, as if you had gone back down.
-      if (SL.Earth && SL.Earth.active) {
-        SL.Earth.leave();
-        if (SL.Wreck) { const s = SL.Wreck.spawnPoint(); this.player.position.copy(s.position); this.player.yaw = s.yaw; }
-        this.player.velocity.set(0, 0, 0);
-      }
       await this.saveWorld();
       this.started = false;
       this.setPaused(true);
@@ -841,6 +833,29 @@
         ? 'CHEAT — hacked candle lit. It only burns in the Deep Trench'
         : 'CHEAT — candle out');
     },
+    // A finished mech beside you, charged and full of air, with you in it.
+    mechstalker(game) {
+      if (SL.Earth && SL.Earth.active) { game.hud.toast('CHEAT — no mech on Earth: go back down first'); return; }
+      if (!SL.Mech || !SL.Mech.cheat(game.player)) return;
+      game.hud.toast('CHEAT — mech ready: battery 100%, air 500s');
+    },
+    // Straight to the little Earth town, to walk it and try NASA.
+    earthsus(game) {
+      if (SL.Earth && SL.Earth.active) { game.hud.toast('CHEAT — you are already on Earth'); return; }
+      if (SL.Rocket && SL.Rocket.flying) return;
+      ['homeScreen', 'completionScreen', 'nasaScreen'].forEach((id) => document.getElementById(id).classList.remove('is-visible'));
+      game.completionOpen = false;
+      SL.Earth.enter(game);
+      game.hud.toast('CHEAT — home to Earth. NASA is at the end of the street');
+    },
+    // Crash straight onto Vireth: a new Vireth world, with your gear and aquarium.
+    virethsus(game) {
+      if (SL.Rocket && SL.Rocket.flying) return;
+      ['homeScreen', 'completionScreen', 'nasaScreen'].forEach((id) => document.getElementById(id).classList.remove('is-visible'));
+      game.completionOpen = false;
+      game.hud.toast('CHEAT — crashing on Vireth');
+      game.crashOnNewPlanet();
+    },
     // Write a place, go to it.
     teletransportsus(game) {
       if (SL.Travel) SL.Travel.open(game);
@@ -899,6 +914,10 @@
       return 'fired';
     }
 
+    // One letter is not a code yet: E, T and the rest still do their jobs, or
+    // the start of every code would be a dead key. From the second letter on,
+    // the key belongs to the code.
+    if (live.length === 1) return 'start';
     return live ? 'prefix' : 'none';
   }
 
@@ -940,8 +959,31 @@
         : 'none';
 
       // A letter part-way through a cheat code belongs to the code, not to
-      // whatever it is normally bound to.
-      if (cheat === 'none') {
+      // whatever it is normally bound to. The first letter still counts as a
+      // key - except V, which spends a repel charge: that waits a moment to
+      // see whether "virethsus" is being typed, and only fires if it is not.
+      if (game.pendingKey) {
+        // The key after a held letter: unless it carried on into a code, the
+        // letter was just that letter.
+        const held = game.pendingKey;
+        clearTimeout(held.timer);
+        game.pendingKey = null;
+        if (!(game.cheatBuffer || '').startsWith(held.letter) || (game.cheatBuffer || '').length < 2) {
+          if (cheat !== 'fired') held.run();
+        }
+      }
+      const HELD = {
+        KeyV: () => game.player.useRepel(),
+        KeyM: () => { game.audio.setMuted(!game.audio.muted); game.hud.showMuted(game.audio.muted); }
+      };
+      if (cheat === 'start' && HELD[e.code]) {
+        const letter = e.key.toLowerCase();
+        const run = HELD[e.code];
+        game.pendingKey = { letter, run, timer: setTimeout(() => {
+          game.pendingKey = null;
+          if (game.cheatBuffer === letter) { game.cheatBuffer = ''; run(); }
+        }, 260) };
+      } else if (cheat === 'none' || cheat === 'start') {
         switch (e.code) {
           case 'KeyE': game.player.interact(); break;
           case 'KeyF': game.player.toggleFlashlight(); break;

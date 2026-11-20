@@ -906,7 +906,10 @@
       const at = this.position.clone().addScaledVector(_forward, 3);
       const floor = SL.Biomes.floorHeightAt(at.x, at.z);
       at.y = SL.clamp(at.y, floor + 1, SL.WATER_LEVEL - 2);
-      const lure = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), this.game.materials.glow);
+      // Its own colour: the shared glow material is painted per vertex, and a
+      // plain sphere has no paint, which drew the lure as a black ball.
+      const lure = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8),
+        new THREE.MeshBasicMaterial({ color: 0x9fffd8 }));
       lure.position.copy(at);
       const light = new THREE.PointLight(0x9fffd8, 1.2, 10, 1.6);
       lure.add(light);

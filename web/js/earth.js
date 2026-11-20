@@ -9,7 +9,8 @@
  *
  * The town only exists while you are there: it is built when you come home
  * and taken down when you leave, so the ocean you dive in never has a city
- * standing in it.
+ * standing in it. But it is a place: quit while you are in it and you come
+ * back to it, where you were standing, with NASA as far along as it was.
  */
 (function (SL) {
   'use strict';
@@ -47,7 +48,7 @@
       }
     },
 
-    enter(game) {
+    enter(game, quiet) {
       this.game = game;
       this.active = true;
       this.stage = 'arrived';
@@ -61,7 +62,35 @@
       p.pitch = 0;
       p.health = p.maxHealth;
       p.oxygen = p.maxOxygen;
-      game.hud.toast('Home. NASA is at the end of the street');
+      if (!quiet) game.hud.toast('Home. NASA is at the end of the street');
+    },
+
+    /** Where you are in the town and how far NASA has got, for the save. */
+    capture() {
+      if (!this.active || !this.game) return null;
+      const p = this.game.player.position;
+      return { stage: this.stage === 'flying' || this.stage === 'done' ? 'ready' : this.stage,
+        timer: this.timer, x: p.x, y: p.y, z: p.z, yaw: this.game.player.yaw };
+    },
+
+    /** Back into the town as it was left. */
+    restore(data, game) {
+      if (!data) return;
+      this.enter(game, true);
+      this.stage = data.stage || 'arrived';
+      this.timer = data.timer || 0;
+      if (this.stage === 'building' || this.stage === 'ready') {
+        this.ship.visible = true;
+        this.ship.scale.set(1, this.stage === 'ready' ? 1 : Math.max(0.02, 1 - this.timer / BUILD_TIME), 1);
+      }
+      const p = game.player;
+      if (typeof data.x === 'number' && this.groundAt(data.x, data.z) > -Infinity) {
+        p.position.set(data.x, Math.max(data.y, GROUND + 1.7), data.z);
+        p.yaw = data.yaw || 0;
+      }
+      p.velocity.set(0, 0, 0);
+      game.hud.toast(this.stage === 'ready' ? 'Back on Earth. Your new ship is on the pad behind NASA'
+        : this.stage === 'building' ? 'Back on Earth. NASA is still building your ship' : 'Back on Earth');
     },
 
     leave() {
